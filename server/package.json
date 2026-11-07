@@ -1,25 +1,19 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Server of registration site of Celestius' event named Larper or Coder ",
-  "main": "app.js",
-  "repository": "https://github.com/admin-celestius/NoCapJustCode.git",
-  "author": "Varun Mahendran",
-  "license": "MIT",
-
+  "main": "src/server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node src/server.js",
+    "dev": "nodemon server.js"
   },
-
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.9",
-    "express": "^5.3.0",
-    "json": "^11.0.0",
-    "mongoose": "^9.12.0",
-    "nodemon": "^3.1.14",
-    "razorpay": "^2.9.8",
-    "zod": "^4.6.7"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "mongoose": "^8.7.0",
+    "razorpay": "^2.9.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
