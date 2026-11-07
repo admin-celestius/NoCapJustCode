@@ -4,8 +4,6 @@ import './App.css';
 import { checkHealth } from './services/api.js';
 import Scene from './components/Scene/Scene.jsx';
 import Intro from './components/Intro/Intro.jsx';
-import CelestiusSplash from './components/Splash/CelestiusSplash.jsx';
-import { SESSION_KEYS } from './components/Intro/introConstants.js';
 import { logTimelineEvent } from './utils/timelineLogger.js';
 import Navbar from './components/Navbar/Navbar.jsx';
 import Hero from './components/Hero/Hero.jsx';
@@ -16,26 +14,20 @@ import Quote from './components/Quote/Quote.jsx';
 import RegisterModal from './components/Register/RegisterModal.jsx';
 import Footer from './components/Footer/Footer.jsx';
 import { auditHardwarePlacement } from './utils/hardwareAudit.js';
+import { useScrollReveal } from './hooks/useScrollReveal.js';
 
 export default function App() {
-  const [appFlow, setAppFlow] = useState(() => {
-    if (typeof window === 'undefined') return 'INTRO';
-    const seen =
-      sessionStorage.getItem(SESSION_KEYS?.INTRO_SEEN || 'larper_or_coder_intro_seen') === 'true' ||
-      sessionStorage.getItem('INTRO_SEEN') === 'true';
-    return seen ? 'SITE' : 'INTRO';
-  });
+  // Always start with 'INTRO' on every reload / visit as requested
+  const [appFlow, setAppFlow] = useState('INTRO');
+  const [siteRevealed, setSiteRevealed] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+
+  // Activate independent scroll reveals across all site elements
+  useScrollReveal(appFlow === 'SITE');
 
   // Non-blocking background health check
   useEffect(() => {
-    checkHealth().then((status) => {
-      if (status.healthy) {
-        console.info('[System] Connected to backend server successfully.');
-      } else {
-        console.info('[System] Backend server offline or mock mode active. Mock adapter will handle registrations.');
-      }
-    });
+    checkHealth();
   }, []);
 
   // Handle tab visibility to pause animations when hidden
@@ -68,7 +60,7 @@ export default function App() {
     }
   }, [appFlow]);
 
-  // Lock scroll while intro or splash is active
+  // Lock scroll while intro is active
   useEffect(() => {
     if (appFlow !== 'SITE') {
       const prevOverflow = document.body.style.overflow;
@@ -88,21 +80,9 @@ export default function App() {
   };
 
   const handleIntroComplete = useCallback(() => {
-    setAppFlow('SPLASH');
-  }, []);
-
-  const handleSplashComplete = useCallback(() => {
     setAppFlow('SITE');
+    setSiteRevealed(true);
     logTimelineEvent('site visible');
-    try {
-      sessionStorage.setItem('INTRO_SEEN', 'true');
-      sessionStorage.setItem(
-        SESSION_KEYS?.INTRO_SEEN || 'larper_or_coder_intro_seen',
-        'true'
-      );
-    } catch {
-      // Storage safety
-    }
   }, []);
 
   return (
@@ -110,28 +90,23 @@ export default function App() {
       {/* Background Coding Scene (Dot Grid, Ambient Glows, Rising Embers) */}
       <Scene />
 
-      {/* Story Introduction Overlay */}
+      {/* Story Introduction Overlay: runs every time on reload */}
       {appFlow === 'INTRO' && (
         <Intro onComplete={handleIntroComplete} />
       )}
 
-      {/* Celestius Splash Screen Overlay */}
-      {appFlow === 'SPLASH' && (
-        <CelestiusSplash onComplete={handleSplashComplete} />
-      )}
-
-      {/* Main Site Container: inert while intro/splash active */}
+      {/* Main Site Container: inert while intro active */}
       <div
-        className="siteWrapper"
+        className={`siteWrapper ${siteRevealed ? 'siteRevealed' : ''}`}
         inert={appFlow !== 'SITE'}
         aria-hidden={appFlow !== 'SITE'}
       >
         {/* Floating Pill Navbar */}
-        <Navbar onOpenRegister={handleOpenRegister} />
+        <Navbar onOpenRegister={handleOpenRegister} animateIn={siteRevealed} />
 
         {/* Main Sections */}
         <main className="mainContent">
-          <Hero onOpenRegister={handleOpenRegister} />
+          <Hero onOpenRegister={handleOpenRegister} animateIn={siteRevealed} />
           <About />
           <Schedule />
           <EventCards onOpenRegister={handleOpenRegister} />

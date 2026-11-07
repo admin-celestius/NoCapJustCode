@@ -33,7 +33,7 @@
   justify-content: center;
   padding: 1.5rem;
   overflow: hidden;
-  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), visibility 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1), visibility 350ms cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
@@ -52,49 +52,21 @@
   z-index: 1;
 }
 
-/* Screen wash for ALERT phase (3 soft orange blinks over 1s, peak opacity 0.25) */
-.orangeWash {
+/* Subtle ambient backdrop radial glow (no blinking or screen flashes) */
+.loaderAmbientGlow {
   position: absolute;
-  inset: 0;
-  background-color: #F57546;
-  opacity: 0;
+  inset: -20%;
+  background: radial-gradient(circle at center, rgba(245, 117, 70, 0.08) 0%, transparent 70%);
   pointer-events: none;
-  z-index: 5;
-  animation: orangeFlashWash 1200ms ease-in-out 1;
+  z-index: 0;
+  transition: background 400ms ease;
 }
 
-@keyframes orangeFlashWash {
-  0% { opacity: 0; }
-  16% { opacity: 0.25; }
-  33% { opacity: 0; }
-  49% { opacity: 0.25; }
-  66% { opacity: 0; }
-  83% { opacity: 0.25; }
-  100% { opacity: 0; }
+.loaderAmbientGlow.greenGlow {
+  background: radial-gradient(circle at center, rgba(61, 220, 132, 0.08) 0%, transparent 70%);
 }
 
-/* Screen wash for GREEN phase (3 soft green blinks over 1.4s, peak opacity 0.28) */
-.greenWash {
-  position: absolute;
-  inset: 0;
-  background-color: #3DDC84;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 5;
-  animation: greenFlashWash 1400ms ease-in-out 1;
-}
-
-@keyframes greenFlashWash {
-  0% { opacity: 0; }
-  16% { opacity: 0.28; }
-  33% { opacity: 0; }
-  49% { opacity: 0.28; }
-  66% { opacity: 0; }
-  83% { opacity: 0.28; }
-  100% { opacity: 0; }
-}
-
-/* 100% Snap Clean Flash (200ms) */
+/* 100% Snap Clean Flash */
 .completeFlash {
   position: absolute;
   inset: 0;
@@ -102,11 +74,11 @@
   opacity: 0;
   pointer-events: none;
   z-index: 6;
-  animation: flashWhite 200ms ease-out 1;
+  animation: flashWhite 160ms ease-out 1;
 }
 
 @keyframes flashWhite {
-  0% { opacity: 0.35; }
+  0% { opacity: 0.45; }
   100% { opacity: 0; }
 }
 
@@ -114,40 +86,12 @@
 .topControls {
   position: absolute;
   top: 1.5rem;
-  left: 1.5rem;
   right: 1.5rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   z-index: 20;
   pointer-events: auto;
-}
-
-.soundButton {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-pill);
-  background: rgba(20, 20, 22, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
-}
-
-.soundButton:hover {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
-  background: var(--surface-2);
-}
-
-.soundButton.soundActive {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
 }
 
 .skipButton {
@@ -157,34 +101,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--text-primary, #F9EDD2);
   background: rgba(20, 20, 22, 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-pill, 9999px);
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+  transition: border-color var(--transition-fast, 150ms ease), background-color var(--transition-fast, 150ms ease), color var(--transition-fast, 150ms ease);
 }
 
 .skipButton:hover {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
-  background: var(--surface-2);
+  border-color: #F57546;
+  color: #F57546;
+  background: rgba(30, 30, 35, 0.85);
 }
 
-/* Main Stage Container */
+/* Main Stage Container (Always Perfectly Centered) */
 .stage {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 880px;
-  min-height: 400px;
+  max-width: 900px;
+  min-height: 440px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -192,106 +136,94 @@
   text-align: center;
 }
 
-/* Loader Area (Alert Banner + Percentage + Segmented Bar + Status Line) */
+/* Loader Area */
 .loaderArea {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  animation: fadeIn 240ms ease-out;
+  gap: 1.25rem;
+  animation: fadeIn 200ms ease-out;
 }
 
 .loaderArea.clearing {
-  animation: fadeOutScale 400ms ease-in forwards;
+  animation: fadeOutScale 200ms ease-in forwards;
 }
 
-/* Refined Alert Banner - Sits ABOVE the loader */
-.alertBannerWrapper {
+/* Holographic Verification Capsule (Smooth, elegant, zero blinking) */
+.verificationCapsule {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 90%;
-  max-width: 680px;
-  animation: slideInFromTop 280ms cubic-bezier(0.16, 1, 0.3, 1), alertShake 3s ease-in-out infinite;
+  max-width: 620px;
+  background: rgba(245, 117, 70, 0.08);
+  border: 1px solid rgba(245, 117, 70, 0.45);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.7), 0 0 16px rgba(245, 117, 70, 0.15);
+  animation: capsuleSlideDown 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: border-color 250ms ease, background-color 250ms ease, box-shadow 250ms ease;
   margin-bottom: 0.5rem;
 }
 
-.alertBanner {
-  position: relative;
-  width: 100%;
-  background-color: #F7EDD8;
-  color: #F57546;
-  border: 2px solid #050507;
-  border-radius: 8px;
-  padding: 1.15rem 2rem;
-  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.95);
+.verificationCapsule.capsuleGreen {
+  background: rgba(61, 220, 132, 0.08);
+  border-color: rgba(61, 220, 132, 0.5);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.7), 0 0 20px rgba(61, 220, 132, 0.2);
+}
+
+@keyframes capsuleSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.capsuleInner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  animation: alertPulseOrange 1.2s ease-in-out infinite;
-  transition: color 200ms ease, border-color 200ms ease;
+  gap: 0.25rem;
+  text-align: center;
 }
 
-.alertBannerGreen {
-  color: #3DDC84;
-  animation: alertPulseGreen 1.2s ease-in-out infinite;
-}
-
-/* Orange/Green Square Handles on left and right edges */
-.handleLeft,
-.handleRight {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 28px;
-  background-color: #F57546;
-  border: 2px solid #050507;
-  border-radius: 2px;
-  z-index: 2;
-  transition: background-color 200ms ease;
-}
-
-.handleLeft {
-  left: -8px;
-}
-
-.handleRight {
-  right: -8px;
-}
-
-.alertBannerGreen .handleLeft,
-.alertBannerGreen .handleRight {
-  background-color: #3DDC84;
-}
-
-.alertTitleRow {
+.capsuleStatusLine {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
+  gap: 0.5rem;
 }
 
-.alertText {
-  font-family: var(--font-intro-pixel);
-  font-size: clamp(1.2rem, 5vw, 2.5rem);
+.capsuleIcon {
+  font-size: 0.95rem;
+  color: #FFA575;
+  transition: color 250ms ease;
+}
+
+.verificationCapsule.capsuleGreen .capsuleIcon {
+  color: #3DDC84;
+}
+
+.capsuleTitle {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: clamp(0.9rem, 2.8vw, 1.15rem);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
   text-transform: uppercase;
-  line-height: 1.1;
 }
 
-.alertStatusSubline {
-  font-family: var(--font-mono);
-  font-size: clamp(0.75rem, 2vw, 0.85rem);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #050507;
-  opacity: 0.75;
+.capsuleSubline {
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(0.72rem, 2vw, 0.8rem);
+  color: var(--text-secondary);
+  opacity: 0.85;
 }
 
 /* Large Percentage Counter */
@@ -299,90 +231,504 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  font-family: var(--font-display);
+  font-family: var(--font-intro-pixel, monospace);
+  font-size: clamp(3rem, 10vw, 5.5rem);
   font-weight: 700;
-  font-size: clamp(3.5rem, 13vw, 7.5rem);
-  line-height: 0.95;
-  color: var(--text-primary);
-  letter-spacing: -0.04em;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-}
-
-.counterPercent {
-  font-family: var(--font-mono);
-  font-size: clamp(1.5rem, 5vw, 3rem);
-  font-weight: 600;
+  line-height: 1;
   color: #F57546;
-  margin-left: 0.35rem;
-  transition: color 200ms ease;
+  letter-spacing: -0.02em;
+  transition: color 150ms ease;
+  min-height: clamp(3.2rem, 11vw, 5.8rem);
 }
 
-.counterRow.greenText .counterPercent {
+.counterRow.greenText {
   color: #3DDC84;
 }
 
-/* Thick Segmented Bar with thinner 2px gaps & clean blocks */
-.segmentedBar {
-  width: 100%;
-  max-width: 500px;
-  height: 22px;
-  background-color: #0b0b0f;
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 2px;
+.counterPercent {
+  font-size: clamp(1.5rem, 5vw, 2.75rem);
+  margin-left: 0.25rem;
+  opacity: 0.85;
+}
+
+/* Cyber Precision Progress Bar Container */
+.progressContainer {
   display: flex;
-  gap: 2px;
+  flex-direction: column;
+  gap: 8px;
+  width: 90%;
+  max-width: 620px;
+}
+
+.progressTelemetryHeader {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: #FFA575;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0 2px;
 }
 
-.segmentBlock {
-  flex: 1;
-  height: 100%;
-  background-color: #16161c;
-  border-radius: 1px;
-  transition: background-color 40ms linear;
+.telemetryTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.segmentBlock.filled {
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background-color: #F57546;
+  box-shadow: 0 0 8px #F57546;
+  display: inline-block;
+  transition: background-color 250ms ease, box-shadow 250ms ease;
 }
 
-.segmentBlock.tip {
-  background-color: #FFA575;
-}
-
-.segmentedBar.greenMode .segmentBlock.filled {
+.statusDotGreen {
   background-color: #3DDC84;
+  box-shadow: 0 0 8px #3DDC84;
 }
 
-.segmentedBar.greenMode .segmentBlock.tip {
-  background-color: #8CFFBD;
+.telemetryRate {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
 }
 
-/* Single Status Line under the bar in muted cream */
-.statusLineMuted {
-  font-family: var(--font-mono);
-  font-size: clamp(0.75rem, 2.5vw, 0.8125rem);
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  min-height: 20px;
-}
-
-/* ------------------------------------------------------------- */
-/* EXACT LOGO TYPING & SWAP SCENE                                */
-/* ------------------------------------------------------------- */
-
-.logoContainer {
+/* High-Tech Energy Rail Track */
+.cyberRail {
   position: relative;
-  width: clamp(280px, 80vw, 860px);
+  width: 100%;
+  height: 14px;
+  background-color: #0A0A0F;
+  border: 1px solid rgba(247, 237, 216, 0.16);
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 16px rgba(245, 117, 70, 0.12);
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.cyberRail.railGreen {
+  border-color: rgba(61, 220, 132, 0.45);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(61, 220, 132, 0.22);
+}
+
+/* Active Energy Fill Bar */
+.cyberFill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, #F26B3A 0%, #F5A81C 75%, #FFA575 100%);
+  border-radius: 9999px;
+  overflow: hidden;
+  transition: width 40ms linear, background 300ms ease;
+}
+
+.cyberFill.fillGreen {
+  background: linear-gradient(90deg, #059669 0%, #10B981 60%, #3DDC84 100%);
+}
+
+/* Continuous Photon Energy Wave (Smooth high-speed current, replaces blinking) */
+.energyWave {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 40%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.25) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: energyFlux 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+@keyframes energyFlux {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Luminous Leading-Edge Spark / Plasma Head */
+.laserHead {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 14px 2px #FFA575, 0 0 6px #FFFFFF;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fillGreen .laserHead {
+  box-shadow: 0 0 14px 2px #3DDC84, 0 0 6px #FFFFFF;
+}
+
+/* Laser Optical Scan Beam during Verification Phase (Smooth horizontal laser sweep, replaces strobe) */
+.laserScanBeam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 100%
+  );
+  mix-blend-mode: color-dodge;
+  animation: laserScanSweep 0.75s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.laserScanBeam.beamGreen {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(140, 255, 189, 0.95) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes laserScanSweep {
+  0% {
+    left: 0%;
+  }
+  100% {
+    left: calc(100% - 48px);
+  }
+}
+
+/* Micro-Ticks Ruler */
+.rulerTicks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  color: rgba(247, 237, 216, 0.35);
+  padding: 0 4px;
+}
+
+/* DYNAMIC STATUS LINE */
+.statusLineMuted {
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(0.75rem, 2.5vw, 0.84rem);
+  color: #FFA575;
+  letter-spacing: 0.05em;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 8px rgba(245, 117, 70, 0.5);
+  transition: color 200ms ease;
+}
+
+.statusLineMuted.greenModeText {
+  color: #3DDC84;
+  text-shadow: 0 0 10px rgba(61, 220, 132, 0.6);
+}
+
+/* ------------------------------------------------------------- */
+/* STAGE 1: EVENT TITLE "LARPER OR CODER" (CENTERED)             */
+/* ------------------------------------------------------------- */
+
+.eventLogoWrapper {
+  position: relative;
+  width: clamp(280px, 80vw, 760px);
   aspect-ratio: 840 / 328;
-  max-height: 70vh;
+  max-height: 55vh;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 300ms ease-out;
+  animation: fadeIn 250ms ease-out;
+}
+
+/* Disappearing animation */
+.eventLogoDisappearing {
+  animation: glitchDissolveOut 300ms ease-in forwards;
+}
+
+@keyframes glitchDissolveOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+  40% {
+    opacity: 0.7;
+    transform: translate(-3px, 1px) scale(0.98);
+    filter: drop-shadow(0 0 8px #F57546);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(8px);
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------- */
+/* STAGE 2: CENTERED "POWERED BY" + CELESTIUS LOGO TRANSFORMATION*/
+/* ------------------------------------------------------------- */
+
+.centerPresenterStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  animation: presenterEnter 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes presenterEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Sleek Cyber Orange Dematerialization (Smooth high-speed energy dispersion, no cracker blast) */
+.stageDisappearing {
+  animation: orangeQuantumDisperse 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes orangeQuantumDisperse {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 0 16px rgba(242, 107, 58, 0.5));
+  }
+  25% {
+    opacity: 0.92;
+    transform: scale(1.02) translateY(-2px);
+    filter: drop-shadow(0 0 32px rgba(245, 168, 28, 0.9)) blur(0.5px);
+  }
+  60% {
+    opacity: 0.5;
+    transform: scale(1.04) translateY(-6px);
+    filter: drop-shadow(0 0 40px rgba(242, 107, 58, 0.95)) blur(3px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.07) translateY(-12px);
+    filter: drop-shadow(0 0 48px rgba(242, 107, 58, 0)) blur(8px);
+  }
+}
+
+/* FREE-FLOATING "PRESENTED BY" TEXT (NO BADGE, NO BORDER, NO BOX) */
+.freePoweredBy {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(0.95rem, 2.6vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.38em;
+  color: #F9EDD2;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  text-shadow: 0 0 16px rgba(245, 117, 70, 0.6), 0 0 32px rgba(245, 117, 70, 0.3);
+  animation: coolTextAperture 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes coolTextAperture {
+  0% {
+    opacity: 0;
+    transform: scale(1.15) translateY(-4px);
+    letter-spacing: 0.58em;
+    filter: blur(8px) brightness(2.2);
+    text-shadow: 0 0 28px rgba(245, 117, 70, 0.9);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(2px) brightness(1.4);
+    text-shadow: 0 0 22px rgba(253, 201, 6, 0.8), 0 0 38px rgba(245, 117, 70, 0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    letter-spacing: 0.38em;
+    filter: none;
+    text-shadow: 0 0 16px rgba(245, 117, 70, 0.6), 0 0 32px rgba(245, 117, 70, 0.3);
+  }
+}
+
+/* LOGO SECTION: APPEARS WITH A DELAY AFTER "PRESENTED BY" */
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  animation: logoSectionEnter 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes logoSectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ------------------------------------------------------------- */
+/* CELESTIUS LOGO MORPH / TRANSFORMATION CONTAINER               */
+/* ------------------------------------------------------------- */
+
+.logoMorphWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* SCATTERING ORANGE PARTICLES CANVAS (FULL-SCREEN SPREAD) */
+.scatterCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* AMBIENT WARM PILL AURA */
+.pillAura {
+  position: absolute;
+  inset: -15px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(253, 201, 6, 0.4) 0%, rgba(245, 117, 70, 0.25) 50%, transparent 70%);
+  filter: blur(16px);
+  pointer-events: none;
+  opacity: 0.65;
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.morphActive .pillAura {
+  opacity: 0.95;
+  background: radial-gradient(ellipse at center, rgba(245, 117, 70, 0.55) 0%, rgba(253, 201, 6, 0.45) 50%, transparent 70%);
+  transform: scale(1.15);
+}
+
+.morphSettled .pillAura {
+  opacity: 0.85;
+  background: radial-gradient(ellipse at center, rgba(253, 201, 6, 0.65) 0%, rgba(245, 117, 70, 0.3) 50%, transparent 70%);
+  transform: scale(1.06);
+}
+
+/* Pill Container (Slightly Reduced Size for Sleek, Premium Proportions) */
+.pillContainer {
+  position: relative;
+  width: clamp(230px, 52vw, 360px);
+  aspect-ratio: 3.1 / 1;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: #FDC906;
+  box-shadow: 0 0 24px rgba(253, 201, 6, 0.32), 0 5px 18px rgba(0, 0, 0, 0.42);
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease;
+  z-index: 4;
+}
+
+/* SMOOTH LOGO ENTRANCE ANIMATION: Deliberate, smooth horizon reveal with warm ambient bloom */
+.pillAppearing {
+  animation: smoothPillReveal 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes smoothPillReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(8px);
+    box-shadow: 0 0 15px rgba(245, 117, 70, 0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.01) translateY(-1px);
+    box-shadow: 0 0 35px rgba(253, 201, 6, 0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    box-shadow: 0 0 28px rgba(253, 201, 6, 0.35), 0 6px 20px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* SYNCHRONIZED REFORGE BEAM (Vertical incandescent filament moving left-to-right) */
+.reforgeBeam {
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  width: 3px;
+  transform: translateX(-50%);
+  background: #FFFFFF;
+  box-shadow:
+    0 0 6px #FFFFFF,
+    0 0 14px #FAA012,
+    0 0 26px #F57546,
+    -4px 0 16px rgba(245, 117, 70, 0.7),
+    4px 0 16px rgba(253, 201, 6, 0.7);
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 2px;
+}
+
+.reforgeBeam::before,
+.reforgeBeam::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFFFFF 0%, #FAA012 60%, transparent 80%);
+}
+.reforgeBeam::before { top: 6%; }
+.reforgeBeam::after { bottom: 6%; }
+
+/* SETTLED STATE */
+.morphSettled .pillContainer {
+  box-shadow: 0 0 42px rgba(253, 201, 6, 0.65), 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: settlePulse 3s infinite ease-in-out;
+}
+
+@keyframes settlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.celestiusImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  will-change: clip-path;
 }
 
 /* Keyframes */
@@ -405,7 +751,7 @@
 @keyframes slideInFromTop {
   from {
     opacity: 0;
-    transform: translateY(-26px);
+    transform: translateY(-24px);
   }
   to {
     opacity: 1;
@@ -413,47 +759,31 @@
   }
 }
 
-@keyframes alertPulseOrange {
-  0%, 100% {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.95), 0 0 0 0 rgba(245, 117, 70, 0);
-  }
-  50% {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.95), 0 0 0 6px rgba(245, 117, 70, 0.45);
-  }
-}
-
-@keyframes alertPulseGreen {
-  0%, 100% {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.95), 0 0 0 0 rgba(61, 220, 132, 0);
-  }
-  50% {
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.95), 0 0 0 6px rgba(61, 220, 132, 0.55);
-  }
-}
-
-@keyframes alertShake {
-  0%, 100% { transform: translate(0, 0); }
-  2% { transform: translate(-2px, 1px); }
-  4% { transform: translate(2px, -1px); }
-  6% { transform: translate(-1px, 2px); }
-  8% { transform: translate(1px, -2px); }
-  10% { transform: translate(0, 0); }
-}
-
 /* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   .overlay {
     transition: none !important;
   }
-  .alertBannerWrapper {
+  .verificationCapsule,
+  .pillContainer,
+  .pillAppearing,
+  .settlePulse,
+  .stageDisappearing,
+  .freePoweredBy,
+  .logoSection {
     animation: none !important;
   }
-  .alertBanner {
-    animation: none !important;
-  }
-  .orangeWash,
-  .greenWash,
+  .reforgeBeam,
+  .scatterCanvas,
+  .energyWave,
+  .laserScanBeam,
   .completeFlash {
     display: none !important;
+  }
+  .eventLogoWrapper {
+    transition: none !important;
+  }
+  .celestiusImg {
+    transition: none !important;
   }
 }

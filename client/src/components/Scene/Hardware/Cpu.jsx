@@ -15,10 +15,10 @@ export default function Cpu({
   style = {},
 }) {
   const primary = hexToRgba(color, opacity);
-  const primaryFaint = hexToRgba(color, opacity * 0.75);
-  const cream = hexToRgba(THEME.cream, THEME.creamDetailOpacity);
-  const creamFaint = hexToRgba(THEME.cream, THEME.creamDetailOpacity * 0.7);
-  const accent = hexToRgba(color, Math.min(opacity + 0.08, 0.24));
+  const primaryFaint = hexToRgba(color, opacity * 0.8);
+  const cream = hexToRgba(THEME.cream, Math.min(THEME.creamDetailOpacity * 1.4, 0.7));
+  const creamFaint = hexToRgba(THEME.cream, Math.min(THEME.creamDetailOpacity, 0.5));
+  const accent = hexToRgba(color, Math.min(opacity + 0.15, 0.75));
 
   // 10 pins per side
   const pinPositions = [18, 24, 30, 36, 42, 48, 54, 60, 66, 72];
@@ -43,20 +43,20 @@ export default function Cpu({
         {/* Outgoing PCB Circuit Traces */}
         {pinPositions.map((p, idx) => (
           <g key={idx}>
-            <line x1={p} y1="0" x2={p} y2="10" stroke={creamFaint} strokeWidth="1" />
-            <line x1={p} y1="85" x2={p} y2="95" stroke={creamFaint} strokeWidth="1" />
-            <line x1="0" y1={p} x2="10" y2={p} stroke={creamFaint} strokeWidth="1" />
-            <line x1="85" y1={p} x2="95" y2={p} stroke={creamFaint} strokeWidth="1" />
+            <line x1={p} y1="0" x2={p} y2="10" stroke={creamFaint} strokeWidth="1.2" />
+            <line x1={p} y1="85" x2={p} y2="95" stroke={creamFaint} strokeWidth="1.2" />
+            <line x1="0" y1={p} x2="10" y2={p} stroke={creamFaint} strokeWidth="1.2" />
+            <line x1="85" y1={p} x2="95" y2={p} stroke={creamFaint} strokeWidth="1.2" />
           </g>
         ))}
 
         {/* 10 Pins per side (extending outward) */}
         {pinPositions.map((p, idx) => (
           <g key={`p-${idx}`}>
-            <rect x={p - 1.5} y="2" width="3" height="8" rx="0.5" fill="none" stroke={cream} strokeWidth="1" />
-            <rect x={p - 1.5} y="85" width="3" height="8" rx="0.5" fill="none" stroke={cream} strokeWidth="1" />
-            <rect x="2" y={p - 1.5} width="8" height="3" rx="0.5" fill="none" stroke={cream} strokeWidth="1" />
-            <rect x="85" y={p - 1.5} width="8" height="3" rx="0.5" fill="none" stroke={cream} strokeWidth="1" />
+            <rect x={p - 1.5} y="2" width="3" height="8" rx="0.5" fill="none" stroke={cream} strokeWidth="1.2" />
+            <rect x={p - 1.5} y="85" width="3" height="8" rx="0.5" fill="none" stroke={cream} strokeWidth="1.2" />
+            <rect x="2" y={p - 1.5} width="8" height="3" rx="0.5" fill="none" stroke={cream} strokeWidth="1.2" />
+            <rect x="85" y={p - 1.5} width="8" height="3" rx="0.5" fill="none" stroke={cream} strokeWidth="1.2" />
           </g>
         ))}
 
@@ -84,7 +84,7 @@ export default function Cpu({
           rx="5"
           fill="none"
           stroke={primary}
-          strokeWidth="1.8"
+          strokeWidth="2"
         />
         <rect
           x="24"
@@ -94,7 +94,7 @@ export default function Cpu({
           rx="3"
           fill="none"
           stroke={primaryFaint}
-          strokeWidth="1.2"
+          strokeWidth="1.4"
         />
 
         {/* Die Engraving Laser Text & Logo Details */}
@@ -103,7 +103,7 @@ export default function Cpu({
         <line x1="32" y1="52" x2="48" y2="52" stroke={cream} strokeWidth="1.4" strokeLinecap="round" />
 
         {/* Silicon Die Accent Dot */}
-        <circle cx="60" cy="58" r="2.5" fill="none" stroke={accent} strokeWidth="1.5" />
+        <circle cx="60" cy="58" r="2.5" fill="none" stroke={accent} strokeWidth="1.6" />
       </svg>
     </div>
   );

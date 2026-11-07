@@ -10,7 +10,7 @@ import Marquee from './Marquee.jsx';
 import { SectionScene } from '../Scene/index.js';
 import Laptop from '../Scene/Hardware/Laptop.jsx';
 
-export default function Hero({ onOpenRegister }) {
+export default function Hero({ onOpenRegister, animateIn }) {
   const scrollToEvents = (e) => {
     e.preventDefault();
     const target = document.getElementById('events');
@@ -20,7 +20,7 @@ export default function Hero({ onOpenRegister }) {
   };
 
   return (
-    <section id="hero" className={styles.heroSection}>
+    <section id="hero" className={`${styles.heroSection} ${animateIn ? styles.heroEntrance : ''}`}>
       <SectionScene section="hero" />
       <div className={`container ${styles.heroContent}`}>
         <div className={styles.heroGrid}>
@@ -115,14 +115,14 @@ export default function Hero({ onOpenRegister }) {
 
             {/* Centered Laptop in page flow on phone (< 768px) */}
             <div className={styles.phoneLaptopBlock}>
-              <Laptop width="100%" height={150} floatVariant="A" hasHalo={false} opacity={0.55} isHero={true} />
+              <Laptop width="100%" height={150} floatVariant="A" hasHalo={true} haloStrong={true} opacity={0.72} isHero={true} />
             </div>
           </div>
 
-          {/* Right Column: Complete Hardware Laptop without halo */}
+          {/* Right Column: Complete Hardware Laptop */}
           <div className={styles.rightCol}>
             <div className={styles.heroLaptopWrapper}>
-              <Laptop width={420} height={263} floatVariant="A" hasHalo={false} isHero={true} />
+              <Laptop width={440} height={275} floatVariant="A" hasHalo={true} haloStrong={true} opacity={0.74} isHero={true} />
             </div>
           </div>
         </div>

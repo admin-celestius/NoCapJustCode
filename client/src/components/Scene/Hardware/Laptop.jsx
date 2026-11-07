@@ -12,6 +12,7 @@ export default function Laptop({
   floatVariant = 'A',
   hasHalo = true,
   haloStrong = false,
+  isHero = false,
   className = '',
   style = {},
 }) {
@@ -32,12 +33,13 @@ export default function Laptop({
     return () => observer.disconnect();
   }, []);
 
-  const primary = hexToRgba(color, opacity);
-  const primaryFaint = hexToRgba(color, opacity * 0.75);
-  const cream = hexToRgba(THEME.cream, opacity > 0.3 ? 0.45 : THEME.creamDetailOpacity);
-  const creamFaint = hexToRgba(THEME.cream, opacity > 0.3 ? 0.35 : THEME.creamDetailOpacity * 0.7);
-  const creamDim = hexToRgba(THEME.cream, opacity > 0.3 ? 0.25 : THEME.creamDetailOpacity * 0.5);
-  const accent = hexToRgba(color, opacity > 0.3 ? 0.55 : Math.min(opacity + 0.08, 0.24));
+  const effectiveOpacity = isHero ? Math.max(opacity, 0.70) : opacity;
+  const primary = hexToRgba(color, effectiveOpacity);
+  const primaryFaint = hexToRgba(color, effectiveOpacity * 0.8);
+  const cream = hexToRgba(THEME.cream, effectiveOpacity > 0.3 ? 0.90 : THEME.creamDetailOpacity);
+  const creamFaint = hexToRgba(THEME.cream, effectiveOpacity > 0.3 ? 0.70 : THEME.creamDetailOpacity * 0.7);
+  const creamDim = hexToRgba(THEME.cream, effectiveOpacity > 0.3 ? 0.55 : THEME.creamDetailOpacity * 0.5);
+  const accent = hexToRgba(color, effectiveOpacity > 0.3 ? 0.90 : Math.min(effectiveOpacity + 0.15, 0.6));
 
   const svgWidth = width === 'auto' ? undefined : width;
   const svgHeight = height === 'auto' ? undefined : height;
@@ -45,7 +47,7 @@ export default function Laptop({
   return (
     <div
       ref={containerRef}
-      className={`${styles.hardwarePiece} ${styles['float' + floatVariant]} ${isVisible ? styles.screenActive : styles.screenPaused} ${className}`}
+      className={`${styles.hardwarePiece} ${styles['float' + floatVariant]} ${isVisible ? styles.screenActive : styles.screenPaused} ${isHero ? styles.heroLaptopPiece : ''} ${className}`}
       style={{ width, height, ...style }}
       aria-hidden="true"
     >
@@ -69,7 +71,7 @@ export default function Laptop({
           rx="10"
           fill="none"
           stroke={primary}
-          strokeWidth="2.2"
+          strokeWidth="2.4"
         />
         <rect
           x="40"
@@ -79,40 +81,40 @@ export default function Laptop({
           rx="5"
           fill="none"
           stroke={primaryFaint}
-          strokeWidth="1.4"
+          strokeWidth="1.5"
         />
         {/* Webcam */}
-        <circle cx="120" cy="15" r="1.5" fill="none" stroke={cream} strokeWidth="1" />
+        <circle cx="120" cy="15" r="1.5" fill="none" stroke={cream} strokeWidth="1.2" />
 
-        {/* Dynamic Cancelled Code Sequence (Section 3) */}
+        {/* Dynamic Cancelled Code Sequence */}
         <ScreenCode
           startX={48}
           startY={38}
           lineGap={14}
           orange={THEME.orange}
-          cream={cream}
-          faintCream={creamFaint}
+          cream="rgba(247, 237, 216, 0.92)"
+          faintCream="rgba(247, 237, 216, 0.72)"
         />
 
         {/* Hinge */}
-        <line x1="88" y1="116" x2="152" y2="116" stroke={primary} strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="88" y1="116" x2="152" y2="116" stroke={primary} strokeWidth="2.5" strokeLinecap="round" />
 
         {/* Keyboard Base Baseplate - Pure Line Art */}
         <path
           d="M 12 124 L 38 118 L 202 118 L 228 124 Q 234 126 226 134 L 210 142 Q 202 144 186 144 L 54 144 Q 38 144 30 142 L 14 134 Q 6 126 12 124 Z"
           fill="none"
           stroke={primary}
-          strokeWidth="2.2"
+          strokeWidth="2.4"
         />
 
         {/* Keyboard Keys Grid (subtle slit rows) */}
-        <line x1="48" y1="124" x2="192" y2="124" stroke={creamDim} strokeWidth="1.2" strokeDasharray="8 4" />
-        <line x1="44" y1="130" x2="196" y2="130" stroke={creamDim} strokeWidth="1.2" strokeDasharray="10 5" />
+        <line x1="48" y1="124" x2="192" y2="124" stroke={creamDim} strokeWidth="1.3" strokeDasharray="8 4" />
+        <line x1="44" y1="130" x2="196" y2="130" stroke={creamDim} strokeWidth="1.3" strokeDasharray="10 5" />
 
         {/* Trackpad */}
-        <rect x="96" y="133" width="48" height="9" rx="2" fill="none" stroke={creamFaint} strokeWidth="1" />
+        <rect x="96" y="133" width="48" height="9" rx="2" fill="none" stroke={creamFaint} strokeWidth="1.2" />
         {/* Status LED */}
-        <circle cx="120" cy="120" r="1.5" fill="none" stroke={accent} strokeWidth="1.2" />
+        <circle cx="120" cy="120" r="1.5" fill="none" stroke={accent} strokeWidth="1.5" />
       </svg>
     </div>
   );

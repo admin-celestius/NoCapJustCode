@@ -12,47 +12,7 @@ export default function Footer() {
   };
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      const auditConnectCards = () => {
-        const cards = document.querySelectorAll(`.${styles.connectCard}`);
-        cards.forEach((card, index) => {
-          const rect = card.getBoundingClientRect();
-          const cx = rect.left + rect.width / 2;
-          const cy = rect.top + rect.height / 2;
-          if (cx >= 0 && cx <= window.innerWidth && cy >= 0 && cy <= window.innerHeight) {
-            const hit = document.elementFromPoint(cx, cy);
-            if (!hit || (hit !== card && !card.contains(hit))) {
-              console.warn(
-                `[ConnectCardAudit] Card ${index} (${card.getAttribute('href')}) is blocked by:`,
-                hit
-              );
-            }
-          }
-        });
-
-        // Check footer divider gap
-        const lastCard = cards[cards.length - 1];
-        const bottomBar = document.querySelector(`.${styles.bottomBar}`);
-        if (lastCard && bottomBar) {
-          const cardBottom = lastCard.getBoundingClientRect().bottom;
-          const dividerTop = bottomBar.getBoundingClientRect().top;
-          const gap = Math.round(dividerTop - cardBottom);
-          const w = window.innerWidth;
-          console.info(`[FooterGapCheck] Width ${w}px: gap = ${gap}px (target: 32px)`);
-          if (gap > 48) {
-            console.error(`[FooterGapCheck] FAILURE: gap is ${gap}px (exceeds 48px max threshold!)`);
-          }
-        }
-      };
-
-      window.__auditConnectCards = auditConnectCards;
-      const timer = setTimeout(auditConnectCards, 800);
-      window.addEventListener('resize', auditConnectCards);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('resize', auditConnectCards);
-      };
-    }
+    // Component mounted
   }, []);
 
   return (
@@ -61,7 +21,7 @@ export default function Footer() {
       <div className={`container ${styles.footerContainer}`}>
         <div className={styles.footerGrid}>
           {/* Brand Column */}
-          <div className={styles.brandCol}>
+          <div className={`${styles.brandCol} scrollReveal`} style={{ transitionDelay: '0ms' }}>
             <div className={styles.brandHeading}>
               <picture>
                 <source srcSet={navbarLogoWebp} type="image/webp" />
@@ -83,7 +43,7 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div className={styles.footerCol}>
+          <div className={`${styles.footerCol} scrollReveal`} style={{ transitionDelay: '100ms' }}>
             <span className={styles.colTitle}>Navigation</span>
             <ul className={styles.colList}>
               <li>
@@ -102,7 +62,7 @@ export default function Footer() {
           </div>
 
           {/* Connect Column */}
-          <div id="connect" className={styles.connectCol}>
+          <div id="connect" className={`${styles.connectCol} scrollReveal`} style={{ transitionDelay: '180ms' }}>
             <span className={styles.colTitle}>Connect</span>
             <div className={styles.cardsList}>
               {/* Website Card */}
@@ -110,7 +70,8 @@ export default function Footer() {
                 href={eventData.connect.website}
                 target={LINK_TARGET}
                 rel="noopener noreferrer"
-                className={styles.connectCard}
+                className={`${styles.connectCard} scrollReveal`}
+                style={{ transitionDelay: '220ms' }}
                 aria-label="Visit the Celestius website (opens in a new tab)"
               >
                 <div className={styles.iconTile} aria-hidden="true">
@@ -162,7 +123,8 @@ export default function Footer() {
                 href={eventData.connect.instagram}
                 target={LINK_TARGET}
                 rel="noopener noreferrer"
-                className={styles.connectCard}
+                className={`${styles.connectCard} scrollReveal`}
+                style={{ transitionDelay: '300ms' }}
                 aria-label="Open Celestius on Instagram (opens in a new tab)"
               >
                 <div className={styles.iconTile} aria-hidden="true">
@@ -213,7 +175,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className={styles.bottomBar}>
+        <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '260ms' }}>
           <p className={styles.copyright}>
             &copy; {eventData.presentedBy}. All rights reserved.
           </p>

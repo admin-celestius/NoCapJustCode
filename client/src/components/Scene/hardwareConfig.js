@@ -6,12 +6,12 @@
  * Zero cropping. Zero overlap with text, buttons, cards or logos.
  */
 
-// Tunable Knobs
-export const LAPTOP_HALO = false;       // Hero laptop has zero halo/glow/gradient
-export const BIG_OPACITY = 0.16;        // 0.12 to 0.20 stroke opacity
-export const SMALL_OPACITY = 0.20;      // Screws, bolts, small chips
-export const CREAM_DETAIL_OPACITY = 0.12;// Subtle cream accents
-export const HALO_OPACITY = 0.04;       // Soft warm radial tint behind pieces
+// Tunable Knobs - Crisp, clearly visible hardware pieces without overwhelming foreground
+export const LAPTOP_HALO = true;        // Hero laptop has subtle ambient halo
+export const BIG_OPACITY = 0.38;        // Raised from 0.16 to 0.38 for clear, crisp lines
+export const SMALL_OPACITY = 0.42;      // Screws, bolts, small chips clearly visible
+export const CREAM_DETAIL_OPACITY = 0.30;// Subtle cream accents clearly legible
+export const HALO_OPACITY = 0.08;       // Soft warm radial tint behind pieces
 
 export const SPIN_SPEED = {
   fan: 12,                              // 10 to 16s linear fan spin
@@ -40,9 +40,9 @@ export const THEME = {
 
 export const OPACITY = {
   strokeStandard: BIG_OPACITY,
-  strokeHeroLaptop: 0.18,
-  accent: 0.22,
-  fillCream: 'rgba(247, 237, 216, 0.02)',
+  strokeHeroLaptop: 0.70,
+  accent: 0.45,
+  fillCream: 'rgba(247, 237, 216, 0.04)',
 };
 
 export const MOTION = {
@@ -171,23 +171,23 @@ export const SECTION_SCENES = {
   events: {
     desktop: {
       big: [
-        { type: 'Gpu', size: 160, pos: { top: '140px', left: '28px' }, rotate: 0, float: 'B', color: THEME.orange },
-        { type: 'Monitor', size: 140, pos: { top: '140px', right: '28px' }, rotate: 0, float: 'A', color: THEME.yellow },
+        { type: 'Gpu', size: 150, pos: { bottom: '32px', left: '28px' }, rotate: 0, float: 'B', color: THEME.orange },
+        { type: 'Monitor', size: 130, pos: { top: '32px', right: '32px' }, rotate: 0, float: 'A', color: THEME.yellow },
       ],
       small: [
-        { type: 'UsbDrive', size: 38, pos: { top: '28px', right: '40px' }, rotate: 0, color: THEME.orange },
-        { type: 'TinyChip', size: 32, pos: { bottom: '28px', left: '40px' }, rotate: 0, color: THEME.yellow },
-        { type: 'Screw', size: 30, pos: { top: '50%', right: '18px' }, rotate: 0, spin: 80, color: THEME.orange },
+        { type: 'UsbDrive', size: 36, pos: { top: '28px', left: '32px' }, rotate: 0, color: THEME.orange },
+        { type: 'TinyChip', size: 32, pos: { bottom: '28px', right: '40px' }, rotate: 0, color: THEME.yellow },
+        { type: 'Screw', size: 28, pos: { top: '50%', right: '18px' }, rotate: 0, spin: 80, color: THEME.orange },
       ],
     },
     tablet: {
       big: [
-        { type: 'Monitor', size: 130, pos: { top: '140px', left: '28px' }, rotate: 0, float: 'A', color: THEME.yellow },
+        { type: 'Monitor', size: 120, pos: { bottom: '24px', right: '24px' }, rotate: 0, float: 'A', color: THEME.yellow },
       ],
       small: [
-        { type: 'UsbDrive', size: 36, pos: { top: '28px', right: '36px' }, rotate: 0, color: THEME.orange },
-        { type: 'TinyChip', size: 32, pos: { top: '28px', left: '36px' }, rotate: 0, color: THEME.yellow },
-        { type: 'Screw', size: 30, pos: { bottom: '28px', right: '36px' }, rotate: 0, spin: 80, color: THEME.orange },
+        { type: 'UsbDrive', size: 34, pos: { top: '24px', right: '32px' }, rotate: 0, color: THEME.orange },
+        { type: 'TinyChip', size: 30, pos: { bottom: '24px', left: '28px' }, rotate: 0, color: THEME.yellow },
+        { type: 'Screw', size: 28, pos: { top: '50%', left: '18px' }, rotate: 0, spin: 80, color: THEME.orange },
       ],
     },
     phone: {

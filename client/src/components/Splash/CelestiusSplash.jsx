@@ -32,41 +32,6 @@ export default function CelestiusSplash({ onComplete }) {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  // Dev-only assertion: Assert Splash DOM contains only BrandTag and logo, zero stray text nodes
-  useEffect(() => {
-    if (import.meta.env.DEV && splashRef.current) {
-      const walker = document.createTreeWalker(
-        splashRef.current,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: (node) => {
-            const parent = node.parentElement;
-            if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('.sr-only') || parent.classList.contains('sr-only')) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            if (parent.closest('svg') || parent.tagName.toLowerCase() === 'text') {
-              return NodeFilter.FILTER_REJECT;
-            }
-            const text = node.textContent?.trim();
-            return text ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-          },
-        }
-      );
-
-      const strayTexts = [];
-      while (walker.nextNode()) {
-        strayTexts.push(walker.currentNode.textContent?.trim());
-      }
-
-      if (strayTexts.length > 0) {
-        console.error('[Splash Assertion Failed] Stray visible text nodes found in splash DOM:', strayTexts);
-      } else {
-        console.info('[Splash Assertion Passed] Splash DOM contains ONLY brand tag and logo.');
-      }
-    }
-  }, []);
-
   useEffect(() => {
     logTimelineEvent('splash start');
 
