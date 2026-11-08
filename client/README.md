@@ -59,8 +59,8 @@ All event details, timings, speaker profiles, dates, venues, contact links, and 
 📁 `client/src/data/event.js`
 
 - `date`: `"13 November 2026"`
-- `venue`: `"Pega Lab"`
-- `instructor`: `"Navadeep Anna, 3rd year senior"`
+- `venue`: `"Informed through message"`
+- `instructor`: `"Top coder of CIT, 3rd year senior"`
 - `connect`: Website and Instagram links
 - `SHOW_UNCONFIRMED`: Controls visibility of unconfirmed placeholder content
 

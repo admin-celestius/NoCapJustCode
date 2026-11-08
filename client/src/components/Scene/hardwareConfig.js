@@ -84,7 +84,7 @@ export const SECTION_SCENES = {
     },
     tablet: {
       big: [
-        { type: 'Laptop', size: 170, pos: { top: '160px', right: '32px' }, rotate: 0, float: 'A', color: THEME.orange },
+        { type: 'Keyboard', size: 170, pos: { top: '160px', right: '32px' }, rotate: 0, float: 'A', color: THEME.orange },
       ],
       small: [
         { type: 'Screw', size: 32, pos: { top: '32px', left: '32px' }, rotate: 0, spin: 85, color: THEME.orange },

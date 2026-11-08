@@ -167,7 +167,7 @@ export default function Navbar({ onOpenRegister, animateIn }) {
         <div className={styles.actions}>
           <div className={styles.registerBtnDesktop}>
             <Button size="sm" variant="primary" onClick={() => onOpenRegister()}>
-              Register as a pair
+              Register with Hommiee
             </Button>
           </div>
 
@@ -223,7 +223,7 @@ export default function Navbar({ onOpenRegister, animateIn }) {
               onOpenRegister();
             }}
           >
-            Register as a pair
+            Register with Hommiee
           </Button>
         </div>
       )}

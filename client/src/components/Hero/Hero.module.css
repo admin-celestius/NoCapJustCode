@@ -44,14 +44,22 @@
 .heroGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 2.5rem;
   align-items: center;
   width: 100%;
 }
 
 @media (min-width: 1024px) {
   .heroGrid {
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .heroGrid {
+    grid-template-columns: 1.05fr 0.95fr;
     gap: 3.5rem;
     align-items: center;
   }
@@ -201,8 +209,8 @@
   }
 
   .dateTimeVenueGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
     width: 100%;
   }
@@ -251,66 +259,19 @@
   }
 }
 
-/* Right Column: Complete Hardware Laptop */
+/* Right Column: The Thinker Statue & Quote */
 .rightCol {
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
+  width: 100%;
+  margin-top: 1.5rem;
 }
 
 @media (min-width: 1024px) {
   .rightCol {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-}
-
-.heroLaptopWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  filter: drop-shadow(0 0 28px rgba(242, 107, 58, 0.18));
-  animation: heroLaptopFloat 6s ease-in-out infinite alternate;
-}
-
-@keyframes heroLaptopFloat {
-  0% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(0.6deg);
-  }
-  100% {
-    transform: translateY(5px) rotate(-0.4deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heroLaptopWrapper {
-    animation: none !important;
-  }
-}
-
-/* Phone in-flow Laptop (under 768px) */
-.phoneLaptopBlock {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 40px;
-  margin-bottom: 48px;
-  width: clamp(250px, 72vw, 360px);
-  aspect-ratio: 240 / 150;
-  margin-inline: auto;
-  align-self: center;
-  filter: drop-shadow(0 0 20px rgba(242, 107, 58, 0.15));
-}
-
-@media (min-width: 768px) {
-  .phoneLaptopBlock {
-    display: none !important;
+    margin-top: 0;
   }
 }
 
