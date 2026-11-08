@@ -1,12 +1,14 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const mongoose = require('mongoose');
+const { ensureMongo } = require('./utils/ensureMongo');
 
 async function start() {
   for (const name of ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET']) {
     if (!process.env[name]?.trim()) throw new Error(`${name} is required`);
   }
   const app = require('./app');
+  await ensureMongo(process.env.MONGO_URI);
   await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 });
   const hello = await mongoose.connection.db.admin().command({ hello: 1 });
   if (!hello.setName && hello.msg !== 'isdbgrid') throw new Error('MongoDB must support transactions (replica set or mongos)');

@@ -1,8 +1,10 @@
 // client/src/components/Footer/Footer.jsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import styles from './Footer.module.css';
 import navbarLogoWebp from '../../assets/logo-navbar.webp';
 import navbarLogoPng from '../../assets/logo-navbar.png';
+import celestiusWebp from '../../assets/celestius-transparent.webp';
+import celestiusPng from '../../assets/celestius-transparent.png';
 import { eventData, LINK_TARGET } from '../../data/event.js';
 import { SectionScene } from '../Scene/index.js';
 
@@ -11,19 +13,19 @@ export default function Footer() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    // Component mounted
-  }, []);
-
   return (
     <footer className={styles.footer}>
+      {/* Top Cyber Laser Glow Rail */}
+      <div className={styles.footerLaserTop} aria-hidden="true" />
       <SectionScene section="footer" />
+
       <div className={`container ${styles.footerContainer}`}>
         <div className={styles.footerGrid}>
           {/* Brand Column */}
           <div className={`${styles.brandCol} scrollReveal`} style={{ transitionDelay: '0ms' }}>
+            {/* Logos: LOC Logo + Vertical Ruler + Celestius Logo (Enlarged) */}
             <div className={styles.brandHeading}>
-              <picture>
+              <picture className={styles.footerLogoWrapper}>
                 <source srcSet={navbarLogoWebp} type="image/webp" />
                 <img
                   src={navbarLogoPng}
@@ -34,156 +36,135 @@ export default function Footer() {
                   style={{ aspectRatio: '320 / 163' }}
                 />
               </picture>
+
+              <span className={styles.brandDivider} aria-hidden="true" />
+
+              <picture className={styles.celestiusLogoWrapper}>
+                <source srcSet={celestiusWebp} type="image/webp" />
+                <img
+                  src={celestiusPng}
+                  alt="Celestius"
+                  className={styles.footerCelestiusLogo}
+                  width={386}
+                  height={120}
+                  style={{ aspectRatio: '386 / 120' }}
+                />
+              </picture>
             </div>
-            <span className={styles.tagline}>{eventData.tagline}</span>
+
+            {/* Standalone Distinctive Tagline Text (Pure text, no badge) */}
+            <div className={styles.brandTaglineText}>
+              no larping. only coding.
+            </div>
+
             <p className={styles.brandBio}>
-              Presented by {eventData.presentedBy}.
-              Built for the ones who actually code. No larping, no glazing, just pure problem-solving.
+              Presented by {eventData.presentedBy}. Built for the ones who actually code. No larping, no glazing, just pure problem-solving.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links Column */}
           <div className={`${styles.footerCol} scrollReveal`} style={{ transitionDelay: '100ms' }}>
             <span className={styles.colTitle}>Fast Travel</span>
             <ul className={styles.colList}>
               <li>
-                <a href="#hero" className={styles.colLink}>Spawn Point</a>
+                <a href="#hero" className={styles.colLink}>
+                  <span className={styles.linkArrow} aria-hidden="true">▸</span>
+                  <span>Spawn Point</span>
+                </a>
               </li>
               <li>
-                <a href="#about" className={styles.colLink}>The Lore</a>
+                <a href="#about" className={styles.colLink}>
+                  <span className={styles.linkArrow} aria-hidden="true">▸</span>
+                  <span>The Lore</span>
+                </a>
               </li>
               <li>
-                <a href="#schedule" className={styles.colLink}>The Game Plan</a>
+                <a href="#schedule" className={styles.colLink}>
+                  <span className={styles.linkArrow} aria-hidden="true">▸</span>
+                  <span>The Game Plan</span>
+                </a>
               </li>
               <li>
-                <a href="#events" className={styles.colLink}>The Battleground</a>
+                <a href="#events" className={styles.colLink}>
+                  <span className={styles.linkArrow} aria-hidden="true">▸</span>
+                  <span>The Battleground</span>
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Connect Column */}
+          {/* Connect Column (Complete UI Redesign: Interactive Terminal Uplink, NO badges) */}
           <div id="connect" className={`${styles.connectCol} scrollReveal`} style={{ transitionDelay: '180ms' }}>
             <span className={styles.colTitle}>Slide Into Our DMs</span>
-            <div className={styles.cardsList}>
-              {/* Website Card */}
-              <a
-                href={eventData.connect.website}
-                target={LINK_TARGET}
-                rel="noopener noreferrer"
-                className={`${styles.connectCard} scrollReveal`}
-                style={{ transitionDelay: '220ms' }}
-                aria-label="Visit the Celestius website (opens in a new tab)"
-              >
-                <div className={styles.iconTile} aria-hidden="true">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={styles.iconSvg}
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  </svg>
-                </div>
-                <div className={styles.cardInfo}>
-                  <span className={styles.cardLabel}>The Official Lore</span>
-                  <span className={styles.cardDetail}>
-                    {eventData.connect.websiteLabel || 'celestius.in'}
-                  </span>
-                </div>
-                <div className={styles.actionPill} aria-hidden="true">
-                  <span className={styles.pillTextTouch}>TAP TO OPEN</span>
-                  <span className={styles.pillTextMouse}>CLICK TO OPEN</span>
-                  <span className={styles.pillTextNarrow}>OPEN</span>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={styles.pillArrow}
-                  >
-                    <line x1="7" y1="17" x2="17" y2="7" />
-                    <polyline points="7 7 17 7 17 17" />
-                  </svg>
-                </div>
-              </a>
 
-              {/* Instagram Card */}
-              <a
-                href={eventData.connect.instagram}
-                target={LINK_TARGET}
-                rel="noopener noreferrer"
-                className={`${styles.connectCard} scrollReveal`}
-                style={{ transitionDelay: '300ms' }}
-                aria-label="Open Celestius on Instagram (opens in a new tab)"
-              >
-                <div className={styles.iconTile} aria-hidden="true">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={styles.iconSvg}
+            <div className={styles.terminalConsole}>
+              {/* Terminal Title Bar */}
+              <div className={styles.terminalHeader}>
+                <div className={styles.terminalLights} aria-hidden="true">
+                  <span className={`${styles.lightDot} ${styles.lightRed}`} />
+                  <span className={`${styles.lightDot} ${styles.lightYellow}`} />
+                  <span className={`${styles.lightDot} ${styles.lightGreen}`} />
+                </div>
+                <span className={styles.terminalPath}>~/celestius/connect.sh</span>
+              </div>
+
+              {/* Terminal Commands Area */}
+              <div className={styles.terminalBody}>
+                {/* Direct Uplink 1: Website */}
+                <div className={styles.commandUnit}>
+                  <span className={styles.cliComment}># 01. the official lore</span>
+                  <a
+                    href={eventData.connect.website}
+                    target={LINK_TARGET}
+                    rel="noopener noreferrer"
+                    className={styles.cliRow}
+                    aria-label="Visit the Celestius website (opens in a new tab)"
                   >
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                  </svg>
+                    <span className={styles.cliPrompt}>$</span>
+                    <span className={styles.cliCmd}>open</span>
+                    <span className={styles.cliTarget}>celestius.in</span>
+                    <span className={styles.cliKey}>[ENTER ↵]</span>
+                  </a>
                 </div>
-                <div className={styles.cardInfo}>
-                  <span className={styles.cardLabel}>Peep the Chaos</span>
-                  <span className={styles.cardDetail}>
-                    {eventData.connect.instagramLabel || '@celestius_cit'}
-                  </span>
-                </div>
-                <div className={styles.actionPill} aria-hidden="true">
-                  <span className={styles.pillTextTouch}>TAP TO OPEN</span>
-                  <span className={styles.pillTextMouse}>CLICK TO OPEN</span>
-                  <span className={styles.pillTextNarrow}>OPEN</span>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={styles.pillArrow}
+
+                {/* Direct Uplink 2: Instagram */}
+                <div className={styles.commandUnit}>
+                  <span className={styles.cliComment}># 02. peep the chaos</span>
+                  <a
+                    href={eventData.connect.instagram}
+                    target={LINK_TARGET}
+                    rel="noopener noreferrer"
+                    className={styles.cliRow}
+                    aria-label="Open Celestius on Instagram (opens in a new tab)"
                   >
-                    <line x1="7" y1="17" x2="17" y2="7" />
-                    <polyline points="7 7 17 7 17 17" />
-                  </svg>
+                    <span className={styles.cliPrompt}>$</span>
+                    <span className={styles.cliCmd}>follow</span>
+                    <span className={styles.cliTarget}>@celestius_cit</span>
+                    <span className={styles.cliKey}>[ENTER ↵]</span>
+                  </a>
                 </div>
-              </a>
+
+                {/* Blinking Interactive Prompt Line */}
+                <div className={styles.terminalPromptLine}>
+                  <span className={styles.cliUserPrompt}>visitor@cit:~$</span>
+                  <span className={styles.terminalCursor} aria-hidden="true" />
+                  <span className={styles.cliHint}>click command to execute</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '260ms' }}>
+        {/* Bottom Bar: Copyright & Back to Top */}
+        <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '240ms' }}>
           <p className={styles.copyright}>
-            &copy; {eventData.presentedBy}. All rights reserved.
+            &copy; {new Date().getFullYear()} {eventData.presentedBy} &middot; Larper or Coder. All rights reserved.
             <span className={styles.copyrightAside}> // Made with claude, caffeine, and questionable life choices.</span>
           </p>
 
-          <button type="button" className={styles.backToTopBtn} onClick={scrollToTop}>
+          <button type="button" className={styles.backToTopBtn} onClick={scrollToTop} aria-label="Scroll back to top">
             <span>Teleport to Spawn</span>
-            <span>&uarr;</span>
+            <span className={styles.topArrow}>&uarr;</span>
           </button>
         </div>
       </div>

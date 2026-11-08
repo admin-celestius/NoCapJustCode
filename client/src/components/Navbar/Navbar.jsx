@@ -11,18 +11,40 @@ export default function Navbar({ onOpenRegister, animateIn }) {
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuActive, setMenuActive] = useState(false);
 
+  // Celestius logo reveal state: starts hidden, then reveals and loops continuously
+  const [celestiusRevealed, setCelestiusRevealed] = useState(false);
+
   const toggleRef = useRef(null);
   const menuRef = useRef(null);
   const firstLinkRef = useRef(null);
 
-  const activeSection = useScrollSpy(['hero', 'about', 'schedule', 'events', 'quote', 'connect']);
+  const activeSection = useScrollSpy(['hero', 'about', 'schedule', 'events']);
 
   const navItems = [
     { label: 'The Lore', href: '#about', id: 'about' },
     { label: 'The Game Plan', href: '#schedule', id: 'schedule' },
     { label: 'The Battleground', href: '#events', id: 'events' },
-    { label: 'Slide Into Our DMs', href: '#connect', id: 'connect' },
   ];
+
+  // Sequence: LOC logo displays immediately; divider & Celestius logo expand after short delay
+  // and then Celestius logo continuously glitches back and forth between new curved & old logos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCelestiusRevealed(true);
+      return;
+    }
+
+    if (!animateIn) {
+      setCelestiusRevealed(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCelestiusRevealed(true);
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [animateIn]);
 
   const closeMenu = useCallback(() => {
     setMobileMenuOpen(false);
@@ -128,8 +150,14 @@ export default function Navbar({ onOpenRegister, animateIn }) {
       )}
 
       <nav className={styles.navbar} aria-label="Main Navigation">
-        {/* Brand: Logo + Wordmark on mobile (<1024px) */}
-        <a href="#hero" className={styles.brand} onClick={(e) => handleNavClick(e, '#hero')}>
+        {/* Brand: LOC Logo (Stable) + Constantly Glitching Celestius Logos (New <-> Old) */}
+        <a
+          href="#hero"
+          className={styles.brand}
+          onClick={(e) => handleNavClick(e, '#hero')}
+          aria-label="Larper or Coder presented by Celestius"
+        >
+          {/* LOC Logo: Steady, never glitches */}
           <picture className={styles.brandLogoWrapper}>
             <source srcSet={navbarLogoWebp} type="image/webp" />
             <img
@@ -141,11 +169,50 @@ export default function Navbar({ onOpenRegister, animateIn }) {
               style={{ aspectRatio: '320 / 163' }}
             />
           </picture>
-          <span className={styles.brandNameMobile}>
-            <span className={styles.nameCream}>LARPER</span>{' '}
-            <span className={styles.nameOrange}>OR</span>{' '}
-            <span className={styles.nameCream}>CODER</span>
-          </span>
+
+          {/* Animated Vertical Divider */}
+          <span
+            className={`${styles.brandDivider} ${
+              celestiusRevealed ? styles.brandDividerVisible : styles.brandDividerHidden
+            }`}
+            aria-hidden="true"
+          />
+
+          {/* Celestius Glitch Arena: Constantly Glitches Alternatively Between New Curved & Old Logos */}
+          <div
+            className={`${styles.celestiusLogoWrapper} ${
+              celestiusRevealed ? styles.celestiusActiveLoop : styles.celestiusHidden
+            }`}
+          >
+            {/* Digital Scanline Noise Layer */}
+            <div className={styles.glitchNoiseOverlay} aria-hidden="true" />
+
+            {/* RGB Chromatic Aberration Slices (Cyan & Red) */}
+            <img
+              src="/Celestius_modified_curved.png"
+              alt=""
+              className={`${styles.celestiusImg} ${styles.glitchSliceCyan}`}
+              aria-hidden="true"
+            />
+            <img
+              src="/celestius_original.png"
+              alt=""
+              className={`${styles.celestiusImg} ${styles.glitchSliceRed}`}
+              aria-hidden="true"
+            />
+
+            {/* Alternating Base Logo Layers (Curved Modified <-> Original) */}
+            <img
+              src="/Celestius_modified_curved.png"
+              alt="Celestius Modified"
+              className={`${styles.celestiusImg} ${styles.celestiusNewLoop}`}
+            />
+            <img
+              src="/celestius_original.png"
+              alt="Celestius Original"
+              className={`${styles.celestiusImg} ${styles.celestiusOldLoop}`}
+            />
+          </div>
         </a>
 
         {/* Desktop Links (>= 1024px) */}
@@ -192,18 +259,35 @@ export default function Navbar({ onOpenRegister, animateIn }) {
         </div>
       </nav>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Drawer Menu (Mounts when toggled) */}
       {menuMounted && (
         <div
-          id="mobile-nav-menu"
           ref={menuRef}
+          id="mobile-nav-menu"
           className={`${styles.mobileMenu} ${menuActive ? styles.menuActive : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation Menu"
         >
-          <ul className={styles.mobileNavList}>
-            {navItems.map((item, index) => (
+          <div className={styles.mobileMenuHeader}>
+            <span className={styles.mobileMenuTitle}>NAVIGATION</span>
+            <button
+              type="button"
+              className={styles.mobileCloseBtn}
+              onClick={closeMenu}
+              aria-label="Close menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <ul className={styles.mobileNavLinks}>
+            {navItems.map((item, idx) => (
               <li key={item.id}>
                 <a
-                  ref={index === 0 ? firstLinkRef : null}
+                  ref={idx === 0 ? firstLinkRef : null}
                   href={item.href}
                   className={`${styles.mobileNavLink} ${activeSection === item.id ? styles.active : ''}`}
                   onClick={(e) => handleNavClick(e, item.href)}
@@ -214,17 +298,19 @@ export default function Navbar({ onOpenRegister, animateIn }) {
             ))}
           </ul>
 
-          <Button
-            size="md"
-            variant="primary"
-            fullWidth
-            onClick={() => {
-              closeMenu();
-              onOpenRegister();
-            }}
-          >
-            Register With Your Homie
-          </Button>
+          <div className={styles.mobileActions}>
+            <Button
+              size="lg"
+              variant="primary"
+              className={styles.mobileRegisterBtn}
+              onClick={() => {
+                closeMenu();
+                onOpenRegister();
+              }}
+            >
+              Register With Your Homie
+            </Button>
+          </div>
         </div>
       )}
     </header>

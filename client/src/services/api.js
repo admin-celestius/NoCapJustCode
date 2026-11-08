@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env?.VITE_API_URL || '').trim().replace(/\/+$/, '');
+const API_BASE_URL = (import.meta.env?.VITE_API_URL || 'http://localhost:5000').trim().replace(/\/+$/, '');
 
 async function request(path, payload, timeout = 20000) {
   if (!API_BASE_URL) throw new Error('Registration is not configured. Please contact the organisers.');

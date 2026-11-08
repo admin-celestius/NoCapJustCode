@@ -205,7 +205,6 @@ export const SECTION_SCENES = {
     desktop: {
       big: [
         { type: 'CaseFan', size: 85, pos: { top: '16px', right: '36px' }, rotate: 0, float: 'C', color: THEME.orange },
-        { type: 'Laptop', size: 140, pos: { top: '16px', left: '36px' }, rotate: 0, float: 'A', color: THEME.yellow },
       ],
       small: [
         { type: 'HexBolt', size: 34, pos: { bottom: '20px', left: '36px' }, rotate: 0, spin: 110, color: THEME.yellow },

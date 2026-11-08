@@ -5,8 +5,8 @@ import thinkerWebp from '../../assets/thinker.webp';
 import thinker450Webp from '../../assets/thinker-450w.webp';
 import { QUOTE, QUOTE_ATTRIBUTION } from '../../data/event.js';
 
-// Dense hatching reads strong, keep statue quiet at 0.6 opacity
-const STATUE_OPACITY = 0.6;
+// Dense hatching reads strong, keep statue quiet at 0.7 opacity
+const STATUE_OPACITY = 0.7;
 
 export default function Quote({ isHero = false, animateIn = true }) {
   const sectionRef = useRef(null);
@@ -18,6 +18,7 @@ export default function Quote({ isHero = false, animateIn = true }) {
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setIsRevealed(true);
       return;
     }
 
@@ -26,7 +27,13 @@ export default function Quote({ isHero = false, animateIn = true }) {
 
     if (isHero) {
       if (animateIn) {
-        setIsRevealed(true);
+        // Stagger by 420ms so heroGlide arrives first, then statue blooms and typing triggers in front of user
+        const timer = setTimeout(() => {
+          setIsRevealed(true);
+        }, 420);
+        return () => clearTimeout(timer);
+      } else {
+        setIsRevealed(false);
       }
       return;
     }
@@ -41,7 +48,6 @@ export default function Quote({ isHero = false, animateIn = true }) {
       return false;
     };
 
-    // If already in viewport on mount
     if (checkReveal()) return;
 
     let observer;
@@ -89,8 +95,11 @@ export default function Quote({ isHero = false, animateIn = true }) {
     >
       <div className={isHero ? styles.heroQuoteContainer : styles.quoteContainer}>
         <figure className={`${styles.quoteFigure} ${isHero ? styles.heroQuoteFigure : ''}`}>
-          {/* Statue Column */}
+          {/* Statue Column with Holographic Bloom & Idle Breath Animation */}
           <div className={`${styles.statueWrapper} ${isHero ? styles.heroStatueWrapper : ''}`}>
+            {/* Ambient Aura behind the statue */}
+            <div className={styles.statueAmbientAura} aria-hidden="true" />
+
             <img
               src={thinkerWebp}
               srcSet={`${thinker450Webp} 450w, ${thinkerWebp} 900w`}
@@ -104,8 +113,14 @@ export default function Quote({ isHero = false, animateIn = true }) {
             />
           </div>
 
-          {/* Quote Column */}
+          {/* Quote Column with Animated Laser Ruler */}
           <div className={`${styles.quoteContent} ${isHero ? styles.heroQuoteContent : ''}`}>
+            {/* Laser Vertical Ruler */}
+            <div className={styles.laserRuler} aria-hidden="true">
+              <span className={styles.laserRulerBeam} />
+              <span className={styles.laserRulerSpark} />
+            </div>
+
             {/* Mobile / Tablet orange divider */}
             <div className={styles.mobileDivider} aria-hidden="true" />
 
@@ -140,7 +155,7 @@ export default function Quote({ isHero = false, animateIn = true }) {
             </div>
 
             <figcaption className={styles.attribution}>
-              — {QUOTE_ATTRIBUTION}
+              <span className={styles.attributionDash}>—</span> {QUOTE_ATTRIBUTION}
             </figcaption>
           </div>
         </figure>
