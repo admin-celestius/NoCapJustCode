@@ -49,7 +49,7 @@ export default function RegisterModal({ isOpen, onClose }) {
 
   // Flow State: 'form' | 'awaiting' | 'success' | 'failure'
   const [flowState, setFlowState] = useState('form');
-  const [awaitingNote, setAwaitingNote] = useState('Awaiting for payment status...');
+  const [awaitingNote, setAwaitingNote] = useState('Waiting for payment status...');
   const [failureMessage, setFailureMessage] = useState(null);
   const [showResultText, setShowResultText] = useState(false);
 
@@ -355,9 +355,9 @@ export default function RegisterModal({ isOpen, onClose }) {
       <ParticleCanvas mode={backdropMode} isClosing={isClosing} />
 
       {/* ========================================================
-          STAGE 1: AWAITING PAYMENT (LOC Logo + Rotating Spinner)
+          STAGE 1: WAITING FOR PAYMENT (LOC Logo + Rotating Spinner)
           ======================================================== */}
-      {flowState === 'awaiting' ? (
+      {flowState === 'waiting' ? (
         <div className={`${styles.modal} ${styles.modalStageCentered} ${isClosing ? styles.modalClosing : ''}`} ref={modalRef}>
           <div className={styles.stageContentCentered}>
             <div className={styles.locSpinnerContainer}>
@@ -367,7 +367,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                 <img src={locLogoPng} alt="LARPER OR CODER" className={styles.locLogoSpinnerImg} />
               </picture>
             </div>
-            <h3 className={styles.awaitingTitle}>Awaiting for the payment status...</h3>
+            <h3 className={styles.awaitingTitle}>Waiting for the payment status...</h3>
             <p className={styles.awaitingSubtitle}>
               {awaitingNote || 'Complete your transaction in Checkout. Do not close or refresh this page.'}
             </p>
@@ -699,7 +699,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                                 id={`member-${index}-rollNo`}
                                 type="text"
                                 autoComplete="off"
-                                placeholder="e.g. 2026CSE001"
+                                placeholder="e.g. 210425205183"
                                 className={`${styles.inputField} ${memberErrors?.rollNo ? styles.hasError : ''}`}
                                 aria-invalid={!!memberErrors?.rollNo}
                                 onFocus={handleInputFocus}

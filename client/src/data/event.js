@@ -204,7 +204,7 @@ export const eventData = {
       stepper: [
         {
           time: "12:00 PM to 2:30 PM",
-          title: "DEADLOCK",
+          title: "Think, Lock In, Execute",
           subItems: ["Round 1: Tug of Aura", "Round 2: Who's the GOAT?"],
         },
         {

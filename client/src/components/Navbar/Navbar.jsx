@@ -23,7 +23,7 @@ export default function Navbar({ onOpenRegister, animateIn }) {
   const navItems = [
     { label: 'The Lore', href: '#about', id: 'about' },
     { label: 'The Game Plan', href: '#schedule', id: 'schedule' },
-    { label: 'The Battleground', href: '#events', id: 'events' },
+    { label: 'The Lineup', href: '#events', id: 'events' },
   ];
 
   // Sequence: LOC logo displays immediately; divider & Celestius logo expand after short delay
