@@ -41,7 +41,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 64px;
+    gap: 56px;
   }
 }
 
@@ -55,10 +55,6 @@
   position: relative;
   flex-shrink: 0;
   margin-top: -10px;
-  /* Transform & opacity animation */
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 1024px) {
@@ -67,16 +63,42 @@
   }
 }
 
-/* When interactive pre-state is applied but not yet triggered */
-.quoteSection[data-ready="true"]:not([data-revealed="true"]) .statueWrapper {
+/* Ambient warm radial glow behind the statue */
+.statueAmbientAura {
+  position: absolute;
+  width: 180px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 107, 58, 0.22) 0%, transparent 70%);
+  filter: blur(24px);
+  pointer-events: none;
+  z-index: 0;
   opacity: 0;
-  transform: translateY(12px);
+  transition: opacity 800ms ease;
+}
+
+.quoteSection[data-revealed="true"] .statueAmbientAura {
+  opacity: 1;
+  animation: auraPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes auraPulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+/* Hidden state before reveal */
+.quoteSection[data-ready="true"]:not([data-revealed="true"]) .statueImage {
+  opacity: 0;
+  transform: translateY(28px) scale(0.92);
 }
 
 .statueImage {
+  position: relative;
+  z-index: 1;
   display: block;
   mix-blend-mode: screen;
-  opacity: var(--statue-opacity, 0.6);
+  opacity: var(--statue-opacity, 0.7);
   pointer-events: none;
   user-select: none;
   width: clamp(200px, 62vw, 320px);
@@ -89,6 +111,42 @@
   mask-image: linear-gradient(to bottom, black 0%, black 78%, transparent 100%);
 }
 
+/* High-impact entrance animation when revealed */
+.quoteSection[data-revealed="true"] .statueImage {
+  animation: statueEntrance 900ms cubic-bezier(0.16, 1, 0.3, 1) both,
+             thinkerBreathe 6s ease-in-out infinite alternate 900ms;
+}
+
+@keyframes statueEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.9);
+    filter: drop-shadow(0 0 0px transparent) brightness(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+    filter: drop-shadow(0 0 34px rgba(242, 107, 58, 0.8)) brightness(1.25);
+  }
+  100% {
+    opacity: var(--statue-opacity, 0.7);
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 20px rgba(242, 107, 58, 0.35)) brightness(1);
+  }
+}
+
+/* Subtle, breathing idle float for the Thinker */
+@keyframes thinkerBreathe {
+  0% {
+    transform: translateY(0);
+    filter: drop-shadow(0 0 18px rgba(242, 107, 58, 0.28));
+  }
+  100% {
+    transform: translateY(-6px);
+    filter: drop-shadow(0 0 32px rgba(242, 107, 58, 0.5));
+  }
+}
+
 @media (min-width: 1024px) {
   .statueImage {
     width: auto;
@@ -97,7 +155,7 @@
 }
 
 /* ----------------------------------------------------
-   Quote Column
+   Quote Column & Laser Vertical Ruler
    ---------------------------------------------------- */
 .quoteContent {
   display: flex;
@@ -106,7 +164,7 @@
   text-align: center;
   position: relative;
   width: 100%;
-  max-width: 30ch;
+  max-width: 32ch;
 }
 
 @media (min-width: 1024px) {
@@ -114,9 +172,69 @@
     align-items: flex-start;
     text-align: left;
     max-width: 34ch;
-    /* 2px orange vertical rule with 24px gap */
-    border-left: 2px solid var(--accent-orange, #F26B3A);
-    padding-left: 24px;
+    padding-left: 26px;
+  }
+}
+
+/* Laser Vertical Ruler */
+.laserRuler {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .laserRuler {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    pointer-events: none;
+  }
+
+  .laserRulerBeam {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #FFA012 0%, #F26B3A 50%, rgba(242, 107, 58, 0.3) 100%);
+    box-shadow: 0 0 10px rgba(242, 107, 58, 0.6);
+    transform-origin: top;
+    transform: scaleY(0);
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .quoteSection[data-revealed="true"] .laserRulerBeam {
+    transform: scaleY(1);
+  }
+
+  .laserRulerSpark {
+    position: absolute;
+    top: 0;
+    left: -2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #FFF;
+    box-shadow: 0 0 8px #FFA012, 0 0 16px #F26B3A;
+    opacity: 0;
+  }
+
+  .quoteSection[data-revealed="true"] .laserRulerSpark {
+    animation: sparkTravel 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes sparkTravel {
+    0% {
+      top: 0;
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      top: 100%;
+      opacity: 0;
+    }
   }
 }
 
@@ -126,9 +244,16 @@
   height: 2px;
   background-color: var(--accent-orange, #F26B3A);
   margin-bottom: 24px;
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.6);
+  transform: scaleX(0);
+  transition: transform 500ms ease;
 }
 
-@media (min-width: 1024px) {
+.quoteSection[data-revealed="true"] .mobileDivider {
+  transform: scaleX(1);
+}
+
+@media (min-width: 640px) {
   .mobileDivider {
     display: none;
   }
@@ -148,7 +273,7 @@
 }
 
 /* ----------------------------------------------------
-   CRT Quote Display & Ghost Sizing (No Layout Shift)
+   CRT Quote Display & Typing Animations
    ---------------------------------------------------- */
 .quoteDisplay {
   position: relative;
@@ -157,18 +282,18 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  line-height: 1.5;
-  font-size: clamp(0.9rem, 3.6vw, 1.1rem);
+  line-height: 1.55;
+  font-size: clamp(0.92rem, 3.6vw, 1.15rem);
   color: var(--accent-orange, #F26B3A);
 
   /* CRT Glow */
-  text-shadow: 0 0 6px rgba(242, 107, 58, 0.35);
+  text-shadow: 0 0 8px rgba(242, 107, 58, 0.45);
   animation: crtFlicker 6s infinite ease-in-out;
 }
 
 @media (min-width: 1024px) {
   .quoteDisplay {
-    font-size: clamp(0.95rem, 1.35vw, 1.3rem);
+    font-size: clamp(0.98rem, 1.35vw, 1.3rem);
   }
 }
 
@@ -189,7 +314,7 @@
   mix-blend-mode: overlay;
 }
 
-/* Subtle CRT Flicker (0.96 to 1) */
+/* CRT Flicker */
 @keyframes crtFlicker {
   0%, 100% { opacity: 1; }
   35% { opacity: 0.98; }
@@ -228,12 +353,13 @@
 .larpCream {
   color: var(--cream, #F7EDD8);
   font-weight: 700;
+  text-shadow: 0 0 10px rgba(247, 237, 216, 0.4);
 }
 
 /* ----------------------------------------------------
    Typing Animations with steps()
-   Line 1: 16 chars * 40ms = 640ms
-   Line 2: 16 chars * 40ms = 640ms, delay 640ms
+   Line 1: 16 chars * 42ms = 672ms (starts at 200ms)
+   Line 2: 16 chars * 42ms = 672ms (starts at 872ms)
    ---------------------------------------------------- */
 .quoteSection[data-ready="true"]:not([data-revealed="true"]) .line1,
 .quoteSection[data-ready="true"]:not([data-revealed="true"]) .line2 {
@@ -241,11 +367,11 @@
 }
 
 .quoteSection[data-revealed="true"] .line1 {
-  animation: typeLine1 640ms steps(16, end) forwards;
+  animation: typeLine1 672ms steps(16, end) 200ms both;
 }
 
 .quoteSection[data-revealed="true"] .line2 {
-  animation: typeLine2 640ms steps(16, end) 640ms forwards;
+  animation: typeLine2 672ms steps(16, end) 872ms both;
 }
 
 @keyframes typeLine1 {
@@ -258,20 +384,16 @@
   to { width: 100%; }
 }
 
-/* ----------------------------------------------------
-   Orange Block Cursor
-   Line 1 cursor blinks from 0ms to 640ms, then hides.
-   Line 2 cursor activates at 640ms, blinks, and disappears
-   1s after typing ends (at 2280ms).
-   ---------------------------------------------------- */
+/* Orange Block Cursor */
 .cursor1,
 .cursor2 {
   display: inline-block;
   width: 0.6em;
   height: 1.15em;
   background-color: var(--accent-orange, #F26B3A);
+  box-shadow: 0 0 8px #F26B3A;
   vertical-align: -0.15em;
-  margin-left: 2px;
+  margin-left: 3px;
 }
 
 .cursor1 {
@@ -283,11 +405,11 @@
 }
 
 .quoteSection[data-revealed="true"] .cursor1 {
-  animation: cursorBlink 600ms step-end infinite, cursor1Hide 640ms step-end forwards;
+  animation: cursorBlink 600ms step-end infinite, cursor1Hide 872ms step-end forwards;
 }
 
 .quoteSection[data-revealed="true"] .cursor2 {
-  animation: cursor2Show 640ms step-end forwards, cursorBlink 600ms step-end 640ms infinite, cursor2Hide 2280ms step-end forwards;
+  animation: cursor2Show 872ms step-end forwards, cursorBlink 600ms step-end 872ms infinite, cursor2Hide 2600ms step-end forwards;
 }
 
 @keyframes cursorBlink {
@@ -311,9 +433,7 @@
 }
 
 /* ----------------------------------------------------
-   Attribution Style
-   JetBrains Mono, uppercase, 12px, letter-spacing 0.12em, muted cream
-   Fades in after typing completes (1320ms)
+   Attribution Style: Smooth Slide & Tracking Expansion
    ---------------------------------------------------- */
 .attribution {
   margin-top: 18px;
@@ -324,7 +444,11 @@
   color: var(--text-muted, rgba(247, 237, 216, 0.6));
   line-height: 1.4;
   opacity: 1;
-  transition: opacity 400ms ease;
+}
+
+.attributionDash {
+  color: var(--accent-orange, #F26B3A);
+  font-weight: 700;
 }
 
 .quoteSection[data-ready="true"]:not([data-revealed="true"]) .attribution {
@@ -332,49 +456,26 @@
 }
 
 .quoteSection[data-revealed="true"] .attribution {
-  animation: attributionFadeIn 400ms ease 1320ms forwards;
-  opacity: 0;
+  animation: attributionSlideUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 1600ms both;
 }
 
-@keyframes attributionFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes attributionSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+    letter-spacing: 0.04em;
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0.12em;
+    filter: none;
+  }
 }
 
 /* ----------------------------------------------------
-   prefers-reduced-motion: show everything immediately
-   ---------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .statueWrapper {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-  .quoteDisplay {
-    animation: none !important;
-    text-shadow: none !important;
-  }
-  .quoteDisplay::after {
-    display: none !important;
-  }
-  .line1, .line2 {
-    width: 100% !important;
-    animation: none !important;
-  }
-  .cursor1, .cursor2 {
-    display: none !important;
-    animation: none !important;
-  }
-  .attribution {
-    opacity: 1 !important;
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-
-/* ----------------------------------------------------
-   Hero Variant (Placed in Hero section in place of Laptop)
+   Hero Variant
    ---------------------------------------------------- */
 .heroQuote {
   background-color: transparent !important;
@@ -425,7 +526,6 @@
   height: auto !important;
   aspect-ratio: 900 / 1420;
   object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(242, 107, 58, 0.22));
 }
 
 @media (min-width: 1024px) {
@@ -443,11 +543,40 @@
   .heroQuoteContent {
     align-items: flex-start !important;
     text-align: left !important;
-    border-left: 2px solid var(--accent-orange, #F26B3A) !important;
-    padding-left: 18px !important;
+    padding-left: 20px !important;
   }
+}
 
-  .heroQuote .mobileDivider {
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .statueImage,
+  .quoteSection[data-revealed="true"] .statueImage {
+    animation: none !important;
+    opacity: 0.8 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .statueAmbientAura {
     display: none !important;
+  }
+  .laserRulerBeam {
+    transform: scaleY(1) !important;
+    transition: none !important;
+  }
+  .laserRulerSpark {
+    display: none !important;
+  }
+  .line1, .line2 {
+    width: 100% !important;
+    animation: none !important;
+  }
+  .cursor1, .cursor2 {
+    display: none !important;
+  }
+  .attribution {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }

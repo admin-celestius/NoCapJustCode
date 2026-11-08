@@ -22,10 +22,10 @@
   width: 100%;
   max-width: 960px;
   height: 60px;
-  background-color: rgba(11, 11, 14, 0.62);
+  background-color: rgba(11, 11, 14, 0.88);
   backdrop-filter: blur(24px) saturate(190%);
   -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(247, 237, 216, 0.12);
+  border: 1px solid rgba(247, 237, 216, 0.14);
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
@@ -64,6 +64,7 @@
   flex-shrink: 0;
   border: none;
   outline: none;
+  gap: 0;
 }
 
 .brandLogoWrapper {
@@ -74,23 +75,373 @@
   box-shadow: none;
   background: transparent;
   flex-shrink: 0;
-  width: 63px;
-  height: 32px;
+  width: 58px;
+  height: 30px;
 }
 
 .brandLogo {
-  height: 32px;
-  width: 63px;
+  height: 30px;
+  width: 58px;
   aspect-ratio: 320 / 163;
   object-fit: contain;
   border: none;
   outline: none;
   box-shadow: none;
   display: block;
+  transition: transform var(--transition-fast);
 }
 
-.brandNameMobile {
-  display: none;
+.brandDivider {
+  display: block;
+  width: 1px;
+  height: 18px;
+  background: rgba(247, 237, 216, 0.28);
+  margin: 0 10px;
+  flex-shrink: 0;
+  border-radius: 1px;
+  transform-origin: center;
+  transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
+              margin 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brandDividerHidden {
+  opacity: 0;
+  transform: scaleY(0);
+  margin: 0;
+  width: 0;
+}
+
+.brandDividerVisible {
+  opacity: 1;
+  transform: scaleY(1);
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.5);
+}
+
+/* Celestius Logo Container & Glitch Morph Sequence */
+.celestiusLogoWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  flex-shrink: 0;
+  height: 22px;
+  width: 76px;
+  border-radius: 9999px; /* Smooth curved pill edges */
+  overflow: hidden;
+  transform-origin: left center;
+  transition: width 450ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 350ms ease,
+              transform 350ms ease;
+}
+
+.celestiusHidden {
+  width: 0 !important;
+  opacity: 0;
+  transform: scale(0.7) translateX(-6px);
+  pointer-events: none;
+}
+
+.celestiusActiveLoop {
+  width: 76px;
+  opacity: 1;
+  border-radius: 9999px;
+  overflow: hidden;
+  animation: celestiusWrapperJitter 5.6s infinite;
+}
+
+@keyframes celestiusWrapperJitter {
+  0%, 43.9% { transform: translate(0, 0); }
+  44% { transform: translate(-2px, 1px); }
+  45.5% { transform: translate(2px, -1px); }
+  47% { transform: translate(-1px, 2px); }
+  48.5% { transform: translate(1px, -1px); }
+  50%, 93.9% { transform: translate(0, 0); }
+  94% { transform: translate(2px, 1px); }
+  95.5% { transform: translate(-2px, -1px); }
+  97% { transform: translate(1px, 2px); }
+  98.5% { transform: translate(-1px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.celestiusImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 9999px; /* Curving the edges */
+  border: none;
+  outline: none;
+  pointer-events: none;
+  user-select: none;
+  will-change: clip-path, opacity, filter, transform;
+}
+
+/* Alternating New Curved Logo Layer */
+.celestiusNewLoop {
+  opacity: 1;
+  animation: loopNewLogo 5.6s infinite;
+}
+
+@keyframes loopNewLogo {
+  0%, 43.9% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(242, 107, 58, 0.35));
+  }
+  44% {
+    opacity: 0.8;
+    transform: translate(-1px, 1px) scale(1.02);
+    filter: brightness(1.4) drop-shadow(0 0 12px rgba(242, 107, 58, 0.7));
+  }
+  45.5% {
+    opacity: 0.3;
+    transform: translate(2px, -1px);
+  }
+  47% {
+    opacity: 0.9;
+    transform: translate(-2px, 0);
+  }
+  47.5%, 93.9% {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+  94% {
+    opacity: 0.2;
+    transform: translate(2px, 1px);
+  }
+  95.5% {
+    opacity: 0.7;
+    transform: translate(-1px, -1px);
+  }
+  97% {
+    opacity: 0.4;
+  }
+  98% {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: brightness(1.3) drop-shadow(0 0 14px rgba(242, 107, 58, 0.8));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(242, 107, 58, 0.35));
+  }
+}
+
+/* Alternating Old Original Logo Layer */
+.celestiusOldLoop {
+  opacity: 0;
+  animation: loopOldLogo 5.6s infinite;
+}
+
+@keyframes loopOldLogo {
+  0%, 43.9% {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+  44% {
+    opacity: 0.2;
+    transform: translate(2px, -1px);
+  }
+  45.5% {
+    opacity: 0.6;
+    transform: translate(-2px, 1px);
+  }
+  47% {
+    opacity: 0.4;
+  }
+  47.5% {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: brightness(1.3) drop-shadow(0 0 16px rgba(255, 189, 46, 0.8));
+  }
+  50%, 93.9% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(255, 189, 46, 0.35));
+  }
+  94% {
+    opacity: 0.8;
+    transform: translate(-2px, 1px) scale(1.02);
+    filter: brightness(1.4) drop-shadow(0 0 12px rgba(255, 189, 46, 0.7));
+  }
+  95.5% {
+    opacity: 0.3;
+    transform: translate(2px, -1px);
+  }
+  97% {
+    opacity: 0.9;
+    transform: translate(-1px, 2px);
+  }
+  97.5%, 100% {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+}
+
+/* Continuous Cyan Glitch Aberration Layer */
+.glitchSliceCyan {
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: drop-shadow(-3px 0 0 #00ffff) brightness(1.6) contrast(1.4);
+  animation: loopGlitchCyan 5.6s infinite;
+}
+
+@keyframes loopGlitchCyan {
+  0%, 43.9% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+  44% {
+    opacity: 0.9;
+    clip-path: polygon(0 15%, 100% 15%, 100% 38%, 0 38%);
+    transform: translate(-4px, 1px) skewX(-6deg);
+  }
+  46% {
+    opacity: 0.7;
+    clip-path: polygon(0 55%, 100% 55%, 100% 80%, 0 80%);
+    transform: translate(3px, -2px) skewX(5deg);
+  }
+  48% {
+    opacity: 0.85;
+    clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%);
+    transform: translate(-3px, 1px);
+  }
+  50%, 93.9% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+  94% {
+    opacity: 0.9;
+    clip-path: polygon(0 40%, 100% 40%, 100% 65%, 0 65%);
+    transform: translate(3px, -1px) skewX(4deg);
+  }
+  96% {
+    opacity: 0.7;
+    clip-path: polygon(0 75%, 100% 75%, 100% 95%, 0 95%);
+    transform: translate(-3px, 2px) skewX(-5deg);
+  }
+  98% {
+    opacity: 0.85;
+    clip-path: polygon(0 20%, 100% 20%, 100% 45%, 0 45%);
+    transform: translate(2px, -1px);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+/* Continuous Red/Orange Glitch Aberration Layer */
+.glitchSliceRed {
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: drop-shadow(3px 0 0 #ff3b00) brightness(1.5) contrast(1.3);
+  animation: loopGlitchRed 5.6s infinite;
+}
+
+@keyframes loopGlitchRed {
+  0%, 43.9% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+  44% {
+    opacity: 0.9;
+    clip-path: polygon(0 45%, 100% 45%, 100% 70%, 0 70%);
+    transform: translate(4px, -1px) skewX(6deg);
+  }
+  46% {
+    opacity: 0.7;
+    clip-path: polygon(0 10%, 100% 10%, 100% 32%, 0 32%);
+    transform: translate(-3px, 2px) skewX(-5deg);
+  }
+  48% {
+    opacity: 0.85;
+    clip-path: polygon(0 70%, 100% 70%, 100% 92%, 0 92%);
+    transform: translate(3px, -1px);
+  }
+  50%, 93.9% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+  94% {
+    opacity: 0.9;
+    clip-path: polygon(0 20%, 100% 20%, 100% 42%, 0 42%);
+    transform: translate(-3px, 1px) skewX(-4deg);
+  }
+  96% {
+    opacity: 0.7;
+    clip-path: polygon(0 60%, 100% 60%, 100% 85%, 0 85%);
+    transform: translate(3px, -2px) skewX(6deg);
+  }
+  98% {
+    opacity: 0.85;
+    clip-path: polygon(0 5%, 100% 5%, 100% 25%, 0 25%);
+    transform: translate(-2px, 1px);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+/* Digital Scanline Noise Overlay */
+.glitchNoiseOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 255, 255, 0.3) 2px,
+    rgba(0, 255, 255, 0.3) 3px
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 8;
+  animation: loopNoiseScanline 5.6s infinite;
+}
+
+@keyframes loopNoiseScanline {
+  0%, 43.9% {
+    opacity: 0;
+  }
+  44%, 49.9% {
+    opacity: 0.75;
+    transform: translateY(-2px);
+  }
+  50%, 93.9% {
+    opacity: 0;
+  }
+  94%, 99.9% {
+    opacity: 0.75;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.brand:hover .brandLogo {
+  transform: scale(1.03);
+}
+
+.brand:hover .celestiusLogoWrapper {
+  transform: scale(1.03);
+}
+
+.brand:hover .celestiusImgModified {
+  filter: drop-shadow(0 0 12px rgba(242, 107, 58, 0.55));
 }
 
 .navLinks {
@@ -215,45 +566,40 @@
 /* Responsive: under 1024px */
 @media (max-width: 1023px) {
   .navbar {
-    height: 64px;
-    padding: 0 0.5rem 0 0.85rem;
+    height: 58px;
+    padding: 0 0.6rem 0 0.85rem;
   }
 
   .brand {
-    gap: 10px;
+    gap: 0;
   }
 
   .brandLogoWrapper {
-    width: 60px;
+    width: 52px;
+    height: 27px;
     flex-shrink: 0;
   }
 
   .brandLogo {
-    width: 60px;
-    height: auto;
-    max-width: 60px;
-    max-height: 32px;
+    width: 52px;
+    height: 27px;
+    max-width: 52px;
+    max-height: 27px;
   }
 
-  .brandNameMobile {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    font-family: var(--font-display, 'Space Grotesk', sans-serif);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-size: clamp(14px, 4.2vw, 17px);
-    line-height: 1;
-    white-space: nowrap;
+  .brandDivider {
+    height: 15px;
+    margin: 0 8px;
   }
 
-  .nameCream {
-    color: var(--text-primary);
+  .celestiusLogoWrapper {
+    height: 19px;
+    width: 64px;
+    flex-shrink: 0;
   }
 
-  .nameOrange {
-    color: var(--accent-orange);
+  .celestiusActiveLoop {
+    width: 64px;
   }
 
   .navLinks {
@@ -273,6 +619,26 @@
   .navbar {
     animation: none !important;
     transform: none !important;
+  }
+
+  .celestiusActiveLoop,
+  .celestiusNewLoop,
+  .celestiusOldLoop,
+  .glitchSliceCyan,
+  .glitchSliceRed,
+  .glitchNoiseOverlay {
+    animation: none !important;
+  }
+
+  .celestiusNewLoop {
+    opacity: 1 !important;
+  }
+
+  .celestiusOldLoop,
+  .glitchSliceCyan,
+  .glitchSliceRed,
+  .glitchNoiseOverlay {
+    display: none !important;
   }
 
   .menuBackdrop,

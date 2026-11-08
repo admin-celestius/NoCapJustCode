@@ -29,16 +29,32 @@ export default function About() {
 
           {/* Right Neutral Stat Tiles */}
           <div className={styles.statsGrid}>
-            {eventData.stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className={`${styles.statCard} scrollReveal`}
-                style={{ transitionDelay: `${280 + idx * 110}ms` }}
-              >
-                <div className={styles.statValue}>{stat.value}</div>
-                <div className={styles.statLabel}>{stat.label}</div>
-              </div>
-            ))}
+            {eventData.stats.map((stat, idx) => {
+              const isBrand = idx === 2 || stat.label?.toLowerCase().includes('presented');
+              return (
+                <div
+                  key={idx}
+                  className={`${styles.statCard} ${isBrand ? styles.statCardBrand : ''} scrollReveal`}
+                  style={{ transitionDelay: `${280 + idx * 110}ms` }}
+                >
+                  <span className={styles.cardAccentLine} aria-hidden="true" />
+                  {isBrand ? (
+                    <div className={styles.brandBlock}>
+                      <span className={styles.brandEyebrow}>
+                        <span className={styles.brandBeaconDot} aria-hidden="true" />
+                        Presented by
+                      </span>
+                      <div className={styles.brandValue}>{stat.value}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.statValue}>{stat.value}</div>
+                      <div className={styles.statLabel}>{stat.label}</div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
