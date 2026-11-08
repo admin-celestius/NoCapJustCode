@@ -1,6 +1,6 @@
 // client/src/components/Register/RegisterModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
@@ -8,19 +8,71 @@ import { createOrder, verifyPayment } from '../../services/api.js';
 import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
 import { PRICING } from '../../data/event.js';
 import Button from '../ui/Button.jsx';
+import ColorOSDropdown from './ColorOSDropdown.jsx';
+import ParticleCanvas from './ParticleCanvas.jsx';
+import BouncingBallsCanvas from './BouncingBallsCanvas.jsx';
+import locLogoWebp from '../../assets/logo-transparent.webp';
+import locLogoPng from '../../assets/logo-transparent.png';
+
+const YEAR_OPTIONS = [
+  { value: '1', label: '1st Year · Fresh Spawn' },
+  { value: '2', label: '2nd Year · Side Quests' },
+  { value: '3', label: '3rd Year · Main Story' },
+  { value: '4', label: '4th Year · Final Boss' },
+];
+
+const DEPARTMENT_OPTIONS = [
+  { value: 'CSE', label: 'CSE · Computer Science' },
+  { value: 'IT', label: 'IT · Information Technology' },
+  { value: 'AI & DS', label: 'AI & DS · Artificial Intelligence' },
+  { value: 'AI & ML', label: 'AI & ML · Machine Learning' },
+  { value: 'CSBS', label: 'CSBS · Business Systems' },
+  { value: 'Cyber Security', label: 'Cyber Security' },
+  { value: 'ECE', label: 'ECE · Electronics & Comm' },
+  { value: 'EEE', label: 'EEE · Electrical & Electronics' },
+  { value: 'Mechanical', label: 'Mechanical Engineering' },
+  { value: 'Civil', label: 'Civil Engineering' },
+  { value: 'Mechatronics', label: 'Mechatronics' },
+  { value: 'ACT', label: 'ACT' },
+  { value: 'VLSI', label: 'VLSI' },
+  { value: 'BME', label: 'BME' },
+];
 
 export default function RegisterModal({ isOpen, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
   const [registrationResult, setRegistrationResult] = useState(null);
   const [pendingPayment, setPendingPayment] = useState(readPendingPayment);
+  const [isClosing, setIsClosing] = useState(false);
   const checkoutRef = useRef(null);
   const submittingRef = useRef(false);
+
+  // Flow State: 'form' | 'awaiting' | 'success' | 'failure'
+  const [flowState, setFlowState] = useState('form');
+  const [awaitingNote, setAwaitingNote] = useState('Awaiting for payment status...');
+  const [failureMessage, setFailureMessage] = useState(null);
+  const [showResultText, setShowResultText] = useState(false);
+
+  // ColorOS Toast Notification State
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
+
+  // Collapse / Expand states for Player 1 & Player 2: default both expanded
+  const [collapsed, setCollapsed] = useState({ 0: false, 1: false });
 
   const modalRef = useRef(null);
   const errorRef = useRef(null);
   const closeBtnRef = useRef(null);
   const triggerRef = useRef(null);
+
+  const showToast = (message) => {
+    if (!message) return;
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ id: Date.now(), message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4500);
+  };
 
   const {
     register,
@@ -28,24 +80,41 @@ export default function RegisterModal({ isOpen, onClose }) {
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       pairName: '',
       members: [
-        { fullName: '', email: '', phone: '', rollNo: '', department: '', year: '1' },
-        { fullName: '', email: '', phone: '', rollNo: '', department: '', year: '1' },
+        { fullName: '', email: '', phone: '', rollNo: '', department: 'CSE', year: '1' },
+        { fullName: '', email: '', phone: '', rollNo: '', department: 'CSE', year: '1' },
       ],
     },
     mode: 'onBlur',
   });
 
-  // Exactly 2 members (fixed, non-removable)
+  const watchedMembers = watch('members') || [];
+
+  // Exactly 2 members (fixed duo)
   const { fields } = useFieldArray({
     control,
     name: 'members',
   });
+
+  const togglePlayer = (index) => {
+    setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  // Auto-expand if a player card has errors
+  useEffect(() => {
+    if (errors.members?.[0]) {
+      setCollapsed((prev) => ({ ...prev, 0: false }));
+    }
+    if (errors.members?.[1]) {
+      setCollapsed((prev) => ({ ...prev, 1: false }));
+    }
+  }, [errors.members]);
 
   useEffect(() => {
     if (isOpen && serverError) errorRef.current?.scrollIntoView({ block: 'nearest' });
@@ -62,7 +131,6 @@ export default function RegisterModal({ isOpen, onClose }) {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    // Focus close button initially
     const timer = setTimeout(() => {
       closeBtnRef.current?.focus();
     }, 60);
@@ -78,7 +146,6 @@ export default function RegisterModal({ isOpen, onClose }) {
     };
   }, [isOpen]);
 
-  // Trap focus and handle Escape
   const handleKeyDown = (e) => {
     if (e.key === 'Escape' && !submitting) {
       e.preventDefault();
@@ -109,14 +176,52 @@ export default function RegisterModal({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
+
+  // Extract the most relevant error message for the toast
+  const extractFirstErrorMessage = (formErrors) => {
+    if (!formErrors) return 'Please check the highlighted fields.';
+    if (formErrors.pairName?.message) {
+      return formErrors.pairName.message;
+    }
+    if (formErrors.members?.[0]) {
+      const m0 = formErrors.members[0];
+      const firstKey = Object.keys(m0).find((k) => m0[k]?.message);
+      if (firstKey) return `Player 1: ${m0[firstKey].message}`;
+    }
+    if (formErrors.members?.[1]) {
+      const m1 = formErrors.members[1];
+      const firstKey = Object.keys(m1).find((k) => m1[k]?.message);
+      if (firstKey) return `Player 2: ${m1[firstKey].message}`;
+    }
+    if (formErrors.members?.root?.message || formErrors.members?.message) {
+      return formErrors.members.root?.message || formErrors.members.message;
+    }
+    const firstTop = Object.values(formErrors).find((err) => err?.message);
+    return firstTop?.message || 'Please check the highlighted fields.';
+  };
+
+  // Called when validation fails on submit ("Lock In" click)
+  const onInvalid = (formErrors) => {
+    const errorMsg = extractFirstErrorMessage(formErrors);
+    showToast(errorMsg);
+    if (formErrors.members?.[0]) setCollapsed((prev) => ({ ...prev, 0: false }));
+    if (formErrors.members?.[1]) setCollapsed((prev) => ({ ...prev, 1: false }));
+  };
 
   const onSubmit = async (formData) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     setServerError(null);
+    setFailureMessage(null);
+    setFlowState('awaiting');
+    setAwaitingNote('Awaiting for payment status...');
+
     let paymentDetails = pendingPayment;
+    let paymentResult = null;
+    let paymentError = null;
+
     try {
       if (!paymentDetails) {
         const payload = {
@@ -125,7 +230,6 @@ export default function RegisterModal({ isOpen, onClose }) {
             ...member, name: fullName, year: Number(member.year),
           })),
         };
-        // Load Checkout before creating a pending team; blocked scripts must not hold seats.
         await loadCheckout();
         const fingerprint = JSON.stringify(payload);
         if (checkoutRef.current?.fingerprint !== fingerprint) {
@@ -139,15 +243,31 @@ export default function RegisterModal({ isOpen, onClose }) {
         setPendingPayment(paymentDetails);
         savePendingPayment(paymentDetails);
       }
+
+      setAwaitingNote('Payment received. Finalizing verification...');
       const result = await verifyPayment(paymentDetails);
       if (result.success !== true || !result.regCode || !result.registrationId) {
         throw new Error('The server has not confirmed your duo yet. Retry verification.');
       }
-      setRegistrationResult(result);
+      paymentResult = result;
+    } catch (err) {
+      paymentError = err;
+    }
+
+    // Keep the awaiting LOC animation for 5 seconds after getting the response
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    setShowResultText(false);
+
+    if (paymentResult) {
+      setRegistrationResult(paymentResult);
       setPendingPayment(null);
       savePendingPayment(null);
       checkoutRef.current = null;
-    } catch (err) {
+      setFlowState('success');
+      setTimeout(() => setShowResultText(true), 3500);
+    } else {
+      const err = paymentError || new Error('Payment was not completed.');
       for (const issue of err.errors || []) {
         const field = issue.field?.replace(/^teamName$/, 'pairName').replace(/\.name$/, '.fullName');
         if (field) setError(field, { type: 'server', message: issue.message });
@@ -158,35 +278,58 @@ export default function RegisterModal({ isOpen, onClose }) {
         formData.members.forEach((member, index) => {
           for (const [field, key] of [['email', 'emails'], ['phone', 'phones'], ['rollNo', 'rollNos']]) {
             if (conflicts[key]?.some((value) => value.toLowerCase() === member[field].toLowerCase())) {
-              setError(`members.${index}.${field}`, { message: 'Bro, You’re Already In 💀 This detail belongs to a registered participant.' });
+              setError(`members.${index}.${field}`, { message: 'Bro, You are Already In. This detail belongs to a registered participant.' });
             }
           }
         });
       }
-      const prefix = err.code === 'SOLD_OUT' ? "Lobby Full. You're Late to the Party. "
-        : err.code === 'DUPLICATE_REGISTRATION' ? "Bro, You're Already In 💀 "
-        : err.status >= 500 ? 'The Server Is Having a Skill Issue. ' : '';
-      const recovery = paymentDetails
-        ? ` Your duo is not confirmed on this screen. Retry verification, not payment. Keep payment ID ${paymentDetails.razorpay_payment_id} for the organisers.`
-        : '';
-      setServerError(`${prefix}${err.message || 'Registration failed.'}${recovery}`);
-    } finally {
-      submittingRef.current = false;
-      setSubmitting(false);
+
+      let errorMsg = err.message || 'Payment was cancelled or failed.';
+      if (err.code === 'PAYMENT_CANCELLED') {
+        errorMsg = 'Checkout was cancelled before completion. Your duo details are safely preserved.';
+      } else if (err.code === 'SOLD_OUT') {
+        errorMsg = "Lobby Full. You're Late to the Party. Registration is sold out.";
+      } else if (err.code === 'DUPLICATE_REGISTRATION') {
+        errorMsg = "Bro, You're Already In. This detail belongs to a registered participant.";
+      }
+
+      setFailureMessage(errorMsg);
+      setServerError(errorMsg);
+      setFlowState('failure');
+      setTimeout(() => setShowResultText(true), 3500);
     }
+
+    submittingRef.current = false;
+    setSubmitting(false);
+  };
+
+  const handleTryAgain = () => {
+    setShowResultText(false);
+    setFlowState('form');
+    setFailureMessage(null);
+    setServerError(null);
   };
 
   const handleModalClose = () => {
-    setServerError(null);
-    if (registrationResult) {
-      reset();
-      setRegistrationResult(null);
-    }
-    // Note: If closed without success, form data is NOT wiped by accident
-    onClose();
+    if (isClosing) return;
+    setIsClosing(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(null);
+
+    setTimeout(() => {
+      setIsClosing(false);
+      setShowResultText(false);
+      setServerError(null);
+      setFlowState('form');
+      setFailureMessage(null);
+      if (registrationResult) {
+        reset();
+        setRegistrationResult(null);
+      }
+      onClose();
+    }, 300);
   };
 
-  // Scroll active input into view on mobile keyboard display
   const handleInputFocus = (e) => {
     if (typeof window !== 'undefined' && window.innerWidth <= 767) {
       setTimeout(() => {
@@ -195,329 +338,508 @@ export default function RegisterModal({ isOpen, onClose }) {
     }
   };
 
+  const backdropMode = flowState === 'success' ? 'tick' : flowState === 'failure' ? 'cross' : 'ambient';
+
   return (
     <div
-      className={styles.backdrop}
+      className={`${styles.backdrop} ${isClosing ? styles.backdropClosing : ''}`}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !submitting) handleModalClose();
+        if (e.target === e.currentTarget && !submitting && flowState !== 'awaiting') handleModalClose();
       }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       onKeyDown={handleKeyDown}
     >
-      <div className={styles.modal} ref={modalRef}>
-        {/* Sticky Header */}
-        <div className={styles.modalHeader}>
-          <div className={styles.modalTitleGroup}>
-            <span className={styles.modalTag}>// SECURE YOUR SPOT</span>
-            <h2 id="modal-title" className={styles.modalTitle}>
-              {registrationResult ? "You're On the List" : 'Assemble Your Duo'}
-            </h2>
-          </div>
+      {/* Fullscreen Backdrop Particles (Tiny red particles floating outside the modal, morphs to Green Tick or Red Cross) */}
+      <ParticleCanvas mode={backdropMode} isClosing={isClosing} />
 
+      {/* ========================================================
+          STAGE 1: AWAITING PAYMENT (LOC Logo + Rotating Spinner)
+          ======================================================== */}
+      {flowState === 'awaiting' ? (
+        <div className={`${styles.modal} ${styles.modalStageCentered} ${isClosing ? styles.modalClosing : ''}`} ref={modalRef}>
+          <div className={styles.stageContentCentered}>
+            <div className={styles.locSpinnerContainer}>
+              <div className={styles.locSpinnerRing} />
+              <picture className={styles.locLogoSpinnerPic}>
+                <source srcSet={locLogoWebp} type="image/webp" />
+                <img src={locLogoPng} alt="LARPER OR CODER" className={styles.locLogoSpinnerImg} />
+              </picture>
+            </div>
+            <h3 className={styles.awaitingTitle}>Awaiting for the payment status...</h3>
+            <p className={styles.awaitingSubtitle}>
+              {awaitingNote || 'Complete your transaction in Checkout. Do not close or refresh this page.'}
+            </p>
+            <div className={styles.awaitingPulseBar}>
+              <span className={styles.pulseDot} />
+              <span className={styles.pulseDot} />
+              <span className={styles.pulseDot} />
+            </div>
+          </div>
+        </div>
+      ) : flowState === 'success' ? (
+        /* ========================================================
+           STAGE 2: SUCCESS (Confirmation on Top -> Center Green Tick -> Bottom Details & Close)
+           ======================================================== */
+        <div className={`${styles.fullscreenResultStage} ${isClosing ? styles.backdropClosing : ''}`}>
           <button
-            ref={closeBtnRef}
             type="button"
-            className={styles.closeButton}
+            className={styles.resultFloatingCloseBtn}
             onClick={handleModalClose}
             aria-label="Close registration modal"
-            disabled={submitting}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </div>
 
-        {/* Content: Success View or Form */}
-        {registrationResult ? (
-          <div className={styles.successBody}>
-            <div className={styles.successIconWrapper}>✓</div>
-            <h3 className={styles.successTitle}>Duo Secured. Aura Loading.</h3>
-            <div className={styles.successTagline}>Your payment and registration for LARPER OR CODER are confirmed. Show up with your homie and prove you're not all talk.</div>
-
-            <div className={styles.registrationCard}>
-              <span className={styles.regIdLabel}>REGISTRATION ID // SCREENSHOT THIS</span>
-              <span className={styles.regIdValue}>{registrationResult.regCode}</span>
-              {registrationResult.teamName && (
-                <span className={styles.regSubtext}>Your duo: {registrationResult.teamName}</span>
-              )}
-              <span className={styles.regSubtext}>
-                Format: Duo (2 coders) // Both events included: The Training Arc & TLE
-              </span>
-              <span className={styles.regFeeSubtext}>
-                The damage: ₹{PRICING.pair} {PRICING.taxNote} (₹{PRICING.perHead}{'\u00a0'}×{'\u00a0'}2)
-              </span>
+          {/* TOP SECTION: Confirmation Message above the symbol */}
+          {showResultText ? (
+            <div className={styles.resultFloatingTop}>
+              <h2 className={styles.resultTitleSuccess}>
+                Your Registration to LOC is Officially Confirmed
+              </h2>
+              <p className={styles.resultSubtitleSuccess}>
+                Payment verified. Show up with your homie and prove you're not all talk.
+              </p>
             </div>
+          ) : (
+            <div className={styles.phase1Spacer} />
+          )}
 
-            {/* PAYMENT NOTE Line */}
-            <div className={styles.paymentNoteBlock}>
-              <span className={styles.paymentNoteIcon} aria-hidden="true">ℹ️</span>
-              <span className={styles.paymentNoteText}>Payment confirmed. Screenshot your registration ID and keep it handy.</span>
-            </div>
-
-            <Button size="md" variant="primary" onClick={handleModalClose}>
-              GG, Close This
-            </Button>
-          </div>
-        ) : (
-          <form className={styles.formContainer} onSubmit={(event) => handleSubmit(onSubmit)(event)} aria-busy={submitting} noValidate>
-            <fieldset className={styles.formBody} disabled={submitting || !!pendingPayment}>
-              {pendingPayment && !serverError && (
-                <div className={styles.errorBanner} role="status">
-                  Your payment needs server confirmation. Retry verification below; do not pay again.
-                </div>
-              )}
-              {/* Error banner if submission failed */}
-              {serverError && (
-                <div className={styles.errorBanner} role="alert" ref={errorRef}>
-                  <span className={styles.errorIcon} aria-hidden="true">⚠️</span>
-                  <span>{serverError}</span>
-                </div>
-              )}
-
-              {/* Pricing & Coverage Summary Banner */}
-              <div className={styles.pricingSummaryCard}>
-                <div className={styles.pricingLeft}>
-                  <div className={styles.pricingFormula}>
-                    2 people × ₹{PRICING.perHead} = <span className={styles.pricingTotal}>₹{PRICING.pair} {PRICING.taxNote}</span>
-                  </div>
-                  <div className={styles.pricingCoverage}>
-                    One duo, both events: The Training Arc and TLE
-                  </div>
-                </div>
-                <div className={styles.pricingPill}>
-                  THE DAMAGE REPORT
-                </div>
-              </div>
-
-              {/* Required team name */}
-              <div className={styles.formGroup}>
-                <label htmlFor="reg-pairname" className={styles.fieldLabel}>
-                  Drop the Duo's Name <span className={styles.optionalBadge}>(Required. Please don't name it Team 1.)</span>
-                </label>
-                <input
-                  id="reg-pairname"
-                  type="text"
-                  autoComplete="off"
-                  placeholder="e.g. Runtime Terrors"
-                  className={`${styles.inputField} ${errors.pairName ? styles.hasError : ''}`}
-                  aria-invalid={!!errors.pairName}
-                  aria-describedby={errors.pairName ? 'reg-pairname-error' : undefined}
-                  onFocus={handleInputFocus}
-                  {...register('pairName')}
-                />
-                {errors.pairName && (
-                  <span id="reg-pairname-error" className={styles.errorMessage} role="alert">
-                    {errors.pairName.message}
-                  </span>
+          {/* BOTTOM SECTION: Floating Registration ID & Actions (Zero Containers) */}
+          {showResultText ? (
+            <div className={styles.resultFloatingBottom}>
+              <div className={styles.registrationFloatingInfo}>
+                <span className={styles.regIdLabel}>Registration ID</span>
+                <span className={styles.regIdValue}>{registrationResult?.regCode}</span>
+                {registrationResult?.teamName && (
+                  <span className={styles.regSubtext}>Duo: {registrationResult.teamName}</span>
                 )}
               </div>
 
-              {/* Two-Column Member Layout on Laptop / Stacked on Mobile */}
-              <div className={styles.membersColumnsGrid}>
-                {fields.map((field, index) => {
-                  const memberNum = index + 1;
-                  const memberErrors = errors.members?.[index];
-
-                  return (
-                    <div key={field.id} className={styles.memberCard}>
-                      <div className={styles.memberCardHeader}>
-                        <span>{memberNum === 1 ? 'PLAYER ONE (PRIMARY CONTACT)' : 'PLAYER TWO'}</span>
-                      </div>
-
-                      <div className={styles.memberFieldsGrid}>
-                        {/* Full Name */}
-                        <div className={styles.formGroup}>
-                          <label htmlFor={`member-${index}-name`} className={styles.fieldLabelSmall}>
-                            Full Name (The Government One)
-                          </label>
-                          <input
-                            id={`member-${index}-name`}
-                            type="text"
-                            autoComplete={index === 0 ? 'name' : 'off'}
-                            placeholder="e.g. Jane Doe"
-                            className={`${styles.inputField} ${memberErrors?.fullName ? styles.hasError : ''}`}
-                            aria-invalid={!!memberErrors?.fullName}
-                            aria-describedby={memberErrors?.fullName ? `member-${index}-name-error` : undefined}
-                            onFocus={handleInputFocus}
-                            {...register(`members.${index}.fullName`)}
-                          />
-                          {memberErrors?.fullName && (
-                            <span id={`member-${index}-name-error`} className={styles.errorMessage} role="alert">
-                              {memberErrors.fullName.message}
-                            </span>
-                          )}
-                        </div>
-
-                        {[
-                          ['rollNo', 'Drop Your Registration Number', 'e.g. 2026CSE001'],
-                        ].map(([name, label, placeholder]) => (
-                          <div className={styles.formGroup} key={name}>
-                            <label htmlFor={`member-${index}-${name}`} className={styles.fieldLabelSmall}>{label}</label>
-                            <input
-                              id={`member-${index}-${name}`}
-                              type="text"
-                              autoComplete="off"
-                              placeholder={placeholder}
-                              className={`${styles.inputField} ${memberErrors?.[name] ? styles.hasError : ''}`}
-                              aria-invalid={!!memberErrors?.[name]}
-                              aria-describedby={memberErrors?.[name] ? `member-${index}-${name}-error` : undefined}
-                              onFocus={handleInputFocus}
-                              {...register(`members.${index}.${name}`)}
-                            />
-                            {memberErrors?.[name] && (
-                              <span id={`member-${index}-${name}-error`} className={styles.errorMessage} role="alert">
-                                {memberErrors[name].message}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-
-                        {/* Email */}
-                        <div className={styles.formGroup}>
-                          <label htmlFor={`member-${index}-email`} className={styles.fieldLabelSmall}>
-                            Drop Your Email
-                          </label>
-                          <input
-                            id={`member-${index}-email`}
-                            type="email"
-                            autoComplete={index === 0 ? 'email' : 'off'}
-                            placeholder="e.g. jane@example.com"
-                            className={`${styles.inputField} ${memberErrors?.email ? styles.hasError : ''}`}
-                            aria-invalid={!!memberErrors?.email}
-                            aria-describedby={memberErrors?.email ? `member-${index}-email-error` : undefined}
-                            onFocus={handleInputFocus}
-                            {...register(`members.${index}.email`)}
-                          />
-                          {memberErrors?.email && (
-                            <span id={`member-${index}-email-error`} className={styles.errorMessage} role="alert">
-                              {memberErrors.email.message}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Phone */}
-                        <div className={styles.formGroup}>
-                          <label htmlFor={`member-${index}-phone`} className={styles.fieldLabelSmall}>
-                            Drop Your Digits (10-Digit Mobile)
-                          </label>
-                          <input
-                            id={`member-${index}-phone`}
-                            type="tel"
-                            inputMode="numeric"
-                            maxLength={10}
-                            autoComplete={index === 0 ? 'tel' : 'off'}
-                            placeholder="e.g. 9876543210"
-                            className={`${styles.inputField} ${memberErrors?.phone ? styles.hasError : ''}`}
-                            aria-invalid={!!memberErrors?.phone}
-                            aria-describedby={memberErrors?.phone ? `member-${index}-phone-error` : undefined}
-                            onFocus={handleInputFocus}
-                            {...register(`members.${index}.phone`, {
-                              onChange: (e) => {
-                                // Strip non-numeric characters and limit to 10
-                                const raw = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                e.target.value = raw;
-                              },
-                            })}
-                          />
-                          {memberErrors?.phone && (
-                            <span id={`member-${index}-phone-error`} className={styles.errorMessage} role="alert">
-                              {memberErrors.phone.message}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Year of Study */}
-                        <div className={styles.formGroup}>
-                          <label htmlFor={`member-${index}-year`} className={styles.fieldLabelSmall}>
-                            Which Year Are You Surviving?
-                          </label>
-                          <select
-                            id={`member-${index}-year`}
-                            className={`${styles.selectField} ${memberErrors?.year ? styles.hasError : ''}`}
-                            aria-invalid={!!memberErrors?.year}
-                            aria-describedby={memberErrors?.year ? `member-${index}-year-error` : undefined}
-                            onFocus={handleInputFocus}
-                            {...register(`members.${index}.year`)}
-                          >
-                            <option value="1">1st Year · Fresh Spawn</option>
-                            <option value="2">2nd Year · Side Quests</option>
-                            <option value="3">3rd Year · Main Story</option>
-                            <option value="4">4th Year · Final Boss</option>
-                            <option value="5">5th Year · Bonus Level</option>
-                          </select>
-                          {memberErrors?.year && (
-                            <span id={`member-${index}-year-error`} className={styles.errorMessage} role="alert">
-                              {memberErrors.year.message}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Department */}
-                        <div className={styles.formGroup}>
-                          <label htmlFor={`member-${index}-dept`} className={styles.fieldLabelSmall}>
-                            What's Your Department?
-                          </label>
-                          <input
-                            id={`member-${index}-dept`}
-                            type="text"
-                            autoComplete="off"
-                            placeholder="e.g. CSE / IT"
-                            className={`${styles.inputField} ${memberErrors?.department ? styles.hasError : ''}`}
-                            aria-invalid={!!memberErrors?.department}
-                            aria-describedby={memberErrors?.department ? `member-${index}-dept-error` : undefined}
-                            onFocus={handleInputFocus}
-                            {...register(`members.${index}.department`)}
-                          />
-                          {memberErrors?.department && (
-                            <span id={`member-${index}-dept-error`} className={styles.errorMessage} role="alert">
-                              {memberErrors.department.message}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            {/* Sticky / Fixed Footer Actions */}
-            <div className={styles.modalFooter}>
-              <div className={styles.footerPriceSummaryMobile}>
-                <span className={styles.footerFormula}>2 people × ₹{PRICING.perHead}</span>
-                <span className={styles.footerTotal}>Total ₹{PRICING.pair} {PRICING.taxNote}</span>
-              </div>
-
-              <div className={styles.footerActions}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="md"
-                  onClick={handleModalClose}
-                  disabled={submitting}
-                  className={styles.cancelBtnDesktop}
-                >
-                  Nah, Go Back
-                </Button>
-                <Button
-                  type={pendingPayment ? "button" : "submit"}
-                  onClick={pendingPayment ? () => onSubmit() : undefined}
-                  variant="primary"
-                  size="lg"
-                  disabled={submitting}
-                  className={styles.submitBtn}
-                >
-                  {submitting ? 'Cooking Your Registration...' : pendingPayment ? 'Retry Payment Verification' : `Lock In the Duo · ₹${PRICING.pair} ${PRICING.taxNote}`}
+              <div className={styles.successActionsGroup}>
+                <Button size="md" variant="primary" onClick={handleModalClose}>
+                  Done, Close This
                 </Button>
               </div>
             </div>
-          </form>
-        )}
-      </div>
+          ) : (
+            <div className={styles.phase1Spacer} />
+          )}
+        </div>
+      ) : flowState === 'failure' ? (
+        /* ========================================================
+           STAGE 3: FAILURE / CANCELLED (Incomplete on Top -> Center Red Cross -> Bottom Actions)
+           ======================================================== */
+        <div className={`${styles.fullscreenResultStage} ${isClosing ? styles.backdropClosing : ''}`}>
+          <button
+            type="button"
+            className={styles.resultFloatingCloseBtn}
+            onClick={handleModalClose}
+            aria-label="Close error modal"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          {/* TOP SECTION: Incomplete Message above the symbol */}
+          {showResultText ? (
+            <div className={styles.resultFloatingTop}>
+              <h2 className={styles.resultTitleFailure}>
+                Payment Incomplete
+              </h2>
+              <p className={styles.resultSubtitleFailure}>
+                {failureMessage || 'Your payment was not completed or was cancelled. Your duo is not confirmed yet.'}
+              </p>
+            </div>
+          ) : (
+            <div className={styles.phase1Spacer} />
+          )}
+
+          {/* BOTTOM SECTION: Preserved note & actions (Zero Containers) */}
+          {showResultText ? (
+            <div className={styles.resultFloatingBottom}>
+              <p className={styles.failureDetailNote}>
+                Don't worry, all your duo details are safely preserved. You can try again right now.
+              </p>
+              <div className={styles.failureActionsGroup}>
+                <Button size="md" variant="primary" onClick={handleTryAgain}>
+                  Try Again
+                </Button>
+                <Button size="md" variant="ghost" onClick={handleModalClose}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.phase1Spacer} />
+          )}
+        </div>
+      ) : (
+        /* ========================================================
+           STAGE 0: REGISTRATION FORM (With Fast 3D Bouncing Orange Balls)
+           ======================================================== */
+        <div className={`${styles.modal} ${isClosing ? styles.modalClosing : ''}`} ref={modalRef}>
+          {/* COLOROS TOAST NOTIFICATION CONTAINER */}
+          {toast && (
+            <div className={styles.toastContainer} key={toast.id}>
+              <div className={styles.toast} role="alert" aria-live="assertive">
+                <div className={styles.toastIcon} aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </div>
+                <span className={styles.toastMessage}>{toast.message}</span>
+                <button
+                  type="button"
+                  className={styles.toastCloseBtn}
+                  onClick={() => setToast(null)}
+                  aria-label="Dismiss error notification"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* LEFT BRAND SIDEBAR */}
+          <aside className={styles.brandSidebar}>
+            <div className={styles.brandTop}>
+              <span className={styles.brandPreHeading}>You're registering for</span>
+            </div>
+
+            <div className={styles.brandCenter}>
+              <div className={styles.logoAnimContainer}>
+                <picture className={styles.locPicture}>
+                  <source srcSet={locLogoWebp} type="image/webp" />
+                  <img
+                    src={locLogoPng}
+                    alt="Larper or Coder"
+                    className={styles.locLogoImg}
+                    width={320}
+                    height={130}
+                  />
+                </picture>
+                <div className={styles.laserScanLine} aria-hidden="true" />
+              </div>
+
+              <div className={styles.brandMeta}>
+                <span className={styles.brandEventName}>The Training Arc &amp; TLE</span>
+                <span className={styles.brandPassInfo}>2 Coders · ₹{PRICING.pair}</span>
+              </div>
+            </div>
+
+            <div className={styles.brandBottom}>
+              <span className={styles.byLabel}>By</span>
+              <img
+                src="/Celestius_modified_curved.png"
+                alt="Celestius"
+                className={styles.celestiusLogoImg}
+                onError={(e) => {
+                  e.currentTarget.src = '/celestius_original.png';
+                }}
+              />
+            </div>
+          </aside>
+
+          {/* RIGHT MAIN CONTENT */}
+          <div className={styles.formContainer}>
+            {/* Header Bar */}
+            <div className={styles.modalHeader}>
+              <div className={styles.headerTitleGroup}>
+                <h2 id="modal-title" className={styles.modalTitle}>
+                  Assemble Your Duo
+                </h2>
+                <p className={styles.modalSubtitle}>
+                  One duo registration covers both events for 2 coders.
+                </p>
+              </div>
+
+              <button
+                ref={closeBtnRef}
+                type="button"
+                className={styles.closeButton}
+                onClick={handleModalClose}
+                aria-label="Close registration modal"
+                disabled={submitting}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <form className={styles.formInner} onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
+              <div className={styles.formScrollArea}>
+                <BouncingBallsCanvas />
+                <fieldset className={styles.formScrollBody} disabled={submitting || !!pendingPayment}>
+                {pendingPayment && !serverError && (
+                  <div className={styles.statusBanner} role="status">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span>Your payment needs server confirmation. Retry verification below; do not pay again.</span>
+                  </div>
+                )}
+
+                {/* Duo Codename Input Field (No inline error text below) */}
+                <div className={styles.formGroupTop}>
+                  <div className={styles.labelRow}>
+                    <label htmlFor="reg-pairname" className={styles.fieldLabel}>
+                      Duo Codename
+                    </label>
+                    <span className={styles.fieldHelper}>Required · Don't name it Team 1</span>
+                  </div>
+                  <input
+                    id="reg-pairname"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="e.g. Runtime Terrors"
+                    className={`${styles.inputField} ${errors.pairName ? styles.hasError : ''}`}
+                    aria-invalid={!!errors.pairName}
+                    onFocus={handleInputFocus}
+                    {...register('pairName')}
+                  />
+                </div>
+
+                {/* Member 1 & Member 2 Accordion Cards (No inline error text below) */}
+                <div className={styles.membersStack}>
+                  {fields.map((field, index) => {
+                    const memberNum = index + 1;
+                    const memberErrors = errors.members?.[index];
+                    const isCollapsed = !!collapsed[index];
+                    const currentName = watchedMembers[index]?.fullName?.trim();
+                    const currentRoll = watchedMembers[index]?.rollNo?.trim();
+
+                    return (
+                      <div
+                        key={field.id}
+                        className={`${styles.memberAccordionCard} ${isCollapsed ? styles.cardCollapsed : ''}`}
+                      >
+                        {/* Header toggle button */}
+                        <button
+                          type="button"
+                          className={styles.accordionHeaderBtn}
+                          onClick={() => togglePlayer(index)}
+                          aria-expanded={!isCollapsed}
+                          aria-controls={`member-section-${index}`}
+                        >
+                          <div className={styles.playerTitleWrapper}>
+                            <span className={`${styles.playerDot} ${memberNum === 1 ? styles.dotOne : styles.dotTwo}`} />
+                            <span className={styles.playerNameTitle}>
+                              Player {memberNum} {memberNum === 1 ? '(Alpha)' : '(Bravo)'}
+                            </span>
+                            {isCollapsed && currentName && (
+                              <span className={styles.collapsedPreview}>
+                                · {currentName}{currentRoll ? ` (${currentRoll})` : ''}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className={styles.headerRightControls}>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={`${styles.chevron} ${isCollapsed ? styles.chevronCollapsed : ''}`}
+                              aria-hidden="true"
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </div>
+                        </button>
+
+                        {/* Collapsible Content */}
+                        <div
+                          id={`member-section-${index}`}
+                          className={`${styles.accordionBody} ${isCollapsed ? styles.accordionBodyHidden : ''}`}
+                        >
+                          <div className={styles.fieldsGrid2}>
+                            {/* Full Name */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-name`} className={styles.fieldLabel}>
+                                Full Name
+                              </label>
+                              <input
+                                id={`member-${index}-name`}
+                                type="text"
+                                autoComplete={index === 0 ? 'name' : 'off'}
+                                placeholder="e.g. Jane Doe"
+                                className={`${styles.inputField} ${memberErrors?.fullName ? styles.hasError : ''}`}
+                                aria-invalid={!!memberErrors?.fullName}
+                                onFocus={handleInputFocus}
+                                {...register(`members.${index}.fullName`)}
+                              />
+                            </div>
+
+                            {/* Registration Number */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-rollNo`} className={styles.fieldLabel}>
+                                Registration Number
+                              </label>
+                              <input
+                                id={`member-${index}-rollNo`}
+                                type="text"
+                                autoComplete="off"
+                                placeholder="e.g. 2026CSE001"
+                                className={`${styles.inputField} ${memberErrors?.rollNo ? styles.hasError : ''}`}
+                                aria-invalid={!!memberErrors?.rollNo}
+                                onFocus={handleInputFocus}
+                                {...register(`members.${index}.rollNo`)}
+                              />
+                            </div>
+
+                            {/* Email */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-email`} className={styles.fieldLabel}>
+                                Email Address
+                              </label>
+                              <input
+                                id={`member-${index}-email`}
+                                type="email"
+                                autoComplete={index === 0 ? 'email' : 'off'}
+                                placeholder="e.g. jane@example.com"
+                                className={`${styles.inputField} ${memberErrors?.email ? styles.hasError : ''}`}
+                                aria-invalid={!!memberErrors?.email}
+                                onFocus={handleInputFocus}
+                                {...register(`members.${index}.email`)}
+                              />
+                            </div>
+
+                            {/* Mobile Number */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-phone`} className={styles.fieldLabel}>
+                                Mobile Number (10 Digits)
+                              </label>
+                              <input
+                                id={`member-${index}-phone`}
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={10}
+                                autoComplete={index === 0 ? 'tel' : 'off'}
+                                placeholder="e.g. 9876543210"
+                                className={`${styles.inputField} ${memberErrors?.phone ? styles.hasError : ''}`}
+                                aria-invalid={!!memberErrors?.phone}
+                                onFocus={handleInputFocus}
+                                {...register(`members.${index}.phone`, {
+                                  onChange: (e) => {
+                                    const raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    e.target.value = raw;
+                                  },
+                                })}
+                              />
+                            </div>
+
+                            {/* Year of Study */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-year`} className={styles.fieldLabel}>
+                                Year of Study
+                              </label>
+                              <Controller
+                                name={`members.${index}.year`}
+                                control={control}
+                                render={({ field }) => (
+                                  <ColorOSDropdown
+                                    id={`member-${index}-year`}
+                                    value={field.value}
+                                    onChange={(val) => {
+                                      field.onChange(val);
+                                      handleInputFocus();
+                                    }}
+                                    options={YEAR_OPTIONS}
+                                    hasError={!!memberErrors?.year}
+                                    onFocus={handleInputFocus}
+                                    ariaLabel="Year of Study"
+                                  />
+                                )}
+                              />
+                            </div>
+
+                            {/* Department */}
+                            <div className={styles.formGroup}>
+                              <label htmlFor={`member-${index}-dept`} className={styles.fieldLabel}>
+                                Department
+                              </label>
+                              <Controller
+                                name={`members.${index}.department`}
+                                control={control}
+                                render={({ field }) => (
+                                  <ColorOSDropdown
+                                    id={`member-${index}-dept`}
+                                    value={field.value}
+                                    onChange={(val) => {
+                                      field.onChange(val);
+                                      handleInputFocus();
+                                    }}
+                                    options={DEPARTMENT_OPTIONS}
+                                    hasError={!!memberErrors?.department}
+                                    onFocus={handleInputFocus}
+                                    ariaLabel="Department"
+                                  />
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </div>
+
+            {/* Clean Footer Bar */}
+              <div className={styles.modalFooter}>
+                <div className={styles.footerInfo}>
+                  <span>₹{PRICING.pair} {PRICING.taxNote}</span>
+                  <span className={styles.footerSubText}>· Covers both members for both events</span>
+                </div>
+
+                <div className={styles.footerButtons}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    onClick={handleModalClose}
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    type={pendingPayment ? "button" : "submit"}
+                    onClick={pendingPayment ? () => onSubmit() : undefined}
+                    variant="primary"
+                    size="lg"
+                    disabled={submitting}
+                    className={styles.submitBtn}
+                  >
+                    {submitting ? 'Locking In...' : pendingPayment ? 'Retry Verification' : `Lock In Duo · ₹${PRICING.pair}`}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "mongo:start": "\"C:\\Program Files\\MongoDB\\Server\\9.0\\bin\\mongod.exe\" --replSet locDev --port 27040 --bind_ip 127.0.0.1 --dbpath .local-mongo",
     "test": "node --test test/*.test.js",
     "test:integration": "node scripts/test-cap.js"
   },
