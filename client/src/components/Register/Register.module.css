@@ -116,6 +116,9 @@
 
 /* Scroll Content in Middle */
 .formBody {
+  border: 0;
+  margin: 0;
+  min-width: 0;
   padding: 1.25rem 1.5rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

@@ -119,21 +119,21 @@ export default function Quote({ isHero = false, animateIn = true }) {
               {/* Ghost block: reserves height to eliminate CLS */}
               <div className={styles.quoteGhost}>
                 <span>
-                  The more u <span className={styles.larpCream}>larp</span>,
+                  The more <span className={styles.larpCream}>you larp</span>.
                 </span>
                 <span>
-                  the less u <span className={styles.larpCream}>larp</span>.
+                  The less <span className={styles.larpCream}>you larp</span>.
                 </span>
               </div>
 
               {/* Animated overlay */}
               <div className={styles.quoteAnimated}>
                 <span className={`${styles.quoteLine} ${styles.line1}`}>
-                  The more u <span className={styles.larpCream}>larp</span>,
+                  The more <span className={styles.larpCream}>you larp</span>.
                   <span className={styles.cursor1} />
                 </span>
                 <span className={`${styles.quoteLine} ${styles.line2}`}>
-                  the less u <span className={styles.larpCream}>larp</span>.
+                  The less <span className={styles.larpCream}>you larp</span>.
                   <span className={styles.cursor2} />
                 </span>
               </div>

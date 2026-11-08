@@ -1,128 +1,46 @@
-# Backend Registration API Contract
+# Registration API contract
 
-> Event: **LARPER OR CODER**  
-> This contract defines the endpoints, request/response structures, and validation rules expected by the frontend.
+All requests use `VITE_API_URL` (the backend origin) and JSON. There is no mock fallback, `/api/register` endpoint, frontend payment secret, or active webhook route.
 
----
+| Request | Consumer | Result |
+| --- | --- | --- |
+| `GET /health` | App startup | `200 { ok: true }` while MongoDB is connected; otherwise 503 |
+| `POST /api/registrations/create-order` | Registration modal | Validates and persists a pending pair, creates Razorpay order |
+| `POST /api/registrations/verify-payment` | Checkout handler / verification retry | Verifies captured payment and transactionally confirms the pair |
+| `POST /api/registrations/check` | Optional API client; not needed by the modal | Checks confirmed email/phone/roll-number/team conflicts |
+| `GET /api/registrations/availability` | Optional API client | Team capacity, confirmed teams, temporary holds, remaining teams, open |
+| `GET /api/registrations/:id/status` | Optional API client / support | Team status, code, confirmation time, member names/roles |
 
-## 1. Health Check
-
-### `GET /health`
-Verifies backend server status.
-
-- **Response `200 OK`**:
-```json
-{
-  "success": true,
-  "message": "server is healthy"
-}
-```
-
----
-
-## 2. Pair Registration
-
-### `POST /api/register`
-Registers a pair for **LARPER OR CODER** (one registration covers both **The Training Arc** and **TLE**).
-
-- **Headers**:
-  ```http
-  Content-Type: application/json
-  ```
-
-### Request Payload Shape
-A single registration covers both tracks for exactly 2 coders. No event selector field. Amount is never accepted from the client; it is computed server-side only.
+## Create order
 
 ```json
 {
-  "pairName": "ByteForce",
+  "teamName": "Runtime Terrors",
   "members": [
-    {
-      "fullName": "Jane Doe",
-      "email": "jane@example.com",
-      "phone": "9876543210",
-      "college": "St. Joseph's Institute of Technology",
-      "department": "Computer Science & Engineering",
-      "year": "3"
-    },
-    {
-      "fullName": "John Smith",
-      "email": "john@example.com",
-      "phone": "9123456780",
-      "college": "St. Joseph's Institute of Technology",
-      "department": "Information Technology",
-      "year": "3"
-    }
+    { "name": "Test Player One", "email": "one@example.com", "phone": "9000000001", "department": "CSE", "year": 3, "rollNo": "TEST001" },
+    { "name": "Test Player Two", "email": "two@example.com", "phone": "9000000002", "department": "CSE", "year": 3, "rollNo": "TEST002" }
   ]
 }
 ```
 
----
+The modal maps `pairName` → `teamName`, `fullName` → `name`, and converts year to a number. The registration number (`reg_number` concept) is stored as the existing `rollNo` field. Registration is limited to CIT students. Both members need every listed field. Names: 2–100 characters; team: 2–60; department: 2–100; rollNo: 1–60; integer year: 1–5. Email and phone are normalized; registration numbers are trimmed/uppercased. Emails, phones and registration numbers must differ within a pair. Confirmed email, phone, rollNo and team names are unique. Pending duplicates can reach Checkout, but only one can confirm.
 
-## Validation Constraints
+`201` returns `{ registrationId, orderId, amount: 30726, currency: "INR", keyId, prefill, checkoutTimeout }`. Amount is always computed server-side (₹298 + taxes = 30726 paise). This is NOT registration success.
 
-| Field | Type | Rules |
-|---|---|---|
-| `pairName` | String (optional) | Max 60 characters |
-| `members` | Array | Must contain **exactly 2** member objects |
-| `members[i].fullName` | String | Trimmed, min 2 characters, max 100 characters |
-| `members[i].email` | String | Valid email address format |
-| `members[i].phone` | String | Valid 10-digit Indian phone number (`/^[6-9]\d{9}$/`) |
-| `members[i].college` | String | Trimmed, min 2 characters |
-| `members[i].department` | String | Trimmed, min 2 characters |
-| `members[i].year` | String enum | Must be `"1"`, `"2"`, `"3"`, or `"4"` |
+## Verify payment
 
-### Cross-Member Uniqueness Constraints
-- `members[0].email.toLowerCase() !== members[1].email.toLowerCase()`
-- `members[0].phone !== members[1].phone`
+Send `{ razorpay_order_id, razorpay_payment_id, razorpay_signature }` from Checkout. The backend validates the HMAC against its stored order ID, fetches payment details, checks ID/order/amount/currency, captures an authorized payment when needed, and requires captured status.
 
----
+`200` returns `{ success: true, registrationId, regCode, teamName }` only after MongoDB confirmation. Repeat verification returns the same code and consumes no extra seat. The client also requires the success flag and both IDs before showing its success screen.
 
-## Expected Response Shapes
+## Errors and state
 
-### Success (`201 Created` or `200 OK`)
-Amount is computed server-side (₹149 × 2 = ₹298).
-```json
-{
-  "success": true,
-  "message": "Registration received successfully",
-  "registration": {
-    "id": "LOC-PAIR-84920",
-    "pairName": "ByteForce",
-    "amount": 298,
-    "members": [
-      {
-        "fullName": "Jane Doe",
-        "email": "jane@example.com",
-        "phone": "9876543210",
-        "college": "St. Joseph's Institute of Technology",
-        "department": "Computer Science & Engineering",
-        "year": "3"
-      },
-      {
-        "fullName": "John Smith",
-        "email": "john@example.com",
-        "phone": "9123456780",
-        "college": "St. Joseph's Institute of Technology",
-        "department": "Information Technology",
-        "year": "3"
-      }
-    ],
-    "createdAt": "2026-11-06T10:15:00.000Z"
-  }
-}
-```
+- `400 { message, errors: [{ field, message }] }`: invalid input; dotted paths map to form fields.
+- `409 { code: "DUPLICATE_REGISTRATION", message, conflicts: { emails, phones, rollNos, teamName } }`: already confirmed details.
+- `409 { code: "SOLD_OUT", message }`: no capacity; if payment was received, the message explicitly says so and directs the user to organisers.
+- `409/410 { success: false, code: "PAYMENT_REVIEW", message }`: captured payment needs manual review/refund, not another payment.
+- `502 { message }`: gateway failure. Other server/network failures remain errors, never mock success.
 
-### Error (`400 Bad Request` / `422 Unprocessable Entity`)
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": [
-    {
-      "field": "members.1.email",
-      "message": "Member 1 and Member 2 must have different email addresses"
-    }
-  ]
-}
-```
+A failed verification retains the signed callback in memory/sessionStorage and offers **Retry Payment Verification**, including after reload in the same tab. Successful confirmation clears that recovery record. Cancellation/failure retains the form and reuses its pending order if the details have not changed. Holds expire after `HOLD_MINUTES`; unpaid attempts never acquire confirmed seats.
+
+Availability uses teams, not people: `{ capacity: 30, confirmed: 0, onHold: 0, remaining: 30, open: true }`. `/check` accepts `{ teamName?, emails?: [], phones?: [], rollNos?: [] }` (at most two of each) and returns `{ available, conflicts }`.

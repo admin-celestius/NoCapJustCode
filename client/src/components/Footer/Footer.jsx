@@ -38,32 +38,32 @@ export default function Footer() {
             <span className={styles.tagline}>{eventData.tagline}</span>
             <p className={styles.brandBio}>
               Presented by {eventData.presentedBy}.
-              The definitive battleground for developers and problem solvers.
+              Built for the ones who actually code. No larping, no glazing, just pure problem-solving.
             </p>
           </div>
 
           {/* Quick Links */}
           <div className={`${styles.footerCol} scrollReveal`} style={{ transitionDelay: '100ms' }}>
-            <span className={styles.colTitle}>Navigation</span>
+            <span className={styles.colTitle}>Fast Travel</span>
             <ul className={styles.colList}>
               <li>
-                <a href="#hero" className={styles.colLink}>Home</a>
+                <a href="#hero" className={styles.colLink}>Spawn Point</a>
               </li>
               <li>
-                <a href="#about" className={styles.colLink}>About the Event</a>
+                <a href="#about" className={styles.colLink}>The Lore</a>
               </li>
               <li>
-                <a href="#schedule" className={styles.colLink}>Full Schedule</a>
+                <a href="#schedule" className={styles.colLink}>The Game Plan</a>
               </li>
               <li>
-                <a href="#events" className={styles.colLink}>Tracks & Arenas</a>
+                <a href="#events" className={styles.colLink}>The Battleground</a>
               </li>
             </ul>
           </div>
 
           {/* Connect Column */}
           <div id="connect" className={`${styles.connectCol} scrollReveal`} style={{ transitionDelay: '180ms' }}>
-            <span className={styles.colTitle}>Connect</span>
+            <span className={styles.colTitle}>Slide Into Our DMs</span>
             <div className={styles.cardsList}>
               {/* Website Card */}
               <a
@@ -92,7 +92,7 @@ export default function Footer() {
                   </svg>
                 </div>
                 <div className={styles.cardInfo}>
-                  <span className={styles.cardLabel}>Website</span>
+                  <span className={styles.cardLabel}>The Official Lore</span>
                   <span className={styles.cardDetail}>
                     {eventData.connect.websiteLabel || 'celestius.in'}
                   </span>
@@ -145,7 +145,7 @@ export default function Footer() {
                   </svg>
                 </div>
                 <div className={styles.cardInfo}>
-                  <span className={styles.cardLabel}>Instagram</span>
+                  <span className={styles.cardLabel}>Peep the Chaos</span>
                   <span className={styles.cardDetail}>
                     {eventData.connect.instagramLabel || '@celestius_cit'}
                   </span>
@@ -178,10 +178,11 @@ export default function Footer() {
         <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '260ms' }}>
           <p className={styles.copyright}>
             &copy; {eventData.presentedBy}. All rights reserved.
+            <span className={styles.copyrightAside}> // Made with claude, caffeine, and questionable life choices.</span>
           </p>
 
           <button type="button" className={styles.backToTopBtn} onClick={scrollToTop}>
-            <span>Back to top</span>
+            <span>Teleport to Spawn</span>
             <span>&uarr;</span>
           </button>
         </div>

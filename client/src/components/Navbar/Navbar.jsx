@@ -18,10 +18,10 @@ export default function Navbar({ onOpenRegister, animateIn }) {
   const activeSection = useScrollSpy(['hero', 'about', 'schedule', 'events', 'quote', 'connect']);
 
   const navItems = [
-    { label: 'About', href: '#about', id: 'about' },
-    { label: 'Schedule', href: '#schedule', id: 'schedule' },
-    { label: 'Events', href: '#events', id: 'events' },
-    { label: 'Connect', href: '#connect', id: 'connect' },
+    { label: 'The Lore', href: '#about', id: 'about' },
+    { label: 'The Game Plan', href: '#schedule', id: 'schedule' },
+    { label: 'The Battleground', href: '#events', id: 'events' },
+    { label: 'Slide Into Our DMs', href: '#connect', id: 'connect' },
   ];
 
   const closeMenu = useCallback(() => {
@@ -166,8 +166,8 @@ export default function Navbar({ onOpenRegister, animateIn }) {
         {/* Actions */}
         <div className={styles.actions}>
           <div className={styles.registerBtnDesktop}>
-            <Button size="sm" variant="primary" onClick={() => onOpenRegister()}>
-              Register with Hommiee
+            <Button size="sm" variant="primary" onClick={() => onOpenRegister()} title="Your homie better be ready.">
+              Register With Your Homie
             </Button>
           </div>
 
@@ -223,7 +223,7 @@ export default function Navbar({ onOpenRegister, animateIn }) {
               onOpenRegister();
             }}
           >
-            Register with Hommiee
+            Register With Your Homie
           </Button>
         </div>
       )}

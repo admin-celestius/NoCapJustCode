@@ -321,7 +321,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                       </svg>
-                      With Hommiee
+                      With Your Homie
                     </span>
                   </div>
                 </div>
@@ -329,7 +329,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                 <div className={styles.detailSectionsStack}>
                   {/* About */}
                   <section className={styles.detailSection}>
-                    <h2 className={styles.sectionMonoLabel}>ABOUT</h2>
+                    <h2 className={styles.sectionMonoLabel}>THE LORE</h2>
                     <p className={styles.sectionParagraph}>
                       {event.about || 'A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.'}
                     </p>
@@ -337,7 +337,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
 
                   {/* At a glance: definition list */}
                   <section className={styles.detailSection}>
-                    <h2 className={styles.sectionMonoLabel}>AT A GLANCE</h2>
+                    <h2 className={styles.sectionMonoLabel}>TL;DR</h2>
                     <dl className={styles.glanceList}>
                       {event.atAGlance?.map((item, idx) => (
                         <div key={idx} className={styles.glanceRow}>
@@ -352,7 +352,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
 
               {/* Right Column (Laptop) / Top (Phone): Framed Photo Gallery */}
               <div className={styles.gallerySlot}>
-                <TrainingArcGallery caption={event.photoCaption || 'From our past workshops'} />
+                <TrainingArcGallery caption={event.photoCaption || 'Lore from our past workshops'} />
               </div>
             </div>
           )}
@@ -402,7 +402,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                       <div className={styles.leftCol}>
                         <section className={styles.detailSection}>
                           <div className={styles.roundsHeaderRow}>
-                            <h2 className={styles.sectionMonoLabel}>COMPETITION TRACKS</h2>
+                            <h2 className={styles.sectionMonoLabel}>PICK YOUR ROUND</h2>
                           </div>
 
                           <div className={styles.roundsCardsGrid}>
@@ -450,7 +450,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                                 {/* Card Footer: Action Bar */}
                                 <div className={styles.roundCardFooter}>
                                   <span className={styles.roundActionPill}>
-                                    <span>Details</span>
+                                    <span>Peep It</span>
                                     <svg className={styles.roundActionArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                       <line x1="5" y1="12" x2="19" y2="12" />
                                       <polyline points="12 5 19 12 12 19" />
@@ -505,7 +505,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                                 {/* Card Footer: Action Bar */}
                                 <div className={styles.roundCardFooter}>
                                   <span className={styles.roundActionPill}>
-                                    <span>Details</span>
+                                    <span>Peep It</span>
                                     <svg className={styles.roundActionArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                       <line x1="5" y1="12" x2="19" y2="12" />
                                       <polyline points="12 5 19 12 12 19" />
@@ -520,7 +520,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                         {/* On phone: Event Day stepper at end of Overview */}
                         <div className={styles.phoneStepperBlock}>
                           <section className={styles.detailSection}>
-                            <h2 className={styles.sectionMonoLabel}>EVENT DAY SCHEDULE</h2>
+                            <h2 className={styles.sectionMonoLabel}>THE GAME PLAN</h2>
                             <div className={styles.stepperCard}>
                               <div className={styles.stepperTrack}>
                                 {event.stepper?.map((step, idx) => (
@@ -580,7 +580,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                       <div className={styles.rightCol}>
                         <div className={styles.desktopTleFactsArea}>
                           <section className={styles.detailSection}>
-                            <h2 className={styles.sectionMonoLabel}>EVENT DAY SCHEDULE</h2>
+                            <h2 className={styles.sectionMonoLabel}>THE GAME PLAN</h2>
                             <div className={styles.stepperCard}>
                               <div className={styles.stepperTrack}>
                                 {event.stepper?.map((step, idx) => (
@@ -799,7 +799,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
             className={styles.primaryRegisterBtn}
             onClick={handleRegisterClick}
           >
-            Register with Hommiee
+            Register With Your Homie
           </button>
         </div>
       </div>

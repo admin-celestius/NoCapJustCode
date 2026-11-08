@@ -44,8 +44,8 @@ export const SPLASH_TIMINGS = {
 export const LOADING_STATUS_MESSAGES = [
   '> telemetry: scanning memory space...',
   '> initializing quantum kernel [OK]...',
-  '> decrypting payload signature...',
-  '> compiling neural telemetry...',
+  '> grepping for resume buzzwords...',
+  '> measuring aura levels...',
   '> verifying participant clearance...',
   '> integrity check in progress...',
 ];
