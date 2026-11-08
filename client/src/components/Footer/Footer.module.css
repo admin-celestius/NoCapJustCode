@@ -404,6 +404,10 @@
   margin: 0;
 }
 
+.copyrightAside {
+  opacity: 0.7;
+}
+
 .backToTopBtn {
   font-family: var(--font-mono);
   font-size: 0.8125rem;

@@ -3,7 +3,7 @@ import React from 'react';
 import styles from './Hero.module.css';
 
 export default function Marquee() {
-  const words = ['LOCK IN', 'EXECUTE', 'NO LARPING', 'ONLY CODING'];
+  const words = ['LOCK IN', 'EXECUTE', 'NO LARPING', 'NO YAPPING'];
   // Repeat words 4 times per group to ensure dense, seamless, uninterrupted loop across all screen sizes (including 4K)
   const sequence = [...words, ...words, ...words, ...words];
 

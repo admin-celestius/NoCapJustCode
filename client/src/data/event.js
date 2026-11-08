@@ -7,8 +7,8 @@ export const EVENT_YEAR = 2026;
 export const SHOW_UNCONFIRMED = false;
 export const PAIR_SIZE = 2;
 
-export const QUOTE = "The more u larp, the less u larp.";
-export const QUOTE_ATTRIBUTION = "Definitely not Albert Einstein";
+export const QUOTE = "Resume says 10x. Code says TLE.";
+export const QUOTE_ATTRIBUTION = "Definitely not Einstein";
 export const QUOTE_ATTRIBUTION_ALTERNATIVES = [
   "The Thinker, still stuck on the same bug",
   "Anonymous senior dev, 4 AM",
@@ -19,7 +19,9 @@ export const LINK_TARGET = "_blank";
 
 export const PRICING = {
   perHead: 149,
-  pair: 149 * 2, // 298 with Hommiee
+  pair: 149 * 2, // 298 per pair, before taxes
+  taxNote: "+ taxes",
+  orderAmountPaise: 30726, // what the backend charges: ₹298 + taxes
 };
 
 export const PAYMENT_NOTE = "Payment instructions will be shared by the organizers.";
@@ -28,16 +30,16 @@ export const eventData = {
   name: "LARPER OR CODER",
   edition: null,
   presentedBy: CLUB_NAME,
-  tagline: "no larping. only coding.",
+  tagline: "no larping. just lock in.",
   description:
-    "A battleground where resume buzzwords don't save you. Only pure logic and locked-in problem solving.",
+    "No amount of resume glazing can save you here. Just you, your homie, and the problems that are about to humble you.",
 
   date: "13 November 2026",
   venue: "Informed through message",
   ticketUrl: "https://makemypass.com/larper-or-coder",
 
   pricingSummary: {
-    pair: `₹${PRICING.pair} with Hommiee`,
+    pair: `₹${PRICING.pair} ${PRICING.taxNote} per duo`,
     split: `₹${PRICING.perHead} × 2 coders · covers both events`,
     splitShort: `₹${PRICING.perHead} × 2 coders`,
   },
@@ -51,14 +53,14 @@ export const eventData = {
 
   fees: {
     perHead: `₹${PRICING.perHead}`,
-    pair: `₹${PRICING.pair}`,
+    pair: `₹${PRICING.pair} ${PRICING.taxNote}`,
     note: "Includes The Training Arc and TLE",
   },
 
   stats: [
-    { label: "tracks", value: "2" },
-    { label: "day", value: "1" },
-    { label: "presented by", value: CLUB_NAME },
+    { label: "ways to cook", value: "2" },
+    { label: "day to lock in", value: "1" },
+    { label: "the people behind the chaos", value: CLUB_NAME },
   ],
 
   schedule: [
@@ -68,7 +70,8 @@ export const eventData = {
       startHour: "10:00 AM",
       title: "Inauguration",
       type: "Ceremony",
-      description: "Formal inauguration.",
+      label: "Opening Ceremony",
+      description: "The calm before the chaos. We kick things off.",
       highlight: false,
     },
     {
@@ -78,7 +81,7 @@ export const eventData = {
       title: "The Training Arc",
       type: "Workshop",
       description:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
+        "Time to upgrade your problem-solving skills before the real boss fight. A hands-on competitive coding workshop led by a top coder of CIT, a 3rd year senior.",
       highlight: true,
       eventId: "training-arc",
     },
@@ -88,7 +91,8 @@ export const eventData = {
       startHour: "11:15 AM",
       title: "Lunch Break",
       type: "Break",
-      description: "Refuel and strategize before the battle.",
+      label: "AFK Mode",
+      description: "Refuel. Touch grass. Prepare for what's coming.",
       highlight: false,
     },
     {
@@ -97,8 +101,9 @@ export const eventData = {
       startHour: "12:00 PM",
       title: "TLE: Think, Lock In, Execute",
       type: "Competition",
+      label: "Boss Fight",
       description:
-        "DEADLOCK Coding Competition with two rounds: Tug of Aura and Who's the GOAT?",
+        "This is where the real ones lock in. The DEADLOCK Coding Competition: two rounds, Tug of Aura and Who's the GOAT? Don't get cooked.",
       highlight: true,
       eventId: "tle",
     },
@@ -108,8 +113,9 @@ export const eventData = {
       startHour: "2:30 PM",
       title: "Results & Prize Distribution",
       type: "Closing",
+      label: "GGs",
       description:
-        "Winners announced, prizes handed out, concluding the day.",
+        "The leaderboard doesn't lie. Winners announced, prizes handed out, and we see who actually cooked.",
       highlight: false,
     },
   ],
@@ -126,13 +132,13 @@ export const eventData = {
       accentColor: "#F26B3A",
       registrationType: "pair",
       blurb:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
+        "Every main character needs a training arc. Level up before the real fight.",
       about:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
+        "Every main character needs a training arc. This is a hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior. Level up before the final boss.",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
 
-        { label: "With Hommiee", type: "entry" },
+        { label: "With Your Homie", type: "entry" },
       ],
       instructor: {
         name: "a top coder of CIT",
@@ -143,9 +149,9 @@ export const eventData = {
         { label: "Time", value: "10:15 AM to 11:15 AM" },
         { label: "Date", value: "13 November 2026" },
         { label: "Venue", value: "Informed through message" },
-        { label: "Entry", value: "One registration with Hommiee covers both events" },
+        { label: "Entry", value: "One registration for you and your homie covers both events" },
       ],
-      photoCaption: "From our past workshops",
+      photoCaption: "Lore from our past workshops",
     },
     {
       id: "tle",
@@ -159,11 +165,11 @@ export const eventData = {
       registrationType: "pair",
       teamSize: PAIR_SIZE,
       blurb:
-        "DEADLOCK Coding Competition with two rounds: Tug of Aura and Who's the GOAT?",
+        "Think you're built different? Two rounds. Zero excuses. Prove it.",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
 
-        { label: "With Hommiee", type: "entry" },
+        { label: "With Your Homie", type: "entry" },
       ],
       overview: {
         about:
@@ -206,7 +212,7 @@ export const eventData = {
           title: "Results & Prize Distribution",
         },
       ],
-      noteCard: "With Hommiee. One registration covers both events.",
+      noteCard: "Your aura is officially on the line. Bring your homie: one registration covers both events.",
     },
   ],
 };

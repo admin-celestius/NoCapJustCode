@@ -83,13 +83,13 @@ export default function Schedule() {
       <div className={`container ${styles.scheduleContainer}`}>
         <div className={styles.scheduleHeader}>
           <div className="section-tag scrollReveal" style={{ transitionDelay: '0ms' }}>
-            // 02. FULL SCHEDULE
+            // 02. THE GAME PLAN
           </div>
           <h2 className="section-title scrollReveal" style={{ transitionDelay: '80ms' }}>
-            Event Timeline
+            The Lock-In Timeline
           </h2>
           <p className="section-subtitle scrollReveal" style={{ transitionDelay: '160ms' }}>
-            A single day structured for learning, testing your endurance, and crowning the problem-solving champions.
+            One day. Two tracks. Zero excuses. Here's how the chaos unfolds.
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default function Schedule() {
                       className={`${styles.statusDot} ${isActivated ? styles.statusDotActive : ''}`}
                       aria-hidden="true"
                     />
-                    <span>{isActivated ? 'LOCKED IN' : 'UPCOMING'}</span>
+                    <span>{isActivated ? 'LOCKED IN' : 'IN QUEUE'}</span>
                   </div>
                 </div>
 
@@ -189,7 +189,7 @@ export default function Schedule() {
                           >
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                           </svg>
-                          <span>{item.type}</span>
+                          <span>{item.label || item.type}</span>
                         </span>
                       )}
                       {isCompetition && (
@@ -216,11 +216,11 @@ export default function Schedule() {
                             <line x1="7" y1="17" x2="4" y2="20" />
                             <line x1="3" y1="19" x2="5" y2="21" />
                           </svg>
-                          <span>{item.type}</span>
+                          <span>{item.label || item.type}</span>
                         </span>
                       )}
                       {!isWorkshop && !isCompetition && (
-                        <span className={styles.badge}>{item.type}</span>
+                        <span className={styles.badge}>{item.label || item.type}</span>
                       )}
                     </div>
                   </div>

@@ -79,13 +79,13 @@ export default function EventCards({ onOpenRegister }) {
       <div className={`container ${styles.eventsContainer}`}>
         <div className={styles.eventsHeader}>
           <div className="section-tag scrollReveal" style={{ transitionDelay: '0ms' }}>
-            // 03. TRACKS & COMPETITIONS
+            // 03. THE LOCK-IN LINEUP
           </div>
           <h2 className="section-title scrollReveal" style={{ transitionDelay: '80ms' }}>
-            Choose Your Arena
+            Here's What We're Cooking
           </h2>
           <p className="section-subtitle scrollReveal" style={{ transitionDelay: '160ms' }}>
-            Two distinct tracks. Level up your algorithmic toolkit in the morning, then put your aura on the line in the afternoon.
+           One workshop. One competition. A whole lot of aura on the line.
           </p>
         </div>
 

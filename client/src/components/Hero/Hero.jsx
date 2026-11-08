@@ -27,7 +27,7 @@ export default function Hero({ onOpenRegister, animateIn }) {
           {/* Left Column */}
           <div className={styles.leftCol}>
             <div className={styles.presenterPill}>
-              PRESENTED BY CELESTIUS
+              // PRESENTED BY CELESTIUS
             </div>
 
             <h1 className={styles.heroTitleH1}>
@@ -60,11 +60,12 @@ export default function Hero({ onOpenRegister, animateIn }) {
               <div className={styles.priceChipRow}>
                 <Chip
                   className={styles.heroChipFull}
+                  title="Cheaper than debugging your life choices."
                   icon={
                     <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>₹</span>
                   }
                 >
-                  ₹149 per person // ₹298 with Hommiee
+                  ₹149 per person // ₹298 + taxes per pair
                 </Chip>
               </div>
 
@@ -80,7 +81,7 @@ export default function Hero({ onOpenRegister, animateIn }) {
                     </svg>
                   }
                 >
-                  DATE: {eventData.date}
+                  D-DAY: {eventData.date}
                 </Chip>
 
                 <Chip
@@ -99,8 +100,8 @@ export default function Hero({ onOpenRegister, animateIn }) {
 
             {/* Action Buttons */}
             <div className={styles.ctaGroup}>
-              <Button size="lg" variant="primary" onClick={() => onOpenRegister()}>
-                Register with Hommiee
+              <Button size="lg" variant="primary" onClick={() => onOpenRegister()} title="Your homie better be ready.">
+                Register With Your Homie
               </Button>
               <Button
                 size="lg"
@@ -109,7 +110,7 @@ export default function Hero({ onOpenRegister, animateIn }) {
                 onClick={scrollToEvents}
                 className={styles.secondaryQuietBtn}
               >
-                See Events
+                See What We're Cooking
               </Button>
             </div>
           </div>

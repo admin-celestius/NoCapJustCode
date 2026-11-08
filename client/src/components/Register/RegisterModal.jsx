@@ -4,17 +4,21 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
-import { registerParticipant } from '../../services/api.js';
-import { startPayment } from '../../services/payment.js';
-import { PRICING, PAYMENT_NOTE } from '../../data/event.js';
+import { createOrder, verifyPayment } from '../../services/api.js';
+import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
+import { PRICING } from '../../data/event.js';
 import Button from '../ui/Button.jsx';
 
 export default function RegisterModal({ isOpen, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
   const [registrationResult, setRegistrationResult] = useState(null);
+  const [pendingPayment, setPendingPayment] = useState(readPendingPayment);
+  const checkoutRef = useRef(null);
+  const submittingRef = useRef(false);
 
   const modalRef = useRef(null);
+  const errorRef = useRef(null);
   const closeBtnRef = useRef(null);
   const triggerRef = useRef(null);
 
@@ -23,14 +27,15 @@ export default function RegisterModal({ isOpen, onClose }) {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       pairName: '',
       members: [
-        { fullName: '', email: '', phone: '', department: '', year: '1' },
-        { fullName: '', email: '', phone: '', department: '', year: '1' },
+        { fullName: '', email: '', phone: '', rollNo: '', department: '', year: '1' },
+        { fullName: '', email: '', phone: '', rollNo: '', department: '', year: '1' },
       ],
     },
     mode: 'onBlur',
@@ -41,6 +46,10 @@ export default function RegisterModal({ isOpen, onClose }) {
     control,
     name: 'members',
   });
+
+  useEffect(() => {
+    if (isOpen && serverError) errorRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [isOpen, serverError]);
 
   // Lock body scroll and handle focus trap / restore trigger on open/close
   useEffect(() => {
@@ -103,36 +112,66 @@ export default function RegisterModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const onSubmit = async (formData) => {
-    if (submitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setServerError(null);
-
+    let paymentDetails = pendingPayment;
     try {
-      const payload = {
-        pairName: formData.pairName ? formData.pairName.trim() : null,
-        members: formData.members.map((m) => ({
-          fullName: m.fullName.trim(),
-          email: m.email.trim(),
-          phone: m.phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').trim(),
-          department: m.department.trim(),
-          year: m.year,
-        })),
-      };
-
-      // Step 1: Submit pair registration to API (or mock adapter)
-      const result = await registerParticipant(payload);
-
-      // Step 2: Payment seam stub
-      await startPayment(result.registration);
-
-      // Step 3: Registration received success state
-      setRegistrationResult(result.registration);
+      if (!paymentDetails) {
+        const payload = {
+          teamName: formData.pairName,
+          members: formData.members.map(({ fullName, ...member }) => ({
+            ...member, name: fullName, year: Number(member.year),
+          })),
+        };
+        // Load Checkout before creating a pending team; blocked scripts must not hold seats.
+        await loadCheckout();
+        const fingerprint = JSON.stringify(payload);
+        if (checkoutRef.current?.fingerprint !== fingerprint) {
+          const order = await createOrder(payload);
+          if (!order.orderId || !order.registrationId || !order.keyId || order.amount !== PRICING.orderAmountPaise || order.currency !== 'INR') {
+            throw new Error('The payment order is invalid. Please contact the organisers.');
+          }
+          checkoutRef.current = { fingerprint, order };
+        }
+        paymentDetails = await startPayment(checkoutRef.current.order);
+        setPendingPayment(paymentDetails);
+        savePendingPayment(paymentDetails);
+      }
+      const result = await verifyPayment(paymentDetails);
+      if (result.success !== true || !result.regCode || !result.registrationId) {
+        throw new Error('The server has not confirmed your duo yet. Retry verification.');
+      }
+      setRegistrationResult(result);
+      setPendingPayment(null);
+      savePendingPayment(null);
+      checkoutRef.current = null;
     } catch (err) {
-      // Truthful error message: preserve inputs on error
-      setServerError(
-        `Server flinched: ${err.message || 'Network error'}. Don't worry, your details are still here, try again.`
-      );
+      for (const issue of err.errors || []) {
+        const field = issue.field?.replace(/^teamName$/, 'pairName').replace(/\.name$/, '.fullName');
+        if (field) setError(field, { type: 'server', message: issue.message });
+      }
+      const conflicts = err.conflicts;
+      if (conflicts && formData) {
+        if (conflicts.teamName) setError('pairName', { message: 'This duo name is already taken.' });
+        formData.members.forEach((member, index) => {
+          for (const [field, key] of [['email', 'emails'], ['phone', 'phones'], ['rollNo', 'rollNos']]) {
+            if (conflicts[key]?.some((value) => value.toLowerCase() === member[field].toLowerCase())) {
+              setError(`members.${index}.${field}`, { message: 'Bro, You’re Already In 💀 This detail belongs to a registered participant.' });
+            }
+          }
+        });
+      }
+      const prefix = err.code === 'SOLD_OUT' ? "Lobby Full. You're Late to the Party. "
+        : err.code === 'DUPLICATE_REGISTRATION' ? "Bro, You're Already In 💀 "
+        : err.status >= 500 ? 'The Server Is Having a Skill Issue. ' : '';
+      const recovery = paymentDetails
+        ? ` Your duo is not confirmed on this screen. Retry verification, not payment. Keep payment ID ${paymentDetails.razorpay_payment_id} for the organisers.`
+        : '';
+      setServerError(`${prefix}${err.message || 'Registration failed.'}${recovery}`);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -171,9 +210,9 @@ export default function RegisterModal({ isOpen, onClose }) {
         {/* Sticky Header */}
         <div className={styles.modalHeader}>
           <div className={styles.modalTitleGroup}>
-            <span className={styles.modalTag}>// PAIR REGISTRATION</span>
+            <span className={styles.modalTag}>// SECURE YOUR SPOT</span>
             <h2 id="modal-title" className={styles.modalTitle}>
-              {registrationResult ? 'Registration Received' : 'Register with Hommiee'}
+              {registrationResult ? "You're On the List" : 'Assemble Your Duo'}
             </h2>
           </div>
 
@@ -196,39 +235,44 @@ export default function RegisterModal({ isOpen, onClose }) {
         {registrationResult ? (
           <div className={styles.successBody}>
             <div className={styles.successIconWrapper}>✓</div>
-            <h3 className={styles.successTitle}>Registration Received</h3>
-            <div className={styles.successTagline}>Your spot has been queued for LARPER OR CODER.</div>
+            <h3 className={styles.successTitle}>Duo Secured. Aura Loading.</h3>
+            <div className={styles.successTagline}>Your payment and registration for LARPER OR CODER are confirmed. Show up with your homie and prove you're not all talk.</div>
 
             <div className={styles.registrationCard}>
-              <span className={styles.regIdLabel}>REGISTRATION ID</span>
-              <span className={styles.regIdValue}>{registrationResult.id}</span>
-              {registrationResult.pairName && (
-                <span className={styles.regSubtext}>Pair: {registrationResult.pairName}</span>
+              <span className={styles.regIdLabel}>REGISTRATION ID // SCREENSHOT THIS</span>
+              <span className={styles.regIdValue}>{registrationResult.regCode}</span>
+              {registrationResult.teamName && (
+                <span className={styles.regSubtext}>Your duo: {registrationResult.teamName}</span>
               )}
               <span className={styles.regSubtext}>
-                Format: Pair (2 coders) // Both tracks included (The Training Arc & TLE)
+                Format: Duo (2 coders) // Both events included: The Training Arc & TLE
               </span>
               <span className={styles.regFeeSubtext}>
-                Total Registration Fee: ₹{PRICING.pair} (₹{PRICING.perHead} × 2)
+                The damage: ₹{PRICING.pair} {PRICING.taxNote} (₹{PRICING.perHead}{'\u00a0'}×{'\u00a0'}2)
               </span>
             </div>
 
             {/* PAYMENT NOTE Line */}
             <div className={styles.paymentNoteBlock}>
               <span className={styles.paymentNoteIcon} aria-hidden="true">ℹ️</span>
-              <span className={styles.paymentNoteText}>{PAYMENT_NOTE}</span>
+              <span className={styles.paymentNoteText}>Payment confirmed. Screenshot your registration ID and keep it handy.</span>
             </div>
 
             <Button size="md" variant="primary" onClick={handleModalClose}>
-              Done & Close
+              GG, Close This
             </Button>
           </div>
         ) : (
-          <form className={styles.formContainer} onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className={styles.formBody}>
+          <form className={styles.formContainer} onSubmit={(event) => handleSubmit(onSubmit)(event)} aria-busy={submitting} noValidate>
+            <fieldset className={styles.formBody} disabled={submitting || !!pendingPayment}>
+              {pendingPayment && !serverError && (
+                <div className={styles.errorBanner} role="status">
+                  Your payment needs server confirmation. Retry verification below; do not pay again.
+                </div>
+              )}
               {/* Error banner if submission failed */}
               {serverError && (
-                <div className={styles.errorBanner} role="alert">
+                <div className={styles.errorBanner} role="alert" ref={errorRef}>
                   <span className={styles.errorIcon} aria-hidden="true">⚠️</span>
                   <span>{serverError}</span>
                 </div>
@@ -238,27 +282,27 @@ export default function RegisterModal({ isOpen, onClose }) {
               <div className={styles.pricingSummaryCard}>
                 <div className={styles.pricingLeft}>
                   <div className={styles.pricingFormula}>
-                    2 people × ₹{PRICING.perHead} = <span className={styles.pricingTotal}>₹{PRICING.pair}</span>
+                    2 people × ₹{PRICING.perHead} = <span className={styles.pricingTotal}>₹{PRICING.pair} {PRICING.taxNote}</span>
                   </div>
                   <div className={styles.pricingCoverage}>
-                    Includes The Training Arc and TLE
+                    One duo, both events: The Training Arc and TLE
                   </div>
                 </div>
                 <div className={styles.pricingPill}>
-                  ONE PASS COVERS ALL
+                  THE DAMAGE REPORT
                 </div>
               </div>
 
-              {/* Optional Pair Name */}
+              {/* Required team name */}
               <div className={styles.formGroup}>
                 <label htmlFor="reg-pairname" className={styles.fieldLabel}>
-                  Pair Name <span className={styles.optionalBadge}>(Optional)</span>
+                  Drop the Duo's Name <span className={styles.optionalBadge}>(Required. Please don't name it Team 1.)</span>
                 </label>
                 <input
                   id="reg-pairname"
                   type="text"
                   autoComplete="off"
-                  placeholder="e.g. ByteForce"
+                  placeholder="e.g. Runtime Terrors"
                   className={`${styles.inputField} ${errors.pairName ? styles.hasError : ''}`}
                   aria-invalid={!!errors.pairName}
                   aria-describedby={errors.pairName ? 'reg-pairname-error' : undefined}
@@ -281,14 +325,14 @@ export default function RegisterModal({ isOpen, onClose }) {
                   return (
                     <div key={field.id} className={styles.memberCard}>
                       <div className={styles.memberCardHeader}>
-                        <span>MEMBER #{memberNum} {memberNum === 1 ? '(PRIMARY CONTACT)' : ''}</span>
+                        <span>{memberNum === 1 ? 'PLAYER ONE (PRIMARY CONTACT)' : 'PLAYER TWO'}</span>
                       </div>
 
                       <div className={styles.memberFieldsGrid}>
                         {/* Full Name */}
                         <div className={styles.formGroup}>
                           <label htmlFor={`member-${index}-name`} className={styles.fieldLabelSmall}>
-                            Full Name
+                            Full Name (The Government One)
                           </label>
                           <input
                             id={`member-${index}-name`}
@@ -308,10 +352,34 @@ export default function RegisterModal({ isOpen, onClose }) {
                           )}
                         </div>
 
+                        {[
+                          ['rollNo', 'Drop Your Registration Number', 'e.g. 2026CSE001'],
+                        ].map(([name, label, placeholder]) => (
+                          <div className={styles.formGroup} key={name}>
+                            <label htmlFor={`member-${index}-${name}`} className={styles.fieldLabelSmall}>{label}</label>
+                            <input
+                              id={`member-${index}-${name}`}
+                              type="text"
+                              autoComplete="off"
+                              placeholder={placeholder}
+                              className={`${styles.inputField} ${memberErrors?.[name] ? styles.hasError : ''}`}
+                              aria-invalid={!!memberErrors?.[name]}
+                              aria-describedby={memberErrors?.[name] ? `member-${index}-${name}-error` : undefined}
+                              onFocus={handleInputFocus}
+                              {...register(`members.${index}.${name}`)}
+                            />
+                            {memberErrors?.[name] && (
+                              <span id={`member-${index}-${name}-error`} className={styles.errorMessage} role="alert">
+                                {memberErrors[name].message}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+
                         {/* Email */}
                         <div className={styles.formGroup}>
                           <label htmlFor={`member-${index}-email`} className={styles.fieldLabelSmall}>
-                            Email Address
+                            Drop Your Email
                           </label>
                           <input
                             id={`member-${index}-email`}
@@ -334,7 +402,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                         {/* Phone */}
                         <div className={styles.formGroup}>
                           <label htmlFor={`member-${index}-phone`} className={styles.fieldLabelSmall}>
-                            Phone (10 Digits)
+                            Drop Your Digits (10-Digit Mobile)
                           </label>
                           <input
                             id={`member-${index}-phone`}
@@ -365,7 +433,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                         {/* Year of Study */}
                         <div className={styles.formGroup}>
                           <label htmlFor={`member-${index}-year`} className={styles.fieldLabelSmall}>
-                            Year of Study
+                            Which Year Are You Surviving?
                           </label>
                           <select
                             id={`member-${index}-year`}
@@ -375,10 +443,11 @@ export default function RegisterModal({ isOpen, onClose }) {
                             onFocus={handleInputFocus}
                             {...register(`members.${index}.year`)}
                           >
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
+                            <option value="1">1st Year · Fresh Spawn</option>
+                            <option value="2">2nd Year · Side Quests</option>
+                            <option value="3">3rd Year · Main Story</option>
+                            <option value="4">4th Year · Final Boss</option>
+                            <option value="5">5th Year · Bonus Level</option>
                           </select>
                           {memberErrors?.year && (
                             <span id={`member-${index}-year-error`} className={styles.errorMessage} role="alert">
@@ -390,7 +459,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                         {/* Department */}
                         <div className={styles.formGroup}>
                           <label htmlFor={`member-${index}-dept`} className={styles.fieldLabelSmall}>
-                            Department
+                            What's Your Department?
                           </label>
                           <input
                             id={`member-${index}-dept`}
@@ -414,13 +483,13 @@ export default function RegisterModal({ isOpen, onClose }) {
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Sticky / Fixed Footer Actions */}
             <div className={styles.modalFooter}>
               <div className={styles.footerPriceSummaryMobile}>
                 <span className={styles.footerFormula}>2 people × ₹{PRICING.perHead}</span>
-                <span className={styles.footerTotal}>Total ₹{PRICING.pair}</span>
+                <span className={styles.footerTotal}>Total ₹{PRICING.pair} {PRICING.taxNote}</span>
               </div>
 
               <div className={styles.footerActions}>
@@ -432,16 +501,17 @@ export default function RegisterModal({ isOpen, onClose }) {
                   disabled={submitting}
                   className={styles.cancelBtnDesktop}
                 >
-                  Cancel
+                  Nah, Go Back
                 </Button>
                 <Button
-                  type="submit"
+                  type={pendingPayment ? "button" : "submit"}
+                  onClick={pendingPayment ? () => onSubmit() : undefined}
                   variant="primary"
                   size="lg"
                   disabled={submitting}
                   className={styles.submitBtn}
                 >
-                  {submitting ? 'Registering with Hommiee...' : `Register with Hommiee - ₹${PRICING.pair}`}
+                  {submitting ? 'Cooking Your Registration...' : pendingPayment ? 'Retry Payment Verification' : `Lock In the Duo · ₹${PRICING.pair} ${PRICING.taxNote}`}
                 </Button>
               </div>
             </div>

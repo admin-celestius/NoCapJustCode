@@ -58,36 +58,36 @@ export default function Footer() {
             </div>
 
             <p className={styles.brandBio}>
-              Presented by {eventData.presentedBy}. A battleground where resume buzzwords don't save you. Only pure logic and locked-in problem solving.
+              Presented by {eventData.presentedBy}. Built for the ones who actually code. No larping, no glazing, just pure problem-solving.
             </p>
           </div>
 
           {/* Quick Links Column */}
           <div className={`${styles.footerCol} scrollReveal`} style={{ transitionDelay: '100ms' }}>
-            <span className={styles.colTitle}>Navigation</span>
+            <span className={styles.colTitle}>Fast Travel</span>
             <ul className={styles.colList}>
               <li>
                 <a href="#hero" className={styles.colLink}>
                   <span className={styles.linkArrow} aria-hidden="true">▸</span>
-                  <span>Home</span>
+                  <span>Spawn Point</span>
                 </a>
               </li>
               <li>
                 <a href="#about" className={styles.colLink}>
                   <span className={styles.linkArrow} aria-hidden="true">▸</span>
-                  <span>About the Event</span>
+                  <span>The Lore</span>
                 </a>
               </li>
               <li>
                 <a href="#schedule" className={styles.colLink}>
                   <span className={styles.linkArrow} aria-hidden="true">▸</span>
-                  <span>Full Schedule</span>
+                  <span>The Game Plan</span>
                 </a>
               </li>
               <li>
                 <a href="#events" className={styles.colLink}>
                   <span className={styles.linkArrow} aria-hidden="true">▸</span>
-                  <span>Tracks & Arenas</span>
+                  <span>The Battleground</span>
                 </a>
               </li>
             </ul>
@@ -95,7 +95,7 @@ export default function Footer() {
 
           {/* Connect Column (Complete UI Redesign: Interactive Terminal Uplink, NO badges) */}
           <div id="connect" className={`${styles.connectCol} scrollReveal`} style={{ transitionDelay: '180ms' }}>
-            <span className={styles.colTitle}>Connect</span>
+            <span className={styles.colTitle}>Slide Into Our DMs</span>
 
             <div className={styles.terminalConsole}>
               {/* Terminal Title Bar */}
@@ -112,7 +112,7 @@ export default function Footer() {
               <div className={styles.terminalBody}>
                 {/* Direct Uplink 1: Website */}
                 <div className={styles.commandUnit}>
-                  <span className={styles.cliComment}># 01. official website</span>
+                  <span className={styles.cliComment}># 01. the official lore</span>
                   <a
                     href={eventData.connect.website}
                     target={LINK_TARGET}
@@ -129,7 +129,7 @@ export default function Footer() {
 
                 {/* Direct Uplink 2: Instagram */}
                 <div className={styles.commandUnit}>
-                  <span className={styles.cliComment}># 02. social dispatch</span>
+                  <span className={styles.cliComment}># 02. peep the chaos</span>
                   <a
                     href={eventData.connect.instagram}
                     target={LINK_TARGET}
@@ -159,10 +159,11 @@ export default function Footer() {
         <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '240ms' }}>
           <p className={styles.copyright}>
             &copy; {new Date().getFullYear()} {eventData.presentedBy} &middot; Larper or Coder. All rights reserved.
+            <span className={styles.copyrightAside}> // Made with claude, caffeine, and questionable life choices.</span>
           </p>
 
           <button type="button" className={styles.backToTopBtn} onClick={scrollToTop} aria-label="Scroll back to top">
-            <span>Back to top</span>
+            <span>Teleport to Spawn</span>
             <span className={styles.topArrow}>&uarr;</span>
           </button>
         </div>

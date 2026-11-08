@@ -53,6 +53,7 @@ export default function EventCard({
         tabIndex={0}
         role="button"
         aria-expanded={isFlipped}
+        title={isTle ? "Plot armor won't save you." : 'Character development starts here.'}
         aria-label={`${event.title} - ${isFlipped ? 'Content revealed. Click to turn back' : 'Click to turn card'}`}
         onClick={onCardClick}
         onKeyDown={handleKeyDown}
@@ -64,7 +65,7 @@ export default function EventCard({
           {/* Animated Glowing Rotating Border Beam */}
           <span className={styles.borderBeam} aria-hidden="true" />
 
-          {/* Center: ONLY the Logo + "Touch to Revel" */}
+          {/* Center: ONLY the Logo + "Touch to Reveal" */}
           <div className={styles.backBrandCenter}>
             <div className={styles.brandGlowHalo} aria-hidden="true" />
             <picture className={styles.backLogoPicture}>
@@ -77,7 +78,7 @@ export default function EventCard({
                 decoding="async"
               />
             </picture>
-            <span className={styles.touchToRevealText}>Touch to Revel</span>
+            <span className={styles.touchToRevealText}>Touch to Reveal</span>
           </div>
         </div>
 
@@ -207,7 +208,7 @@ export default function EventCard({
               }}
               aria-label={`View details and rules for ${event.title}`}
             >
-              <span className={styles.actionText}>View Details & Rules</span>
+              <span className={styles.actionText}>Know the Game</span>
               <svg
                 className={styles.actionArrow}
                 width="14"

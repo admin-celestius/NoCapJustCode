@@ -13,17 +13,18 @@ export default function About() {
           {/* Left Text */}
           <div className={styles.textContent}>
             <div className="section-tag scrollReveal" style={{ transitionDelay: '0ms' }}>
-              // 01. ABOUT THE EVENT
+              // 01. THE LORE
             </div>
             <h2 className="section-title scrollReveal" style={{ transitionDelay: '80ms' }}>
-              Built for real problem solvers, not resume larpers.
+              All talk? Time to beat the allegations.
             </h2>
             <p className={`${styles.description} scrollReveal`} style={{ transitionDelay: '160ms' }}>
-              This is the flagship coding event presented by Celestius.
-              It brings together developers and competitive programmers who prefer writing clean, working algorithms over talking about them.
+              Think you're cracked at coding? Time to prove it. No buzzword flexing, no tutorial merchant energy.
+              Just pure logic and problem-solving.
             </p>
             <p className={`${styles.subDescription} scrollReveal`} style={{ transitionDelay: '240ms' }}>
-              From deep-dive conceptual workshops to live algorithmic battlegrounds, this is where theory gets tested under real pressure.
+              From getting your training arc in to entering the coding battleground, this is where theory meets reality.
+              Your GitHub contributions won't save you here.
             </p>
           </div>
 
