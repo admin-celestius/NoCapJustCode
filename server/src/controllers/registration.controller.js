@@ -38,6 +38,45 @@ async function findConflicts({ teamName, emails = [], phones = [], rollNos = [] 
 const hasConflicts = (c) => c.emails.length || c.phones.length || c.rollNos.length || c.teamName;
 
 
+/**
+ * GET /api/registrations/check-team?name=RuntimeTerrors
+ * Checks whether a duo codename is unique/available among confirmed registrations.
+ */
+exports.checkTeamName = async (req, res, next) => {
+  try {
+    const rawName = (req.query.name || req.query.teamName || req.body?.name || req.body?.teamName || '').trim();
+    if (!rawName || rawName.length < 2) {
+      return res.status(400).json({
+        available: false,
+        message: 'Duo codename must be at least 2 characters',
+      });
+    }
+    if (rawName.length > 60) {
+      return res.status(400).json({
+        available: false,
+        message: 'Duo codename cannot exceed 60 characters',
+      });
+    }
+
+    const existing = await Registration.findOne({
+      status: 'confirmed',
+      teamName: rawName,
+    })
+      .collation(CASE_INSENSITIVE)
+      .select('_id')
+      .lean();
+
+    const available = !existing;
+    return res.json({
+      available,
+      teamName: rawName,
+      message: available ? 'Codename is available' : 'This duo codename is already taken',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.checkAvailability = async (req, res, next) => {
   try {
     const parsed = checkSchema.safeParse(req.body);
