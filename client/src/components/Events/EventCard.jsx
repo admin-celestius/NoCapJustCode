@@ -17,6 +17,7 @@ export default function EventCard({
   const numeral = event.numeral || String(index + 1).padStart(2, '0');
   const tagLabel = event.tagLabel || (index === 0 ? 'WORKSHOP' : 'COMPETITION');
   const isSecondCard = index === 1;
+  const isTle = event.id === 'tle' || isSecondCard;
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -100,7 +101,26 @@ export default function EventCard({
 
           {/* Hero Title */}
           <div className={styles.titleWrapper}>
-            <h3 className={styles.cardTitle}>{event.title}</h3>
+            {isTle ? (
+              <div className={styles.tleGlitchContainer}>
+                <div className={styles.tleGlitchHeader}>
+                  <span className={styles.tleLaserCyan} aria-hidden="true" />
+                  <h3 className={styles.tleGlitchMain} data-text="TLE">
+                    TLE
+                  </h3>
+                  <span className={styles.tleLaserOrange} aria-hidden="true" />
+                </div>
+                <div className={styles.tleGlitchSub} data-text="think, lock in, execute">
+                  <span className={styles.subKeyword1}>think</span>
+                  <span className={styles.subSep}>,</span>
+                  <span className={styles.subKeyword2}>lock in</span>
+                  <span className={styles.subSep}>,</span>
+                  <span className={styles.subKeyword3}>execute</span>
+                </div>
+              </div>
+            ) : (
+              <h3 className={styles.cardTitle}>{event.title}</h3>
+            )}
           </div>
 
           {/* Description Blurb */}

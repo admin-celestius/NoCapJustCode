@@ -173,7 +173,7 @@ export default function RegisterModal({ isOpen, onClose }) {
           <div className={styles.modalTitleGroup}>
             <span className={styles.modalTag}>// PAIR REGISTRATION</span>
             <h2 id="modal-title" className={styles.modalTitle}>
-              {registrationResult ? 'Registration Received' : 'Register as a Pair'}
+              {registrationResult ? 'Registration Received' : 'Register with Hommiee'}
             </h2>
           </div>
 
@@ -441,7 +441,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                   disabled={submitting}
                   className={styles.submitBtn}
                 >
-                  {submitting ? 'Registering pair...' : `Register as a pair - ₹${PRICING.pair}`}
+                  {submitting ? 'Registering with Hommiee...' : `Register with Hommiee - ₹${PRICING.pair}`}
                 </Button>
               </div>
             </div>

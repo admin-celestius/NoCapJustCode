@@ -7,8 +7,15 @@ import GoatTerminalVisual from './GoatTerminalVisual.jsx';
 import TrainingArcGallery from './TrainingArcGallery.jsx';
 import { eventData } from '../../data/event.js';
 
+const TAB_INDEX_MAP = {
+  overview: 0,
+  round1: 1,
+  round2: 2,
+};
+
 export default function EventDetailPanel({ event, isOpen, onClose, onRegister, triggerRef }) {
   const [activeTab, setActiveTab] = useState('overview'); // For TLE: 'overview' | 'round1' | 'round2'
+  const activeTabIndex = TAB_INDEX_MAP[activeTab] ?? 0;
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [prevEventId, setPrevEventId] = useState(null);
@@ -195,7 +202,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
       >
         {/* (a) HEADER (64px laptop, 56px phone, border-bottom) */}
         <div
-          className={styles.sheetHeader}
+          className={`${styles.sheetHeader} ${isTle ? styles.sheetHeaderWithTabs : ''}`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -204,6 +211,60 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
           <div className={styles.dragPillIndicator} aria-hidden="true" />
           <div className={styles.headerBar}>
             <span className={styles.headerEyebrow}>{eyebrowText}</span>
+
+            {/* Redesigned Centered Segmented Control for TLE Navigation */}
+            {isTle && (
+              <div className={styles.headerNavCenter}>
+                <div
+                  className={styles.segmentedControl}
+                  role="tablist"
+                  aria-label="TLE Competition Sections"
+                >
+                  <button
+                    id="tab-btn-overview"
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'overview'}
+                    aria-controls="panel-overview"
+                    tabIndex={activeTab === 'overview' ? 0 : -1}
+                    className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
+                    onClick={() => switchTab('overview')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 0)}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    id="tab-btn-round1"
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'round1'}
+                    aria-controls="panel-round1"
+                    tabIndex={activeTab === 'round1' ? 0 : -1}
+                    className={`${styles.tabBtn} ${activeTab === 'round1' ? styles.tabBtnActive : ''}`}
+                    onClick={() => switchTab('round1')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 1)}
+                    aria-label="Round 1: Tug of Aura"
+                  >
+                    Round 1
+                  </button>
+                  <button
+                    id="tab-btn-round2"
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'round2'}
+                    aria-controls="panel-round2"
+                    tabIndex={activeTab === 'round2' ? 0 : -1}
+                    className={`${styles.tabBtn} ${activeTab === 'round2' ? styles.tabBtnActive : ''}`}
+                    onClick={() => switchTab('round2')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 2)}
+                    aria-label="Round 2: Who's the GOAT?"
+                  >
+                    Round 2
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               ref={closeBtnRef}
               type="button"
@@ -229,12 +290,12 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
           </div>
         </div>
 
-        {/* (b) BODY: Inner Scroll Container with Dark Thin Scrollbar */}
-        <div className={styles.sheetBody}>
+        {/* (b) BODY: Inner Container */}
+        <div className={`${styles.sheetBody} ${isTle ? styles.sheetBodyWithTle : ''}`}>
           {/* TRAINING ARC: 2-column on laptop, ordered with gallery first on phone */}
           {isTrainingArc && (
             <div className={styles.trainingArcContainer}>
-              {/* Left Column: Title, Chips, About, Instructor, Glance */}
+              {/* Left Column: Title, Chips, About, Glance */}
               <div className={styles.leftCol}>
                 <div className={styles.detailTitleSection}>
                   <h1 id="detail-panel-title" className={styles.detailTitle}>
@@ -252,13 +313,6 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                       13 Nov 2026
                     </span>
 
-                    <span className={styles.detailMetaChip}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      Pega Lab
-                    </span>
 
                     <span className={styles.detailMetaChip}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -267,21 +321,19 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                       </svg>
-                      Pair entry
+                      With Hommiee
                     </span>
                   </div>
                 </div>
 
                 <div className={styles.detailSectionsStack}>
-                  {/* About: ONE paragraph */}
+                  {/* About */}
                   <section className={styles.detailSection}>
                     <h2 className={styles.sectionMonoLabel}>ABOUT</h2>
                     <p className={styles.sectionParagraph}>
                       {event.about || 'A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.'}
                     </p>
                   </section>
-
-
 
                   {/* At a glance: definition list */}
                   <section className={styles.detailSection}>
@@ -308,242 +360,423 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
           {/* TLE COMPETITION CONTENT */}
           {isTle && (
             <div className={styles.tleContainer}>
-              {/* Left Column: Title, Chips, Sticky Segmented Tab Bar, Panels */}
-              <div className={styles.leftCol}>
-                <div className={styles.detailTitleSection}>
-                  <h1 id="detail-panel-title" className={styles.detailTitle}>
-                    {event.title}
-                  </h1>
-
-                  <div className={styles.detailMetaRow}>
-                    <span className={styles.detailMetaChip}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      13 Nov 2026
-                    </span>
-
-                    <span className={styles.detailMetaChip}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      Pega Lab
-                    </span>
-
-                    <span className={styles.detailMetaChip}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                      </svg>
-                      Pair entry
-                    </span>
+              {/* TLE Hero Header (Preserved across all 3 sections) */}
+              <div className={styles.tleOverviewHeader}>
+                <div className={styles.tleTitleSection}>
+                  <div className={`${styles.tleGlitchContainer} ${styles.tleGlitchContainerModal}`}>
+                    <div className={styles.tleGlitchHeader}>
+                      <span className={styles.tleLaserCyan} aria-hidden="true" />
+                      <h1 id="detail-panel-title" className={`${styles.tleGlitchMain} ${styles.tleGlitchMainModal}`} data-text="TLE">
+                        TLE
+                      </h1>
+                      <span className={styles.tleLaserOrange} aria-hidden="true" />
+                    </div>
+                    <div className={`${styles.tleGlitchSub} ${styles.tleGlitchSubModal}`} data-text="think, lock in, execute">
+                      <span className={styles.subKeyword1}>think</span>
+                      <span className={styles.subSep}>,</span>
+                      <span className={styles.subKeyword2}>lock in</span>
+                      <span className={styles.subSep}>,</span>
+                      <span className={styles.subKeyword3}>execute</span>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Sticky Tab Bar (Solid #0B0B0D background, full width on phone, 44px tall, radius 12px) */}
-                <div className={styles.stickyTabBarWrapper}>
-                  <div className={styles.segmentedControl} role="tablist" aria-label="TLE Competition Sections">
-                    <button
-                      id="tab-btn-overview"
-                      type="button"
-                      role="tab"
-                      aria-selected={activeTab === 'overview'}
-                      aria-controls="panel-overview"
-                      tabIndex={activeTab === 'overview' ? 0 : -1}
-                      className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
-                      onClick={() => switchTab('overview')}
-                      onKeyDown={(e) => handleTabKeyDown(e, 0)}
-                    >
-                      Overview
-                    </button>
-                    <button
-                      id="tab-btn-round1"
-                      type="button"
-                      role="tab"
-                      aria-selected={activeTab === 'round1'}
-                      aria-controls="panel-round1"
-                      tabIndex={activeTab === 'round1' ? 0 : -1}
-                      className={`${styles.tabBtn} ${activeTab === 'round1' ? styles.tabBtnActive : ''}`}
-                      onClick={() => switchTab('round1')}
-                      onKeyDown={(e) => handleTabKeyDown(e, 1)}
-                    >
-                      Round 1
-                    </button>
-                    <button
-                      id="tab-btn-round2"
-                      type="button"
-                      role="tab"
-                      aria-selected={activeTab === 'round2'}
-                      aria-controls="panel-round2"
-                      tabIndex={activeTab === 'round2' ? 0 : -1}
-                      className={`${styles.tabBtn} ${activeTab === 'round2' ? styles.tabBtnActive : ''}`}
-                      onClick={() => switchTab('round2')}
-                      onKeyDown={(e) => handleTabKeyDown(e, 2)}
-                    >
-                      Round 2
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tab 1: Overview */}
-                {activeTab === 'overview' && (
+              {/* Main Sliding Content Viewport (Animated 3-Section Track) */}
+              <div className={styles.tleSliderViewport}>
+                <div
+                  className={styles.tleSliderTrack}
+                  style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}
+                >
+                  {/* Slide 0: Overview */}
                   <div
                     id="panel-overview"
                     role="tabpanel"
                     aria-labelledby="tab-btn-overview"
-                    className={styles.tabPanelFade}
+                    aria-hidden={activeTab !== 'overview'}
+                    tabIndex={activeTab === 'overview' ? 0 : -1}
+                    className={`${styles.tleSlide} ${activeTab === 'overview' ? styles.tleSlideActive : styles.tleSlideInactive}`}
                   >
-                    <section className={styles.detailSection}>
-                      <h2 className={styles.sectionMonoLabel}>ABOUT</h2>
-                      <p className={styles.sectionParagraph}>
-                        {event.overview?.about}
-                      </p>
-                    </section>
-
-                    <section className={styles.detailSection}>
-                      <h2 className={styles.sectionMonoLabel}>FORMAT</h2>
-                      <p className={styles.sectionParagraph}>
-                        {event.overview?.format}
-                      </p>
-                    </section>
-
-                    <section className={styles.detailSection}>
-                      <h2 className={styles.sectionMonoLabel}>AT A GLANCE</h2>
-                      <dl className={styles.glanceList}>
-                        {event.overview?.atAGlance?.map((item, idx) => (
-                          <div key={idx} className={styles.glanceRow}>
-                            <dt className={styles.glanceLabel}>{item.label}</dt>
-                            <dd className={styles.glanceValue}>{item.value}</dd>
+                    <div className={styles.tleGridRow}>
+                      {/* Left Column: Track Cards (Stacked Vertically & Full Width) */}
+                      <div className={styles.leftCol}>
+                        <section className={styles.detailSection}>
+                          <div className={styles.roundsHeaderRow}>
+                            <h2 className={styles.sectionMonoLabel}>COMPETITION TRACKS</h2>
                           </div>
-                        ))}
-                      </dl>
-                    </section>
 
-                    {/* On phone: Event Day stepper at end of Overview */}
-                    <div className={styles.phoneStepperBlock}>
-                      <section className={styles.detailSection}>
-                        <h2 className={styles.sectionMonoLabel}>EVENT DAY</h2>
-                        <div className={styles.stepperCard}>
-                          <div className={styles.stepperTrack}>
-                            {event.stepper?.map((step, idx) => (
-                              <div key={idx} className={styles.stepperItem}>
-                                <div className={styles.stepperLineWrap}>
-                                  <span className={styles.stepperDot} />
-                                  {idx < event.stepper.length - 1 && <span className={styles.stepperLine} />}
+                          <div className={styles.roundsCardsGrid}>
+                            {/* Round 1 Card */}
+                            <button
+                              type="button"
+                              className={`${styles.roundPreviewCard} ${styles.roundCardOne}`}
+                              onClick={() => switchTab('round1')}
+                              aria-label="Choose Round 1: Tug of Aura to view details"
+                            >
+                              <span className={styles.cardCornerNotch} aria-hidden="true" />
+                              <span className={styles.cardAccentBar} aria-hidden="true" />
+                              <span className={styles.roundCardShimmer} aria-hidden="true" />
+
+                              {/* Left Cyber Conduit Rail */}
+                              <div className={styles.cardConduitColumn} aria-hidden="true">
+                                <span className={`${styles.conduitPip} ${styles.conduitPipOne}`} />
+                                <span className={`${styles.conduitPip} ${styles.conduitPipOne}`} />
+                                <span className={`${styles.conduitPip} ${styles.conduitPipOne}`} />
+                              </div>
+
+                              <div className={styles.cardContentWrapper}>
+                                {/* Card Top: Badges */}
+                                <div className={styles.roundCardTop}>
+                                  <div className={styles.roundBadgeWrap}>
+                                    <span className={`${styles.roundBeaconDot} ${styles.roundBeaconOne}`} aria-hidden="true" />
+                                    <span className={styles.roundBadge}>ROUND 01</span>
+                                  </div>
+                                  <span className={styles.roundTrackTag}>TUG-OF-WAR</span>
                                 </div>
-                                <div className={styles.stepperContent}>
-                                  <span className={styles.stepperTime}>{step.time}</span>
-                                  <span className={styles.stepperTitle}>{step.title}</span>
-                                  {step.subItems && (
-                                    <ul className={styles.stepperSublist}>
-                                      {step.subItems.map((sub, sIdx) => (
-                                        <li key={sIdx} className={styles.stepperSubitem}>
-                                          {sub}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
+
+                                {/* Card Main: Icon + Title */}
+                                <div className={styles.roundCardMain}>
+                                  <div className={styles.roundCardIconWrap} aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                    </svg>
+                                  </div>
+                                  <div className={styles.roundCardTitleBlock}>
+                                    <h3 className={styles.roundCardTitle}>Tug of Aura</h3>
+                                    <span className={styles.roundCardTechSubtitle}>// ARENA · KINETIC FORCE</span>
+                                  </div>
+                                </div>
+
+                                {/* Card Footer: Action Bar */}
+                                <div className={styles.roundCardFooter}>
+                                  <span className={styles.roundActionPill}>
+                                    <span>Details</span>
+                                    <svg className={styles.roundActionArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <line x1="5" y1="12" x2="19" y2="12" />
+                                      <polyline points="12 5 19 12 12 19" />
+                                    </svg>
+                                  </span>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        </div>
+                            </button>
 
-                        <div className={styles.noteCard}>
-                          <p className={styles.noteCardText}>{event.noteCard}</p>
+                            {/* Round 2 Card */}
+                            <button
+                              type="button"
+                              className={`${styles.roundPreviewCard} ${styles.roundCardTwo}`}
+                              onClick={() => switchTab('round2')}
+                              aria-label="Choose Round 2: Who's the GOAT? to view details"
+                            >
+                              <span className={styles.cardCornerNotch} aria-hidden="true" />
+                              <span className={styles.cardAccentBar} aria-hidden="true" />
+                              <span className={styles.roundCardShimmer} aria-hidden="true" />
+
+                              {/* Left Cyber Conduit Rail */}
+                              <div className={styles.cardConduitColumn} aria-hidden="true">
+                                <span className={`${styles.conduitPip} ${styles.conduitPipTwo}`} />
+                                <span className={`${styles.conduitPip} ${styles.conduitPipTwo}`} />
+                                <span className={`${styles.conduitPip} ${styles.conduitPipTwo}`} />
+                              </div>
+
+                              <div className={styles.cardContentWrapper}>
+                                {/* Card Top: Badges */}
+                                <div className={styles.roundCardTop}>
+                                  <div className={styles.roundBadgeWrap}>
+                                    <span className={`${styles.roundBeaconDot} ${styles.roundBeaconTwo}`} aria-hidden="true" />
+                                    <span className={styles.roundBadge}>ROUND 02</span>
+                                  </div>
+                                  <span className={styles.roundTrackTag}>REVERSE CODE</span>
+                                </div>
+
+                                {/* Card Main: Icon + Title */}
+                                <div className={styles.roundCardMain}>
+                                  <div className={styles.roundCardIconWrap} aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="4 17 10 11 4 5" />
+                                      <line x1="12" y1="19" x2="20" y2="19" />
+                                    </svg>
+                                  </div>
+                                  <div className={styles.roundCardTitleBlock}>
+                                    <h3 className={styles.roundCardTitle}>Who's the GOAT?</h3>
+                                    <span className={styles.roundCardTechSubtitle}>// TERMINAL · BLACK BOX</span>
+                                  </div>
+                                </div>
+
+                                {/* Card Footer: Action Bar */}
+                                <div className={styles.roundCardFooter}>
+                                  <span className={styles.roundActionPill}>
+                                    <span>Details</span>
+                                    <svg className={styles.roundActionArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <line x1="5" y1="12" x2="19" y2="12" />
+                                      <polyline points="12 5 19 12 12 19" />
+                                    </svg>
+                                  </span>
+                                </div>
+                              </div>
+                            </button>
+                          </div>
+                        </section>
+
+                        {/* On phone: Event Day stepper at end of Overview */}
+                        <div className={styles.phoneStepperBlock}>
+                          <section className={styles.detailSection}>
+                            <h2 className={styles.sectionMonoLabel}>EVENT DAY SCHEDULE</h2>
+                            <div className={styles.stepperCard}>
+                              <div className={styles.stepperTrack}>
+                                {event.stepper?.map((step, idx) => (
+                                  <div key={idx} className={`${styles.stepperItem} ${idx === 0 ? styles.stepperItemFirst : styles.stepperItemSecond}`}>
+                                    <div className={styles.stepperLineWrap}>
+                                      <span className={`${styles.stepperDot} ${idx === 0 ? styles.stepperDotActive : styles.stepperDotSecond}`} />
+                                      {idx < event.stepper.length - 1 && (
+                                        <div className={styles.stepperTrackRail}>
+                                          <span className={styles.stepperLaserBeam} />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className={`${styles.stepperContent} ${idx === 0 ? styles.stepperContentFirst : styles.stepperContentSecond}`}>
+                                      <span className={styles.stepperTime}>{step.time}</span>
+                                      <span className={styles.stepperTitle}>{step.title}</span>
+                                      {step.subItems && (
+                                        <div className={styles.stepperInteractiveSublist}>
+                                          <button
+                                            type="button"
+                                            className={`${styles.stepperSubitemBtn} ${styles.stepperSubitemBtnFirst}`}
+                                            onClick={() => switchTab('round1')}
+                                            aria-label="Switch to Round 1: Tug of Aura"
+                                          >
+                                            <span className={styles.stepperSubitemBullet} aria-hidden="true">▸</span>
+                                            <span>Round 1: Tug of Aura</span>
+                                            <svg className={styles.stepperSubitemArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                              <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className={`${styles.stepperSubitemBtn} ${styles.stepperSubitemBtnSecond}`}
+                                            onClick={() => switchTab('round2')}
+                                            aria-label="Switch to Round 2: Who's the GOAT?"
+                                          >
+                                            <span className={styles.stepperSubitemBullet} aria-hidden="true">▸</span>
+                                            <span>Round 2: Who's the GOAT?</span>
+                                            <svg className={styles.stepperSubitemArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                              <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className={styles.noteCard}>
+                              <p className={styles.noteCardText}>{event.noteCard}</p>
+                            </div>
+                          </section>
                         </div>
-                      </section>
+                      </div>
+
+                      {/* Right Column (Laptop >= 768px): Event Day Schedule */}
+                      <div className={styles.rightCol}>
+                        <div className={styles.desktopTleFactsArea}>
+                          <section className={styles.detailSection}>
+                            <h2 className={styles.sectionMonoLabel}>EVENT DAY SCHEDULE</h2>
+                            <div className={styles.stepperCard}>
+                              <div className={styles.stepperTrack}>
+                                {event.stepper?.map((step, idx) => (
+                                  <div key={idx} className={`${styles.stepperItem} ${idx === 0 ? styles.stepperItemFirst : styles.stepperItemSecond}`}>
+                                    <div className={styles.stepperLineWrap}>
+                                      <span className={`${styles.stepperDot} ${idx === 0 ? styles.stepperDotActive : styles.stepperDotSecond}`} />
+                                      {idx < event.stepper.length - 1 && (
+                                        <div className={styles.stepperTrackRail}>
+                                          <span className={styles.stepperLaserBeam} />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className={`${styles.stepperContent} ${idx === 0 ? styles.stepperContentFirst : styles.stepperContentSecond}`}>
+                                      <span className={styles.stepperTime}>{step.time}</span>
+                                      <span className={styles.stepperTitle}>{step.title}</span>
+                                      {step.subItems && (
+                                        <div className={styles.stepperInteractiveSublist}>
+                                          <button
+                                            type="button"
+                                            className={`${styles.stepperSubitemBtn} ${styles.stepperSubitemBtnFirst}`}
+                                            onClick={() => switchTab('round1')}
+                                            aria-label="Switch to Round 1: Tug of Aura"
+                                          >
+                                            <span className={styles.stepperSubitemBullet} aria-hidden="true">▸</span>
+                                            <span>Round 1: Tug of Aura</span>
+                                            <svg className={styles.stepperSubitemArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                              <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className={`${styles.stepperSubitemBtn} ${styles.stepperSubitemBtnSecond}`}
+                                            onClick={() => switchTab('round2')}
+                                            aria-label="Switch to Round 2: Who's the GOAT?"
+                                          >
+                                            <span className={styles.stepperSubitemBullet} aria-hidden="true">▸</span>
+                                            <span>Round 2: Who's the GOAT?</span>
+                                            <svg className={styles.stepperSubitemArrow} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                              <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className={styles.noteCard}>
+                              <p className={styles.noteCardText}>{event.noteCard}</p>
+                            </div>
+                          </section>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* Tab 2: Round 1 (Tug of Aura) */}
-                {activeTab === 'round1' && (
+                  {/* Slide 1: Round 1 (Tug of Aura) */}
                   <div
                     id="panel-round1"
                     role="tabpanel"
                     aria-labelledby="tab-btn-round1"
-                    className={styles.tabPanelFade}
+                    aria-hidden={activeTab !== 'round1'}
+                    tabIndex={activeTab === 'round1' ? 0 : -1}
+                    className={`${styles.tleSlide} ${activeTab === 'round1' ? styles.tleSlideActive : styles.tleSlideInactive}`}
                   >
-                    <section className={styles.detailSection}>
-                      <h2 className={styles.sectionMonoLabel}>ROUND 1: TUG OF AURA</h2>
-                      <p className={styles.sectionParagraph}>
-                        {event.round1?.description}
-                      </p>
-                    </section>
+                    <div className={styles.tleGridRow}>
+                      <div className={styles.leftCol}>
+                        <section className={styles.detailSection}>
+                          <div className={styles.roundDetailHeader}>
+                            <span className={styles.roundDetailBadge}>ROUND 01 · COMPETITION TRACK</span>
+                            <h2 className={styles.roundDetailTitle}>{event.round1?.name}</h2>
+                          </div>
+                          <p className={styles.sectionParagraph}>
+                            {event.round1?.description}
+                          </p>
 
-                    <div className={styles.visualSlot}>
-                      <TugOfAuraVisual />
+                          <div className={styles.roundMetaCallout}>
+                            <div className={styles.roundMetaRow}>
+                              <span className={styles.roundMetaKey}>MECHANIC</span>
+                              <span className={styles.roundMetaVal}>Digital Tug-of-War · Teams Alpha vs Omega</span>
+                            </div>
+                            <div className={styles.roundMetaRow}>
+                              <span className={styles.roundMetaKey}>CORE FOCUS</span>
+                              <span className={styles.roundMetaVal}>Speed, Accuracy & Live Kinetic Force Control</span>
+                            </div>
+                          </div>
+
+                          <div className={styles.tabNavRow}>
+                            <button
+                              type="button"
+                              className={styles.tabNavBackBtn}
+                              onClick={() => switchTab('overview')}
+                            >
+                              <span>←</span>
+                              <span>Back to Overview</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.tabNavNextBtn}
+                              onClick={() => switchTab('round2')}
+                            >
+                              <span>Next: Round 2</span>
+                              <span>→</span>
+                            </button>
+                          </div>
+                        </section>
+
+                        {/* On phone: Show visual inside panel */}
+                        <div className={styles.phoneVisualSlot}>
+                          <TugOfAuraVisual />
+                        </div>
+                      </div>
+
+                      {/* Right Column (Laptop >= 768px): Tug Visual */}
+                      <div className={styles.rightCol}>
+                        <div className={styles.desktopVisualArea}>
+                          <div className={styles.visualSlot}>
+                            <TugOfAuraVisual />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* Tab 3: Round 2 (Who's the GOAT?) */}
-                {activeTab === 'round2' && (
+                  {/* Slide 2: Round 2 (Who's the GOAT?) */}
                   <div
                     id="panel-round2"
                     role="tabpanel"
                     aria-labelledby="tab-btn-round2"
-                    className={styles.tabPanelFade}
+                    aria-hidden={activeTab !== 'round2'}
+                    tabIndex={activeTab === 'round2' ? 0 : -1}
+                    className={`${styles.tleSlide} ${activeTab === 'round2' ? styles.tleSlideActive : styles.tleSlideInactive}`}
                   >
-                    <section className={styles.detailSection}>
-                      <h2 className={styles.sectionMonoLabel}>ROUND 2: WHO'S THE GOAT?</h2>
-                      <p className={styles.sectionParagraph}>
-                        {event.round2?.description}
-                      </p>
-                    </section>
+                    <div className={styles.tleGridRow}>
+                      <div className={styles.leftCol}>
+                        <section className={styles.detailSection}>
+                          <div className={styles.roundDetailHeader}>
+                            <span className={styles.roundDetailBadge}>ROUND 02 · COMPETITION TRACK</span>
+                            <h2 className={styles.roundDetailTitle}>{event.round2?.name}</h2>
+                          </div>
+                          <p className={styles.sectionParagraph}>
+                            {event.round2?.description}
+                          </p>
 
-                    <div className={styles.visualSlot}>
-                      <GoatTerminalVisual />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column (Laptop >= 768px): Event Day Stepper & Note Card */}
-              <div className={styles.rightCol}>
-                <div className={styles.desktopTleFactsArea}>
-                  <section className={styles.detailSection}>
-                    <h2 className={styles.sectionMonoLabel}>EVENT DAY</h2>
-                    <div className={styles.stepperCard}>
-                      <div className={styles.stepperTrack}>
-                        {event.stepper?.map((step, idx) => (
-                          <div key={idx} className={styles.stepperItem}>
-                            <div className={styles.stepperLineWrap}>
-                              <span className={styles.stepperDot} />
-                              {idx < event.stepper.length - 1 && <span className={styles.stepperLine} />}
+                          <div className={styles.roundMetaCallout}>
+                            <div className={styles.roundMetaRow}>
+                              <span className={styles.roundMetaKey}>ENVIRONMENT</span>
+                              <span className={styles.roundMetaVal}>Black Box Terminal · No Problem Statement</span>
                             </div>
-                            <div className={styles.stepperContent}>
-                              <span className={styles.stepperTime}>{step.time}</span>
-                              <span className={styles.stepperTitle}>{step.title}</span>
-                              {step.subItems && (
-                                <ul className={styles.stepperSublist}>
-                                  {step.subItems.map((sub, sIdx) => (
-                                    <li key={sIdx} className={styles.stepperSubitem}>
-                                      {sub}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
+                            <div className={styles.roundMetaRow}>
+                              <span className={styles.roundMetaKey}>CORE FOCUS</span>
+                              <span className={styles.roundMetaVal}>Only Raw Input & Output Provided · No Complexity Clues</span>
                             </div>
                           </div>
-                        ))}
+
+                          <div className={styles.tabNavRow}>
+                            <button
+                              type="button"
+                              className={styles.tabNavBackBtn}
+                              onClick={() => switchTab('round1')}
+                            >
+                              <span>←</span>
+                              <span>Round 1: Tug of Aura</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.tabNavNextBtn}
+                              onClick={() => switchTab('overview')}
+                            >
+                              <span>Back to Overview</span>
+                              <span>→</span>
+                            </button>
+                          </div>
+                        </section>
+
+                        {/* On phone: Show visual inside panel */}
+                        <div className={styles.phoneVisualSlot}>
+                          <GoatTerminalVisual />
+                        </div>
+                      </div>
+
+                      {/* Right Column (Laptop >= 768px): Animated Terminal Visual */}
+                      <div className={styles.rightCol}>
+                        <div className={styles.desktopVisualArea}>
+                          <div className={styles.visualSlot}>
+                            <GoatTerminalVisual />
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    <div className={styles.noteCard}>
-                      <p className={styles.noteCardText}>{event.noteCard}</p>
-                    </div>
-                  </section>
+                  </div>
                 </div>
               </div>
-            </div>
+          </div>
           )}
         </div>
 
@@ -566,7 +799,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
             className={styles.primaryRegisterBtn}
             onClick={handleRegisterClick}
           >
-            Register as a pair
+            Register with Hommiee
           </button>
         </div>
       </div>

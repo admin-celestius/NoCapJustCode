@@ -8,7 +8,7 @@ import Button from '../ui/Button.jsx';
 import Chip from '../ui/Chip.jsx';
 import Marquee from './Marquee.jsx';
 import { SectionScene } from '../Scene/index.js';
-import Laptop from '../Scene/Hardware/Laptop.jsx';
+import Quote from '../Quote/Quote.jsx';
 
 export default function Hero({ onOpenRegister, animateIn }) {
   const scrollToEvents = (e) => {
@@ -64,7 +64,7 @@ export default function Hero({ onOpenRegister, animateIn }) {
                     <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>₹</span>
                   }
                 >
-                  ₹149 per person // ₹298 per pair
+                  ₹149 per person // ₹298 with Hommiee
                 </Chip>
               </div>
 
@@ -100,7 +100,7 @@ export default function Hero({ onOpenRegister, animateIn }) {
             {/* Action Buttons */}
             <div className={styles.ctaGroup}>
               <Button size="lg" variant="primary" onClick={() => onOpenRegister()}>
-                Register as a pair
+                Register with Hommiee
               </Button>
               <Button
                 size="lg"
@@ -112,18 +112,11 @@ export default function Hero({ onOpenRegister, animateIn }) {
                 See Events
               </Button>
             </div>
-
-            {/* Centered Laptop in page flow on phone (< 768px) */}
-            <div className={styles.phoneLaptopBlock}>
-              <Laptop width="100%" height={150} floatVariant="A" hasHalo={true} haloStrong={true} opacity={0.72} isHero={true} />
-            </div>
           </div>
 
-          {/* Right Column: Complete Hardware Laptop */}
+          {/* Right Column: The Thinker Statue & Quote (In place of Laptop) */}
           <div className={styles.rightCol}>
-            <div className={styles.heroLaptopWrapper}>
-              <Laptop width={440} height={275} floatVariant="A" hasHalo={true} haloStrong={true} opacity={0.74} isHero={true} />
-            </div>
+            <Quote isHero={true} animateIn={animateIn} />
           </div>
         </div>
       </div>

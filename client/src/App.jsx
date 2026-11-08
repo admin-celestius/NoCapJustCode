@@ -10,7 +10,6 @@ import Hero from './components/Hero/Hero.jsx';
 import About from './components/About/About.jsx';
 import Schedule from './components/Schedule/Schedule.jsx';
 import EventCards from './components/Events/EventCards.jsx';
-import Quote from './components/Quote/Quote.jsx';
 import RegisterModal from './components/Register/RegisterModal.jsx';
 import Footer from './components/Footer/Footer.jsx';
 import { auditHardwarePlacement } from './utils/hardwareAudit.js';
@@ -110,7 +109,6 @@ export default function App() {
           <About />
           <Schedule />
           <EventCards onOpenRegister={handleOpenRegister} />
-          <Quote />
         </main>
 
         {/* Footer */}

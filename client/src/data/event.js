@@ -19,7 +19,7 @@ export const LINK_TARGET = "_blank";
 
 export const PRICING = {
   perHead: 149,
-  pair: 149 * 2, // 298 per pair
+  pair: 149 * 2, // 298 with Hommiee
 };
 
 export const PAYMENT_NOTE = "Payment instructions will be shared by the organizers.";
@@ -33,11 +33,11 @@ export const eventData = {
     "A battleground where resume buzzwords don't save you. Only pure logic and locked-in problem solving.",
 
   date: "13 November 2026",
-  venue: "Pega Lab",
+  venue: "Informed through message",
   ticketUrl: "https://makemypass.com/larper-or-coder",
 
   pricingSummary: {
-    pair: `₹${PRICING.pair} per pair`,
+    pair: `₹${PRICING.pair} with Hommiee`,
     split: `₹${PRICING.perHead} × 2 coders · covers both events`,
     splitShort: `₹${PRICING.perHead} × 2 coders`,
   },
@@ -131,8 +131,8 @@ export const eventData = {
         "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
-        { label: "Pega Lab", type: "venue" },
-        { label: "Pair entry", type: "entry" },
+
+        { label: "With Hommiee", type: "entry" },
       ],
       instructor: {
         name: "a top coder of CIT",
@@ -142,8 +142,8 @@ export const eventData = {
       atAGlance: [
         { label: "Time", value: "10:15 AM to 11:15 AM" },
         { label: "Date", value: "13 November 2026" },
-        { label: "Venue", value: "Pega Lab" },
-        { label: "Entry", value: "One pair registration covers both events" },
+        { label: "Venue", value: "Informed through message" },
+        { label: "Entry", value: "One registration with Hommiee covers both events" },
       ],
       photoCaption: "From our past workshops",
     },
@@ -162,8 +162,8 @@ export const eventData = {
         "DEADLOCK Coding Competition with two rounds: Tug of Aura and Who's the GOAT?",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
-        { label: "Pega Lab", type: "venue" },
-        { label: "Pair entry", type: "entry" },
+
+        { label: "With Hommiee", type: "entry" },
       ],
       overview: {
         about:
@@ -173,7 +173,7 @@ export const eventData = {
         atAGlance: [
           { label: "Time", value: "12:00 PM to 2:30 PM" },
           { label: "Date", value: "13 November 2026" },
-          { label: "Venue", value: "Pega Lab" },
+          { label: "Venue", value: "Informed through message" },
           { label: "Results and prizes", value: "2:30 PM to 3:00 PM" },
         ],
       },
@@ -193,7 +193,7 @@ export const eventData = {
           { input: "[4, 4, 4, 4]", output: "16" },
           { input: "[100, 25, -10]", output: "115" },
         ],
-        targetComplexity: "Target: O(N) Time · O(1) Auxiliary Space",
+        rawIoNotice: "Only Raw Input & Output Provided · No Complexity Clues · No Problem Statement",
       },
       stepper: [
         {
@@ -206,7 +206,7 @@ export const eventData = {
           title: "Results & Prize Distribution",
         },
       ],
-      noteCard: "Pairs only. One registration covers both events.",
+      noteCard: "With Hommiee. One registration covers both events.",
     },
   ],
 };

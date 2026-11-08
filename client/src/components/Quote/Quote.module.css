@@ -371,3 +371,83 @@
     transition: none !important;
   }
 }
+
+
+/* ----------------------------------------------------
+   Hero Variant (Placed in Hero section in place of Laptop)
+   ---------------------------------------------------- */
+.heroQuote {
+  background-color: transparent !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: visible !important;
+  width: 100%;
+}
+
+.heroQuoteContainer {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0;
+}
+
+.heroQuoteFigure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .heroQuoteFigure {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 2.5vw, 36px);
+  }
+}
+
+.heroStatueWrapper {
+  margin-top: 0 !important;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroStatueImage {
+  width: clamp(130px, 32vw, 190px) !important;
+  height: auto !important;
+  aspect-ratio: 900 / 1420;
+  object-fit: contain;
+  filter: drop-shadow(0 0 24px rgba(242, 107, 58, 0.22));
+}
+
+@media (min-width: 1024px) {
+  .heroStatueImage {
+    width: auto !important;
+    height: clamp(300px, 40vh, 420px) !important;
+  }
+}
+
+.heroQuoteContent {
+  max-width: 28ch !important;
+}
+
+@media (min-width: 640px) {
+  .heroQuoteContent {
+    align-items: flex-start !important;
+    text-align: left !important;
+    border-left: 2px solid var(--accent-orange, #F26B3A) !important;
+    padding-left: 18px !important;
+  }
+
+  .heroQuote .mobileDivider {
+    display: none !important;
+  }
+}

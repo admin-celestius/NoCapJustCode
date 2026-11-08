@@ -8,7 +8,7 @@ import { QUOTE, QUOTE_ATTRIBUTION } from '../../data/event.js';
 // Dense hatching reads strong, keep statue quiet at 0.6 opacity
 const STATUE_OPACITY = 0.6;
 
-export default function Quote() {
+export default function Quote({ isHero = false, animateIn = true }) {
   const sectionRef = useRef(null);
   const [isRevealed, setIsRevealed] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -23,6 +23,13 @@ export default function Quote() {
 
     // Apply interactive pre-state only after JS observer is ready
     el.setAttribute('data-ready', 'true');
+
+    if (isHero) {
+      if (animateIn) {
+        setIsRevealed(true);
+      }
+      return;
+    }
 
     const checkReveal = () => {
       const rect = el.getBoundingClientRect();
@@ -68,35 +75,37 @@ export default function Quote() {
       window.removeEventListener('scroll', handleScroll);
       if (observer) observer.disconnect();
     };
-  }, []);
+  }, [isHero, animateIn]);
+
+  const Tag = isHero ? 'div' : 'section';
 
   return (
-    <section
+    <Tag
       id="quote"
       ref={sectionRef}
-      className={styles.quoteSection}
+      className={`${styles.quoteSection} ${isHero ? styles.heroQuote : ''}`}
       data-revealed={isRevealed ? 'true' : 'false'}
       style={{ '--statue-opacity': STATUE_OPACITY }}
     >
-      <div className={styles.quoteContainer}>
-        <figure className={styles.quoteFigure}>
+      <div className={isHero ? styles.heroQuoteContainer : styles.quoteContainer}>
+        <figure className={`${styles.quoteFigure} ${isHero ? styles.heroQuoteFigure : ''}`}>
           {/* Statue Column */}
-          <div className={styles.statueWrapper}>
+          <div className={`${styles.statueWrapper} ${isHero ? styles.heroStatueWrapper : ''}`}>
             <img
               src={thinkerWebp}
               srcSet={`${thinker450Webp} 450w, ${thinkerWebp} 900w`}
-              sizes="(min-width: 1024px) 450px, (min-width: 768px) 320px, 62vw"
+              sizes={isHero ? "(min-width: 1024px) 260px, (min-width: 768px) 220px, 45vw" : "(min-width: 1024px) 450px, (min-width: 768px) 320px, 62vw"}
               width={900}
               height={1420}
               alt="Orange line drawing of The Thinker statue, seated with his chin on his hand"
-              className={styles.statueImage}
+              className={`${styles.statueImage} ${isHero ? styles.heroStatueImage : ''}`}
               decoding="async"
-              loading="lazy"
+              loading={isHero ? "eager" : "lazy"}
             />
           </div>
 
           {/* Quote Column */}
-          <div className={styles.quoteContent}>
+          <div className={`${styles.quoteContent} ${isHero ? styles.heroQuoteContent : ''}`}>
             {/* Mobile / Tablet orange divider */}
             <div className={styles.mobileDivider} aria-hidden="true" />
 
@@ -136,6 +145,6 @@ export default function Quote() {
           </div>
         </figure>
       </div>
-    </section>
+    </Tag>
   );
 }
