@@ -1,24 +1,28 @@
-const { isValidObjectId } = require('mongoose');
+const mongoose = require('mongoose');
+const { isValidObjectId } = mongoose;
 const razorpay = require('../config/razorpay');
 const Registration = require('../models/Registration');
 const Participant = require('../models/Participant');
 const Payment = require('../models/Payment');
-const { validateRegistration } = require('../utils/validate');
+const { validateRegistration, checkSchema, paymentSchema, issues } = require('../utils/validate');
 const { isValidCheckoutSignature } = require('../utils/signature');
 const { confirmRegistration } = require('../services/confirmRegistration');
 const capacity = require('../services/capacity');
 
 const TEAM_SIZE = 2;
-const FEE_PER_PERSON_PAISE = Math.round(Number(process.env.FEE_PER_PERSON_INR || 0) * 100);
+const FEE_PER_PERSON_PAISE = Math.round(Number(process.env.FEE_PER_PERSON_INR || 149) * 100);
+if (FEE_PER_PERSON_PAISE !== 14900) throw new Error('FEE_PER_PERSON_INR must be 149 for this event');
+// Charged per pair: ₹298 + taxes (Razorpay gateway fees passed on).
+const ORDER_AMOUNT_PAISE = 30726;
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000; 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
 
-async function findConflicts({ teamName, emails = [], phones = [] }) {
+async function findConflicts({ teamName, emails = [], phones = [], rollNos = [] }) {
   const [people, team] = await Promise.all([
     Participant.find(
-      { status: 'confirmed', $or: [{ email: { $in: emails } }, { phone: { $in: phones } }] },
-      'email phone'
-    ).lean(),
+      { status: 'confirmed', $or: [{ email: { $in: emails } }, { phone: { $in: phones } }, { rollNo: { $in: rollNos } }] },
+      'email phone rollNo'
+    ).collation(CASE_INSENSITIVE).lean(),
     teamName
       ? Registration.findOne({ status: 'confirmed', teamName }).collation(CASE_INSENSITIVE).select('_id').lean()
       : null,
@@ -26,18 +30,19 @@ async function findConflicts({ teamName, emails = [], phones = [] }) {
   return {
     emails: people.map((p) => p.email).filter((e) => emails.includes(e)),
     phones: people.map((p) => p.phone).filter((p) => phones.includes(p)),
+    rollNos: people.map((p) => p.rollNo?.toUpperCase()).filter((p) => rollNos.includes(p)),
     teamName: Boolean(team),
   };
 }
 
-const hasConflicts = (c) => c.emails.length || c.phones.length || c.teamName;
+const hasConflicts = (c) => c.emails.length || c.phones.length || c.rollNos.length || c.teamName;
 
 
 exports.checkAvailability = async (req, res, next) => {
   try {
-    const emails = (req.body.emails || []).map((e) => String(e).trim().toLowerCase()).slice(0, TEAM_SIZE);
-    const phones = (req.body.phones || []).map((p) => String(p).replace(/\D/g, '').slice(-10)).slice(0, TEAM_SIZE);
-    const conflicts = await findConflicts({ teamName: req.body.teamName?.trim(), emails, phones });
+    const parsed = checkSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: 'Validation failed', errors: issues(parsed.error) });
+    const conflicts = await findConflicts(parsed.data);
     res.json({ available: !hasConflicts(conflicts), conflicts });
   } catch (err) {
     next(err);
@@ -46,12 +51,12 @@ exports.checkAvailability = async (req, res, next) => {
 
 /**
  * POST /api/registrations/create-order
- * Body: { teamName, members: [ {name,email,phone,college,department?,year?,rollNo?}, {...} ] }
+ * Body: { teamName, members: [ {name,email,phone,department,year,rollNo}, {...} ] }
  * members[0] is the leader (the person paying).
  */
 exports.createOrder = async (req, res, next) => {
   try {
-    const { errors, data } = validateRegistration(req.body, TEAM_SIZE);
+    const { errors, data } = validateRegistration(req.body);
     if (errors.length) return res.status(400).json({ message: 'Validation failed', errors });
 
     const { teamName, members } = data;
@@ -59,9 +64,10 @@ exports.createOrder = async (req, res, next) => {
       teamName,
       emails: members.map((m) => m.email),
       phones: members.map((m) => m.phone),
+      rollNos: members.map((m) => m.rollNo),
     });
     if (hasConflicts(conflicts)) {
-      return res.status(409).json({ message: 'Already registered', conflicts });
+      return res.status(409).json({ code: 'DUPLICATE_REGISTRATION', message: 'Already registered', conflicts });
     }
 
     // Soft cap (UX only): confirmed teams + teams currently in checkout. The real
@@ -71,64 +77,76 @@ exports.createOrder = async (req, res, next) => {
       return res.status(409).json({ code: 'SOLD_OUT', message: 'Registrations are full' });
     }
 
-    const amount = FEE_PER_PERSON_PAISE * TEAM_SIZE;
+    const amount = ORDER_AMOUNT_PAISE;
     const expiresAt = new Date(Date.now() + PENDING_TTL_MS);
 
-    // 1. Pending team
-    const registration = await Registration.create({
-      teamName,
-      teamSize: TEAM_SIZE,
-      amount,
-      currency: 'INR',
-      status: 'pending',
-      expiresAt,
-    });
-
-    const people = await Participant.insertMany(
-      members.map((m, i) => ({
-        ...m,
-        role: i === 0 ? 'leader' : 'member',
-        registration: registration._id,
+    // Persist a complete pair atomically before creating an external order.
+    let registration;
+    await mongoose.connection.transaction(async (session) => {
+      [registration] = await Registration.create([{
+        teamName,
+        teamSize: TEAM_SIZE,
+        amount,
+        currency: 'INR',
         status: 'pending',
         expiresAt,
-      }))
-    );
-    registration.leader = people[0]._id;
-    registration.members = people.map((p) => p._id);
-    await registration.save();
+      }], { session });
 
-    // 3. Razorpay order
-    const receipt = registration._id.toString();
-    const order = await razorpay.orders.create({
-      amount,
-      currency: 'INR',
-      receipt,
-      notes: {
-        registrationId: receipt,
-        teamName,
-        leaderEmail: members[0].email,
-        // Informational: after this the seat is no longer held, and a late payment may be refunded
-        seatHeldUntil: new Date(registration.createdAt.getTime() + capacity.HOLD_MS).toISOString(),
-      },
+      const people = await Participant.insertMany(
+        members.map((m, i) => ({
+          ...m,
+          role: i === 0 ? 'leader' : 'member',
+          registration: registration._id,
+          status: 'pending',
+          expiresAt,
+        })), { session }
+      );
+      registration.leader = people[0]._id;
+      registration.members = people.map((p) => p._id);
+      await registration.save({ session });
     });
 
-    await Payment.create({
-      registration: registration._id,
-      razorpayOrderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      receipt,
-      status: 'created',
-    });
+    // Gateway calls stay outside transactions (MongoDB can retry callbacks).
+    try {
+      const receipt = registration._id.toString();
+      const order = await razorpay.orders.create({
+        amount,
+        currency: 'INR',
+        receipt,
+        notes: {
+          registrationId: receipt,
+          teamName,
+          leaderEmail: members[0].email,
+          // Informational: after this the seat is no longer held, and a late payment may be refunded
+          seatHeldUntil: new Date(registration.createdAt.getTime() + capacity.HOLD_MS).toISOString(),
+        },
+      });
 
-    res.status(201).json({
-      registrationId: registration._id,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
-      prefill: { name: members[0].name, email: members[0].email, contact: members[0].phone },
-    });
+      await Payment.create({
+        registration: registration._id,
+        razorpayOrderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        receipt,
+        status: 'created',
+      });
+
+      res.status(201).json({
+        registrationId: registration._id,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        prefill: { name: members[0].name, email: members[0].email, contact: members[0].phone },
+        checkoutTimeout: capacity.HOLD_MINUTES > 0 ? capacity.HOLD_MINUTES * 60 : 900,
+      });
+    } catch (err) {
+      await mongoose.connection.transaction(async (session) => {
+        await Participant.deleteMany({ registration: registration._id, status: 'pending' }, { session });
+        await Registration.deleteOne({ _id: registration._id, status: 'pending' }, { session });
+      });
+      throw err;
+    }
   } catch (err) {
     next(err);
   }
@@ -136,26 +154,33 @@ exports.createOrder = async (req, res, next) => {
 
 exports.verifyPayment = async (req, res, next) => {
   try {
-    const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body;
-    if (!orderId || !paymentId || !signature) {
-      return res.status(400).json({ message: 'Missing payment fields' });
-    }
-
-    if (!isValidCheckoutSignature(orderId, paymentId, signature)) {
-      return res.status(400).json({ message: 'Invalid payment signature' });
-    }
+    const parsed = paymentSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: 'Invalid payment fields', errors: issues(parsed.error) });
+    const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = parsed.data;
 
     const payment = await Payment.findOne({ razorpayOrderId: orderId });
     if (!payment) return res.status(404).json({ message: 'Order not found' });
 
+    if (!isValidCheckoutSignature(payment.razorpayOrderId, paymentId, signature)) {
+      return res.status(400).json({ message: 'Invalid payment signature' });
+    }
+
     let rp = await razorpay.payments.fetch(paymentId);
-    if (rp.order_id !== orderId || Number(rp.amount) !== payment.amount) {
+    const matchesOrder = (p) => p.id === paymentId && p.order_id === payment.razorpayOrderId &&
+      Number(p.amount) === payment.amount && p.currency === payment.currency;
+    if (!matchesOrder(rp)) {
       return res.status(400).json({ message: 'Payment does not match order' });
     }
     if (rp.status === 'authorized') {
-      rp = await razorpay.payments.capture(paymentId, payment.amount, payment.currency);
+      try {
+        rp = await razorpay.payments.capture(paymentId, payment.amount, payment.currency);
+      } catch (err) {
+        // An auto-capture or parallel verification may have captured it already.
+        rp = await razorpay.payments.fetch(paymentId);
+        if (rp.status !== 'captured') throw err;
+      }
     }
-    if (rp.status !== 'captured') {
+    if (!matchesOrder(rp) || rp.status !== 'captured') {
       return res.status(400).json({ message: `Payment not completed (status: ${rp.status})` });
     }
 
@@ -173,18 +198,21 @@ exports.verifyPayment = async (req, res, next) => {
       case 'conflict':
         return res.status(409).json({
           success: false,
-          message: `Payment received, but this ${result.field} was registered by another team meanwhile. Your refund will be processed.`,
+          code: 'PAYMENT_REVIEW',
+          message: `Payment received, but this ${result.field} was registered by another team meanwhile. Contact the organisers for a refund; do not pay again.`,
         });
       case 'sold_out':
         return res.status(409).json({
           success: false,
           code: 'SOLD_OUT',
-          message: 'Payment received but the event filled up. Your refund will be processed.',
+          message: 'Payment received but the event filled up. Contact the organisers for a refund; do not pay again.',
         });
       case 'registration_missing':
+      case 'registration_incomplete':
         return res.status(410).json({
           success: false,
-          message: 'Payment received but the registration session expired. Please contact the organisers.',
+          code: 'PAYMENT_REVIEW',
+          message: 'Payment received but the registration session expired or is incomplete. Contact the organisers; do not pay again.',
         });
       default:
         return res.status(404).json({ success: false, message: 'Order not found' });

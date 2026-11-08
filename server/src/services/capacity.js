@@ -10,7 +10,8 @@ function intFromEnv(name, fallback) {
 }
 
 // Max confirmed teams. Enforced for real in confirmRegistration via EventConfig.
-const MAX_TEAMS = intFromEnv('MAX_TEAMS', 50);
+const MAX_TEAMS = intFromEnv('MAX_TEAMS', 30);
+if (MAX_TEAMS > 30) throw new Error('MAX_TEAMS cannot exceed 30 (60 participants)');
 // How long a pending registration "holds" a seat while its owner is in Razorpay Checkout.
 // Only used for the soft check / availability; the 24h TTL is separate and unchanged.
 const HOLD_MINUTES = intFromEnv('HOLD_MINUTES', 15);

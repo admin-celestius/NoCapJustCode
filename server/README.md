@@ -1,99 +1,90 @@
-# Event registration backend (team of 2, Razorpay)
+# LARPER OR CODER registration backend
 
-```
-npm install
-cp .env.example .env   # fill in keys
+Node/Express, Mongoose, Zod and Razorpay. ₹149 per person / ₹298 per pair; maximum 30 confirmed teams (60 participants).
+
+## Run
+
+From `server/`:
+
+```sh
+yarn install
+# Fresh installation only: preserve an existing .env.
+cp .env.example .env
+# Fill in a dedicated MongoDB replica-set database and Razorpay test credentials.
 npm run dev
 ```
 
-## Payment flow
+`src/server.js` always loads **server/.env**, regardless of the shell's working directory. Shell/deployment variables take precedence. The repository-root `.env` is not consumed. Startup requires MongoDB connectivity, transaction support and successful model/unique-index initialization before opening the HTTP port. `/health` also reports loss of the database connection.
 
-1. Form submit → `POST /api/registrations/create-order` → creates a pending team, 2 pending participants and a Razorpay order.
-2. Frontend opens Razorpay Checkout with the returned `orderId`.
-3. Checkout success handler → `POST /api/registrations/verify-payment` → signature check, payment re-fetched from Razorpay, team and both people marked `confirmed`, `regCode` returned.
-4. Razorpay also calls `POST /api/payments/webhook` (`order.paid`). If the user closed the tab before step 3, this still confirms the team. Both paths are idempotent.
-5. Unpaid attempts are removed automatically after 24h (TTL index).
+| Variable | Value / meaning |
+| --- | --- |
+| `MONGO_URI` | MongoDB replica set or Atlas database URI; required |
+| `PORT` | Backend port; default 5000 |
+| `CLIENT_ORIGIN` | Exact frontend origin(s), comma-separated; default `http://localhost:5173` |
+| `RAZORPAY_KEY_ID` | Test/live public key for the matching Razorpay environment; required |
+| `RAZORPAY_KEY_SECRET` | Matching server-only secret; required |
+| `FEE_PER_PERSON_INR` | 149; any value producing a different price fails startup |
+| `MAX_TEAMS` | Default 30; integers 0–30 only (0 closes registration) |
+| `HOLD_MINUTES` | Default 15; pending-checkout hold window, 0 disables soft holds |
 
-## Environment variables
+`FRONTEND_URL`, `TRUST_PROXY`, `REGISTRATION_FEE_PER_PERSON`, registration-token and admin variables from the old root configuration are not used. No authentication/admin feature exists in this backend. Registration APIs are public; proof of payment requires a server-verified Checkout signature. No `trust proxy` setting is added.
 
-See `.env.example`. Capacity-related:
+## Local development database configured by this audit
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `MAX_TEAMS` | `50` | Maximum number of **confirmed** teams. |
-| `HOLD_MINUTES` | `15` | How long a pending registration holds a seat while its owner is in Razorpay Checkout. `0` disables holds. |
+With user approval, the local `server/.env` now uses:
 
-## Registration cap
-
-- **Soft check (create-order):** seats taken = confirmed teams + pending teams created in the last `HOLD_MINUTES`. If that reaches `MAX_TEAMS`, `create-order` returns `409 { code: 'SOLD_OUT', message: 'Registrations are full' }` and nothing is created. An abandoned checkout frees its seat after `HOLD_MINUTES`, not after the 24h TTL.
-- **Hard cap (confirmation):** an `EventConfig` document (`key: 'main'`) holds `confirmedCount`. It is created on first use and seeded from the real number of confirmed teams. The counter is incremented with `confirmedCount < MAX_TEAMS` inside the confirmation transaction, so two payments racing for the last seat can't both be confirmed. If the transaction aborts, for example on a duplicate email, the increment rolls back.
-- **Paid but full:** the team becomes `refund_required`, both participants `cancelled`, and the Payment is `paid` + `needsReview` with note `Event full at confirmation; refund required`. Refund these from the Razorpay dashboard (`Payment.find({ needsReview: true })`). `verify-payment` returns `409 { success: false, code: 'SOLD_OUT', message }`; the webhook logs it and returns 200.
-- Razorpay orders carry `notes.seatHeldUntil`. To stop people paying after their hold ends, set the Checkout option `timeout: HOLD_MINUTES * 60` (seconds) on the frontend.
-- If you raise `MAX_TEAMS` later, restart the server. The counter keeps its value and the new limit applies straight away. Lowering it below the confirmed count only stops new confirmations.
-
-### `GET /api/registrations/availability`
-
-```json
-{ "capacity": 50, "confirmed": 47, "onHold": 2, "remaining": 1, "open": true }
+```env
+MONGO_URI=mongodb://127.0.0.1:27040/larper_or_coder?replicaSet=locDev
 ```
 
-`remaining = max(0, capacity - confirmed - onHold)`, `open = remaining > 0`. Public. Use it to show "N spots left" or to disable the form.
+This separate replica set stores data in ignored `server/.local-mongo/`. The original standalone database was not changed. The replica set has already been initialized. To restart it after a reboot, run from `server/`:
 
-### Testing the cap
-
-`scripts/test-cap.js` runs the real routes against a separate database (`TEST_DB_NAME`, default `cap_test`, **wiped on each run**) with `MAX_TEAMS=2`. It stubs only the Razorpay API client and signs webhooks with `RAZORPAY_WEBHOOK_SECRET` (HMAC-SHA256 of the raw body in `x-razorpay-signature`). It checks the soft check and hold expiry, sequential webhooks (teams 1 and 2 confirmed, team 3 `refund_required`), replays, `verify-payment` when full, ten rounds of two concurrent webhooks for the last seat (exactly one must confirm), and the counter rollback on an aborted transaction.
-
-It needs a replica set. A throwaway local one:
-
-```
-mkdir -p /tmp/rs && mongod --replSet rs0 --port 27031 --dbpath /tmp/rs --fork --logpath /tmp/rs.log
-mongosh --port 27031 --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27031"}]})'
-TEST_MONGO_URI='mongodb://127.0.0.1:27031/?replicaSet=rs0' node scripts/test-cap.js
+```sh
+mongod --replSet locDev --port 27040 --bind_ip 127.0.0.1 --dbpath "$PWD/.local-mongo" --logpath "$PWD/.local-mongo/mongod.log" --fork
 ```
 
-Against a running server you can fire a signed webhook by hand:
+For a new clone, first create the directory, start the command above, then initialize once:
 
-```
-BODY='{"event":"order.paid","payload":{"payment":{"entity":{"id":"pay_X","order_id":"<orderId from create-order>","method":"upi"}}}}'
-SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$RAZORPAY_WEBHOOK_SECRET" -hex | sed 's/^.* //')
-curl -X POST localhost:5000/api/payments/webhook -H 'Content-Type: application/json' -H "x-razorpay-signature: $SIG" -d "$BODY"
-curl localhost:5000/api/registrations/availability
-```
-
-## Frontend (React) sketch
-
-```html
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+```sh
+mkdir -p .local-mongo
+# Run the mongod command above before this initialization command.
+mongosh 'mongodb://127.0.0.1:27040/?directConnection=true' --quiet --eval 'rs.initiate({_id:"locDev",members:[{_id:0,host:"127.0.0.1:27040"}]})'
 ```
 
-```js
-const res = await fetch(`${API}/api/registrations/create-order`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ teamName, members: [leader, partner] }),
-});
-const order = await res.json();
-if (!res.ok) return showError(order);
+Do not use the separate test replica set on port 27039 for normal registrations. Do not rerun initialization against an already initialized replica set.
 
-const rzp = new window.Razorpay({
-  key: order.keyId,
-  amount: order.amount,
-  currency: order.currency,
-  order_id: order.orderId,
-  name: 'Event Name',
-  description: 'Team registration (2 people)',
-  prefill: order.prefill,
-  handler: async (resp) => {
-    // resp = { razorpay_order_id, razorpay_payment_id, razorpay_signature }
-    const v = await fetch(`${API}/api/registrations/verify-payment`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(resp),
-    }).then((r) => r.json());
-    v.success ? goToSuccess(v.regCode) : showError(v.message);
-  },
-  modal: { ondismiss: () => console.log('Checkout closed') },
-});
-rzp.open();
+## Registration and payment lifecycle
+
+1. Zod validates two complete participants. The form's registration-number label maps to existing `Participant.rollNo`; no `reg_number` database field was introduced.
+2. A MongoDB transaction creates the pending team and both participants. The external Razorpay order call occurs outside the transaction so transaction retries cannot duplicate gateway calls. Gateway/setup failure removes this attempt and its hold.
+3. The client opens Checkout using the returned public key, order, amount and prefill.
+4. `verify-payment` verifies the signature and fetches payment details from Razorpay. It checks the stored order, payment ID, amount, currency and captured state; authorized payments are captured. Concurrent capture races are re-fetched safely.
+5. The existing confirmation transaction claims one team seat, confirms both participants and the payment, and returns the registration code. All confirmation replays are idempotent.
+6. Pending attempts count only as temporary soft holds. They stop holding seats after `HOLD_MINUTES`; abandoned records expire via the existing 24-hour TTL. Confirmed/refund-review records have their TTL removed.
+
+The counter's conditional increment inside the transaction enforces the hard limit. Soft holds are advisory and can race; a late/concurrent payment can be received when the last seat is already gone. Such teams become `refund_required`, participants `cancelled`, and Payment `paid` + `needsReview`. Duplicate-index failures roll back seat increments before marking the payment for review. Missing/partial pairs cannot confirm. **Refunds are manual in Razorpay Dashboard; the application does not issue or promise automatic refunds.**
+
+The legacy webhook controller/signature helper remain in the repository for reference, but **no webhook route is mounted**. The active flow requires the Checkout verification request and does not use webhooks. If the tab disappears before the signed callback is saved, organisers must reconcile the Razorpay payment/order and database record manually. Do not tell a charged user to pay again.
+
+Before deploying onto an existing database, review confirmed participants for missing or duplicate registration numbers. Backfill valid `rollNo` values after organiser review; do not delete registrations or drop indexes. The new case-insensitive unique confirmed-roll-number index may reject inconsistent legacy data. Confirm `EventConfig.confirmedCount` equals the confirmed registration count before opening registration if the database has been edited outside this application.
+
+See [API contract](../client/src/services/CONTRACT.md) and [audit/manual release checks](../INTEGRATION_AUDIT.md).
+
+## Automated checks
+
+```sh
+npm test
+TEST_MONGO_URI='mongodb://127.0.0.1:27039/?replicaSet=locTest' npm run test:integration
 ```
 
-## Testing webhooks locally
-Expose the server with ngrok or cloudflared and set the webhook URL to `https://<tunnel>/api/payments/webhook` in the Razorpay **test mode** dashboard.
+The integration suite refuses a non-loopback URI and requires explicit `TEST_MONGO_URI`. It never loads `.env`, never falls back to `MONGO_URI`, uses a new `loc_integration_*` database per run, and stubs only Razorpay network calls. Resets affect only that run's generated test database. It also starts the real backend entry point with a separate `loc_startup_*` database and test credentials.
+
+To create a disposable replica set (choose an unused port):
+
+```sh
+mkdir -p /tmp/loc-integration-mongo
+mongod --replSet locTest --port 27039 --bind_ip 127.0.0.1 --dbpath /tmp/loc-integration-mongo --logpath /tmp/loc-integration-mongo/mongod.log --fork
+mongosh 'mongodb://127.0.0.1:27039/?directConnection=true' --quiet --eval 'rs.initiate({_id:"locTest",members:[{_id:0,host:"127.0.0.1:27039"}]})'
+```
+
+Do not run the test suite against an event/production database. After tests, stop this specific test instance; its disposable files remain in `/tmp/loc-integration-mongo`.

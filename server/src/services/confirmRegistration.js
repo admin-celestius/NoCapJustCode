@@ -25,10 +25,14 @@ async function confirmRegistration({ orderId, paymentId, signature, method, via 
         result = { outcome: 'already_confirmed', registration: reg };
         return;
       }
-      // Already turned away as sold out (e.g. order.paid + payment.captured + checkout all
-      // arrive for one payment). Keep that decision; never hand this team a seat later.
-      if (reg && reg.status === 'refund_required' && payment.note === SOLD_OUT_NOTE) {
-        result = { outcome: 'sold_out', registration: reg };
+      // Every terminal decision is stable across verification retries.
+      if (reg && reg.status === 'refund_required') {
+        result = {
+          outcome: payment.note === SOLD_OUT_NOTE ? 'sold_out' :
+            payment.note?.startsWith('Duplicate ') ? 'conflict' : 'registration_incomplete',
+          field: payment.note?.match(/^Duplicate (\w+)/)?.[1],
+          registration: reg,
+        };
         return;
       }
 
@@ -45,6 +49,22 @@ async function confirmRegistration({ orderId, paymentId, signature, method, via 
         payment.set({ needsReview: true, note: 'Paid, but registration was missing (expired?)' });
         await payment.save({ session });
         result = { outcome: 'registration_missing' };
+        return;
+      }
+
+      // Independent TTL deletion can remove participants before their team document.
+      // Never confirm a partial pair or consume a seat for it.
+      const people = await Participant.find({ registration: reg._id }).session(session);
+      if (reg.teamSize !== 2 || reg.members.length !== 2 || people.length !== 2 ||
+          new Set(reg.members.map(String)).size !== 2 ||
+          people.some((p) => p.status !== 'pending' || !p.rollNo || !reg.members.some((id) => id.equals(p._id)))) {
+        payment.set({ needsReview: true, note: 'Paid, but participant details were incomplete or expired' });
+        await payment.save({ session });
+        await Participant.updateMany({ registration: reg._id },
+          { $set: { status: 'cancelled' }, $unset: { expiresAt: 1 } }, { session });
+        reg.set({ status: 'refund_required', payment: payment._id, expiresAt: undefined });
+        await reg.save({ session });
+        result = { outcome: 'registration_incomplete' };
         return;
       }
 
@@ -87,7 +107,9 @@ async function confirmRegistration({ orderId, paymentId, signature, method, via 
       if (err.keyPattern && err.keyPattern.regCode && attempt < 3) {
         return confirmRegistration({ orderId, paymentId, signature, method, via }, attempt + 1);
       }
-      return markConflict({ orderId, paymentId, signature, method, via, keyPattern: err.keyPattern });
+      if (['email', 'phone', 'rollNo', 'teamName'].some((field) => err.keyPattern?.[field])) {
+        return markConflict({ orderId, paymentId, signature, method, via, keyPattern: err.keyPattern });
+      }
     }
     throw err;
   } finally {
@@ -97,33 +119,45 @@ async function confirmRegistration({ orderId, paymentId, signature, method, via 
 
 async function markConflict({ orderId, paymentId, signature, method, via, keyPattern }) {
   const field = keyPattern ? Object.keys(keyPattern)[0] : 'unknown';
-  const payment = await Payment.findOneAndUpdate(
-    { razorpayOrderId: orderId },
-    {
-      $set: {
-        status: 'paid',
-        razorpayPaymentId: paymentId,
-        ...(signature && { razorpaySignature: signature }),
-        method,
-        verifiedVia: via,
-        paidAt: new Date(),
-        needsReview: true,
-        note: `Duplicate ${field} at confirmation; refund required`,
+  let result = { outcome: 'conflict', field };
+  await mongoose.connection.transaction(async (session) => {
+    const existing = await Payment.findOne({ razorpayOrderId: orderId }).session(session);
+    if (!existing) return;
+    const reg = await Registration.findById(existing.registration).session(session);
+    if (reg?.status === 'confirmed') {
+      result = { outcome: 'already_confirmed', registration: reg };
+      return;
+    }
+    const payment = await Payment.findOneAndUpdate(
+      { razorpayOrderId: orderId },
+      {
+        $set: {
+          status: 'paid',
+          razorpayPaymentId: paymentId,
+          ...(signature && { razorpaySignature: signature }),
+          method,
+          verifiedVia: via,
+          paidAt: new Date(),
+          needsReview: true,
+          note: `Duplicate ${field} at confirmation; refund required`,
+        },
       },
-    },
-    { new: true }
-  );
-  if (payment) {
-    await Registration.updateOne(
-      { _id: payment.registration },
-      { $set: { status: 'refund_required', payment: payment._id }, $unset: { expiresAt: 1 } }
+      { new: true, session }
     );
-    await Participant.updateMany(
-      { registration: payment.registration },
-      { $set: { status: 'cancelled' }, $unset: { expiresAt: 1 } }
-    );
-  }
-  return { outcome: 'conflict', field };
+    if (payment) {
+      await Registration.updateOne(
+        { _id: payment.registration },
+        { $set: { status: 'refund_required', payment: payment._id }, $unset: { expiresAt: 1 } },
+        { session }
+      );
+      await Participant.updateMany(
+        { registration: payment.registration },
+        { $set: { status: 'cancelled' }, $unset: { expiresAt: 1 } },
+        { session }
+      );
+    }
+  });
+  return result;
 }
 
 module.exports = { confirmRegistration };

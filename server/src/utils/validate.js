@@ -1,46 +1,50 @@
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^[6-9]\d{9}$/; // Indian mobile
+const { z } = require('zod');
 
-const str = (v) => (v === undefined || v === null ? '' : String(v).trim());
+const email = z.string().trim().toLowerCase().email();
+const phone = z.string().trim()
+  .transform((v) => v.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, ''))
+  .pipe(z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'));
+const rollNo = z.string().trim().toUpperCase().min(1, 'Registration number is required').max(60);
+const teamName = z.string().trim().min(2).max(60);
 
-function cleanMember(m = {}) {
-  return {
-    name: str(m.name),
-    email: str(m.email).toLowerCase(),
-    phone: str(m.phone).replace(/\D/g, '').slice(-10), // strips +91, spaces, dashes
-    college: str(m.college),
-    department: str(m.department) || undefined,
-    year: m.year ? Number(m.year) : undefined,
-    rollNo: str(m.rollNo) || undefined,
-  };
-}
+const memberSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email,
+  phone,
+  department: z.string().trim().min(2).max(100),
+  year: z.union([z.number(), z.enum(['1', '2', '3', '4', '5'])])
+    .transform(Number).pipe(z.number().int().min(1).max(5)),
+  rollNo,
+});
 
-// Returns { errors: string[], data: { teamName, members[] } }
-function validateRegistration(body = {}, teamSize = 2) {
-  const errors = [];
-  const teamName = str(body.teamName);
-  if (teamName.length < 2 || teamName.length > 60) errors.push('teamName must be 2-60 characters');
-
-  if (!Array.isArray(body.members) || body.members.length !== teamSize) {
-    errors.push(`Exactly ${teamSize} members are required`);
-    return { errors, data: null };
+const registrationSchema = z.object({
+  teamName,
+  members: z.array(memberSchema).length(2, 'Exactly 2 members are required'),
+}).superRefine(({ members }, ctx) => {
+  for (const field of ['email', 'phone', 'rollNo']) {
+    if (members.length === 2 && members[0][field] === members[1][field]) {
+      ctx.addIssue({ code: 'custom', path: ['members', 1, field], message: `Members must have different ${field === 'rollNo' ? 'registration numbers' : field + 's'}` });
+    }
   }
+});
 
-  const members = body.members.map(cleanMember);
-  members.forEach((m, i) => {
-    const p = `members[${i}]`;
-    if (!m.name) errors.push(`${p}.name is required`);
-    if (!EMAIL_RE.test(m.email)) errors.push(`${p}.email is invalid`);
-    if (!PHONE_RE.test(m.phone)) errors.push(`${p}.phone must be a 10-digit mobile number`);
-    if (!m.college) errors.push(`${p}.college is required`);
-    if (m.year !== undefined && !(m.year >= 1 && m.year <= 5)) errors.push(`${p}.year must be 1-5`);
-  });
+const checkSchema = z.object({
+  teamName: teamName.optional(),
+  emails: z.array(email).max(2).default([]),
+  phones: z.array(phone).max(2).default([]),
+  rollNos: z.array(rollNo).max(2).default([]),
+});
 
-  // The two people in one team can't share an email/phone
-  if (new Set(members.map((m) => m.email)).size !== members.length) errors.push('Members must have different emails');
-  if (new Set(members.map((m) => m.phone)).size !== members.length) errors.push('Members must have different phone numbers');
+const paymentSchema = z.object({
+  razorpay_order_id: z.string().regex(/^order_[A-Za-z0-9]+$/),
+  razorpay_payment_id: z.string().regex(/^pay_[A-Za-z0-9]+$/),
+  razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
+});
 
-  return { errors, data: { teamName, members } };
+const issues = (error) => error.issues.map((issue) => ({ field: issue.path.join('.'), message: issue.message }));
+function validateRegistration(body) {
+  const result = registrationSchema.safeParse(body);
+  return result.success ? { errors: [], data: result.data } : { errors: issues(result.error), data: null };
 }
 
-module.exports = { validateRegistration };
+module.exports = { validateRegistration, registrationSchema, checkSchema, paymentSchema, issues };

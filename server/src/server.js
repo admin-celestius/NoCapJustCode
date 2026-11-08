@@ -1,35 +1,29 @@
-require('dotenv').config();
-const express = require('express');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const mongoose = require('mongoose');
-const cors = require('cors');
 
-const registrationRoutes = require('./routes/registration.routes');
-const { razorpayWebhook } = require('./controllers/webhook.controller');
-
-const app = express();
-app.use(cors({ origin: process.env.CLIENT_ORIGIN }));
-
-app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), razorpayWebhook);
-
-app.use(express.json({ limit: '50kb' }));
-
-app.get('/health', (req, res) => res.json({ ok: true }));
-app.use('/api/registrations', registrationRoutes);
-
-app.use((err, req, res, next) => {
-  console.error(err);
-  // Razorpay SDK errors look like { statusCode, error: { description } }
-  if (err && err.error && err.statusCode) {
-    return res.status(502).json({ message: 'Payment gateway error', detail: err.error.description });
+async function start() {
+  for (const name of ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET']) {
+    if (!process.env[name]?.trim()) throw new Error(`${name} is required`);
   }
-  res.status(err.status || 500).json({ message: err.status ? err.message : 'Internal server error' });
-});
+  const app = require('./app');
+  await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 });
+  const hello = await mongoose.connection.db.admin().command({ hello: 1 });
+  if (!hello.setName && hello.msg !== 'isdbgrid') throw new Error('MongoDB must support transactions (replica set or mongos)');
+  // Wait for unique indexes before accepting requests. Never drop existing indexes.
+  const models = ['Registration', 'Participant', 'Payment', 'EventConfig'].map((name) => require(`./models/${name}`));
+  for (const model of models) await model.init();
+  await require('./services/capacity').ensureEventConfig();
+  const port = process.env.PORT || 5000;
+  const server = app.listen(port, () => console.log(`The server is running on port ${server.address().port}`));
+  return server;
+}
 
-const PORT = process.env.PORT || 5000;
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => app.listen(PORT, () => console.log(`The server is running on port ${PORT}`)))
-  .catch((err) => {
-    console.error('Mongo connection failed', err);
+if (require.main === module) {
+  start().catch((err) => {
+    console.error('Server startup failed:', err.name, err.code || '',
+      /required|must|cannot/.test(err.message) ? err.message : 'Check database connectivity, credentials and indexes.');
     process.exit(1);
   });
+}
+module.exports = { start };
