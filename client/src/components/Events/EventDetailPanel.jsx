@@ -277,27 +277,11 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                   <section className={styles.detailSection}>
                     <h2 className={styles.sectionMonoLabel}>ABOUT</h2>
                     <p className={styles.sectionParagraph}>
-                      {event.about || 'A hands-on workshop on competitive coding and problem-solving, conducted by Navadeep Anna, a 3rd year senior.'}
+                      {event.about || 'A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.'}
                     </p>
                   </section>
 
-                  {/* Your instructor: compact card */}
-                  <section className={styles.detailSection}>
-                    <h2 className={styles.sectionMonoLabel}>YOUR INSTRUCTOR</h2>
-                    <div className={styles.instructorCard}>
-                      <div className={styles.instructorAvatar} aria-hidden="true">
-                        {event.instructor?.initials || 'NA'}
-                      </div>
-                      <div className={styles.instructorInfo}>
-                        <span className={styles.instructorName}>
-                          {event.instructor?.name || 'Navadeep Anna'}
-                        </span>
-                        <span className={styles.instructorRole}>
-                          {event.instructor?.role || '3rd year senior'}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
+
 
                   {/* At a glance: definition list */}
                   <section className={styles.detailSection}>

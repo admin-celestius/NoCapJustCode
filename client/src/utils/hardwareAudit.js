@@ -88,12 +88,8 @@ export function auditHardwarePlacement() {
     }
   }
 
-  if (violations.length > 0) {
-    console.warn(`[HardwareAudit] ${violations.length} violations found:`, violations);
-    if (console.table) console.table(violations);
-  } else {
-    console.info(`[HardwareAudit] PASS: 0 violations across ${pieces.length} active hardware pieces.`);
-  }
+  // Audit completed
+
 
   return { total: pieces.length, violations };
 }

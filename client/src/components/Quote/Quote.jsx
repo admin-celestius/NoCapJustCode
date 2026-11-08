@@ -24,60 +24,49 @@ export default function Quote() {
     // Apply interactive pre-state only after JS observer is ready
     el.setAttribute('data-ready', 'true');
 
-    // 1500ms safety fallback to ensure content is never trapped in pre-state
-    const fallbackTimer = setTimeout(() => {
-      setIsRevealed(true);
-    }, 1500);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry && entry.isIntersecting) {
-          setIsRevealed(true);
-          clearTimeout(fallbackTimer);
-          observer.disconnect();
-        }
-      },
-      {
-        threshold: 0.25,
+    const checkReveal = () => {
+      const rect = el.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.top <= windowHeight * 0.85 && rect.bottom >= 0) {
+        setIsRevealed(true);
+        return true;
       }
-    );
+      return false;
+    };
 
-    observer.observe(el);
+    // If already in viewport on mount
+    if (checkReveal()) return;
 
-    // Dev-only check: measure card to statue distance
-    if (import.meta.env.DEV) {
-      const measureCardToStatue = () => {
-        const cards = document.querySelectorAll('.eventCard, [class*="eventCard"]');
-        const lastCard = cards[cards.length - 1];
-        const statue = el.querySelector(`.${styles.statueImage}`);
-        if (lastCard && statue) {
-          const cardRect = lastCard.getBoundingClientRect();
-          const statueRect = statue.getBoundingClientRect();
-          // Known crop offset: 8px on 901px canvas (0.89%)
-          const firstNonBlackRow = statueRect.top + statueRect.height * (8 / 901);
-          const dist = Math.round(firstNonBlackRow - cardRect.bottom);
-          const w = window.innerWidth;
-          const target = w >= 1024 ? 88 : 56;
-          console.info(
-            `[QuoteDistanceCheck] Width ${w}px: measured distance = ${dist}px (target: ${target}px, diff: ${dist - target}px)`
-          );
+    let observer;
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          if (entry && entry.isIntersecting) {
+            setIsRevealed(true);
+            observer.disconnect();
+          }
+        },
+        {
+          threshold: 0.1,
+          rootMargin: '0px 0px -40px 0px',
         }
-      };
-      window.__measureCardToStatue = measureCardToStatue;
-      const distTimer = setTimeout(measureCardToStatue, 800);
-      window.addEventListener('resize', measureCardToStatue);
-      return () => {
-        clearTimeout(fallbackTimer);
-        clearTimeout(distTimer);
-        window.removeEventListener('resize', measureCardToStatue);
-        observer.disconnect();
-      };
+      );
+      observer.observe(el);
     }
 
+    const handleScroll = () => {
+      if (checkReveal() && observer) {
+        observer.disconnect();
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
-      clearTimeout(fallbackTimer);
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      if (observer) observer.disconnect();
     };
   }, []);
 

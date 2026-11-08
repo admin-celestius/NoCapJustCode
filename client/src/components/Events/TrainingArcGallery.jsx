@@ -1,58 +1,187 @@
 // client/src/components/Events/TrainingArcGallery.jsx
-import React, { useState, useCallback, useEffect, memo } from 'react';
+import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Events.module.css';
 import { workshopPhotos } from '../../data/workshopPhotos.js';
+import logoWebp from '../../assets/logo-transparent.webp';
+import logoPng from '../../assets/logo-transparent.png';
 
-function TrainingArcGallery() {
+function TrainingArcGallery({ caption }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [displayedIndex, setDisplayedIndex] = useState(0);
+  const [logoIndex, setLogoIndex] = useState(0);
+  const [logoVisible, setLogoVisible] = useState(true);
+  const [flyingData, setFlyingData] = useState(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const galleryWrapperRef = useRef(null);
+  const largeViewportRef = useRef(null);
+  const miniRefs = useRef([]);
+  const isAnimatingRef = useRef(false);
+  const flightTimerRef = useRef(null);
 
   const total = workshopPhotos.length;
 
-  const goTo = useCallback(
-    (idx) => {
-      setActiveIndex(Math.max(0, Math.min(total - 1, idx)));
+  const handleMiniClick = useCallback(
+    (targetIdx) => {
+      if (
+        targetIdx === activeIndex ||
+        isAnimatingRef.current ||
+        !galleryWrapperRef.current ||
+        !largeViewportRef.current ||
+        !miniRefs.current[activeIndex] ||
+        !miniRefs.current[targetIdx]
+      ) {
+        return;
+      }
+
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        setActiveIndex(targetIdx);
+        setDisplayedIndex(targetIdx);
+        setLogoIndex(targetIdx);
+        setLogoVisible(true);
+        return;
+      }
+
+      isAnimatingRef.current = true;
+      setLogoVisible(false); // 1. Logo on current mini preview disappears immediately
+
+      const wrapperRect = galleryWrapperRef.current.getBoundingClientRect();
+      const largeRect = largeViewportRef.current.getBoundingClientRect();
+      const sourceMiniRect = miniRefs.current[activeIndex].getBoundingClientRect();
+      const targetMiniRect = miniRefs.current[targetIdx].getBoundingClientRect();
+
+      const largePos = {
+        left: Math.round(largeRect.left - wrapperRect.left),
+        top: Math.round(largeRect.top - wrapperRect.top),
+        width: Math.round(largeRect.width),
+        height: Math.round(largeRect.height),
+      };
+
+      const sourceMiniPos = {
+        left: Math.round(sourceMiniRect.left - wrapperRect.left),
+        top: Math.round(sourceMiniRect.top - wrapperRect.top),
+        width: Math.round(sourceMiniRect.width),
+        height: Math.round(sourceMiniRect.height),
+      };
+
+      const targetMiniPos = {
+        left: Math.round(targetMiniRect.left - wrapperRect.left),
+        top: Math.round(targetMiniRect.top - wrapperRect.top),
+        width: Math.round(targetMiniRect.width),
+        height: Math.round(targetMiniRect.height),
+      };
+
+      setFlyingData({
+        sourceIdx: activeIndex,
+        targetIdx,
+        shrink: {
+          photo: workshopPhotos[activeIndex],
+          start: {
+            top: `${largePos.top}px`,
+            left: `${largePos.left}px`,
+            width: `${largePos.width}px`,
+            height: `${largePos.height}px`,
+            borderRadius: '18px',
+            zIndex: 22,
+          },
+          end: {
+            top: `${sourceMiniPos.top}px`,
+            left: `${sourceMiniPos.left}px`,
+            width: `${sourceMiniPos.width}px`,
+            height: `${sourceMiniPos.height}px`,
+            borderRadius: '12px',
+            zIndex: 22,
+          },
+        },
+        enlarge: {
+          photo: workshopPhotos[targetIdx],
+          start: {
+            top: `${targetMiniPos.top}px`,
+            left: `${targetMiniPos.left}px`,
+            width: `${targetMiniPos.width}px`,
+            height: `${targetMiniPos.height}px`,
+            borderRadius: '12px',
+            zIndex: 25,
+          },
+          end: {
+            top: `${largePos.top}px`,
+            left: `${largePos.left}px`,
+            width: `${largePos.width}px`,
+            height: `${largePos.height}px`,
+            borderRadius: '18px',
+            zIndex: 25,
+          },
+        },
+        active: false,
+      });
+
+      // Next tick: engage the smooth CSS flight transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFlyingData((prev) => (prev ? { ...prev, active: true } : null));
+        });
+      });
+
+      // When flight reaches target positions (430ms)
+      flightTimerRef.current = setTimeout(() => {
+        setDisplayedIndex(targetIdx);
+        setActiveIndex(targetIdx);
+        setFlyingData(null);
+        setLogoIndex(targetIdx);
+        setLogoVisible(true);
+        isAnimatingRef.current = false;
+      }, 430);
     },
-    [total]
+    [activeIndex]
   );
 
-  const prev = useCallback(() => {
-    goTo(activeIndex - 1);
-  }, [activeIndex, goTo]);
+  useEffect(() => {
+    return () => {
+      if (flightTimerRef.current) clearTimeout(flightTimerRef.current);
+    };
+  }, []);
 
-  const next = useCallback(() => {
-    goTo(activeIndex + 1);
-  }, [activeIndex, goTo]);
+  // Auto-advance photo carousel every 4.5 seconds (pauses on hover, lightbox, or tab hidden)
+  useEffect(() => {
+    if (isLightboxOpen || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (document.hidden || isAnimatingRef.current) return;
+      handleMiniClick((activeIndex + 1) % total);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [activeIndex, handleMiniClick, isHovered, isLightboxOpen, total]);
 
   const openLightbox = useCallback(() => {
-    setLightboxIndex(activeIndex);
+    if (flyingData) return;
+    setLightboxIndex(displayedIndex);
     setIsLightboxOpen(true);
-  }, [activeIndex]);
+  }, [displayedIndex, flyingData]);
 
   const closeLightbox = useCallback(() => {
-    setActiveIndex(lightboxIndex);
     setIsLightboxOpen(false);
-  }, [lightboxIndex]);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        goTo(activeIndex - 1);
+        const prev = Math.max(0, activeIndex - 1);
+        handleMiniClick(prev);
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        goTo(activeIndex + 1);
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        goTo(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        goTo(total - 1);
+        const next = Math.min(total - 1, activeIndex + 1);
+        handleMiniClick(next);
       }
     },
-    [activeIndex, goTo, total]
+    [activeIndex, handleMiniClick, total]
   );
 
   // Lightbox keyboard controls: Escape, ArrowLeft, ArrowRight
@@ -73,200 +202,231 @@ function TrainingArcGallery() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isLightboxOpen, closeLightbox, total]);
 
+  const currentPhoto = workshopPhotos[displayedIndex];
+
   return (
     <div
+      ref={galleryWrapperRef}
       className={styles.galleryWrapper}
       role="region"
       aria-roledescription="carousel"
-      aria-label="Workshop photos"
+      aria-label="Past workshop photos"
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Visually hidden aria-live status */}
+      {/* Visually hidden status */}
       <div className={styles.srOnly} aria-live="polite">
-        Photo {activeIndex + 1} of {total}
+        Photo {displayedIndex + 1} of {total}
       </div>
 
-      {/* 1. Framed Card: 2px solid #F26B3A, radius 24px, padding 6px, bg #0B0B0D */}
+      {/* 1. Main Enlarged Framed Card */}
       <div className={styles.framedPhotoCard}>
-        {/* Viewport: overflow hidden, radius 18px, aspect-ratio 4/3 */}
         <button
+          ref={largeViewportRef}
           type="button"
-          className={styles.galleryViewport}
+          className={`${styles.galleryViewport} ${flyingData ? styles.galleryViewportHidden : ''}`}
           onClick={openLightbox}
-          aria-label="Click to enlarge photo"
+          aria-label="Click to enlarge photo full-screen"
         >
-          {/* Top-left pill: PAST WORKSHOP */}
-          <span className={styles.categoryPill} aria-hidden="true">
+          {/* Top-left pill: PAST WORKSHOP (with dynamic appear animation on photo change) */}
+          <span key={`cat-${displayedIndex}`} className={styles.categoryPill} aria-hidden="true">
             PAST WORKSHOP
           </span>
 
-          {/* Top-right pill: 1/4 counter */}
-          <span className={styles.counterPill} aria-hidden="true">
-            {activeIndex + 1}/{total}
+          {/* Top-right pill: 1/4 counter (with dynamic appear animation on photo change) */}
+          <span key={`cnt-${displayedIndex}`} className={styles.counterPill} aria-hidden="true">
+            {displayedIndex + 1}/{total}
           </span>
 
-          {/* Track: flex row of slides moved by transform */}
+          {/* Enlarged Photo Stage */}
+          <div className={styles.mainStageWrapper}>
+            <picture>
+              <source srcSet={currentPhoto.srcset} type="image/webp" />
+              <img
+                src={currentPhoto.src}
+                alt={currentPhoto.alt}
+                width={currentPhoto.width}
+                height={currentPhoto.height}
+                decoding="async"
+                draggable={false}
+                className={styles.mainStageImg}
+              />
+            </picture>
+          </div>
+        </button>
+      </div>
+
+      {/* Caption under enlarged preview */}
+      {caption && (
+        <p className={styles.galleryCaptionText}>
+          {currentPhoto.caption || caption}
+        </p>
+      )}
+
+      {/* 2. Four Mini Pictures Row */}
+      <div className={styles.miniPicturesGrid} role="group" aria-label="Select photo preview">
+        {workshopPhotos.map((photo, i) => {
+          const isActive = activeIndex === i;
+          const hasLogo = logoIndex === i && logoVisible;
+          const isTargetFlying = flyingData && flyingData.targetIdx === i;
+
+          return (
+            <button
+              key={photo.id}
+              ref={(el) => {
+                miniRefs.current[i] = el;
+              }}
+              type="button"
+              className={`${styles.miniPictureCard} ${
+                isActive ? styles.miniPictureCardActive : ''
+              } ${isTargetFlying ? styles.miniPictureCardFlying : ''}`}
+              onClick={() => handleMiniClick(i)}
+              aria-label={`Select photo ${i + 1}`}
+              aria-pressed={isActive}
+            >
+              <img
+                src={photo.src}
+                alt={`Thumbnail ${i + 1}`}
+                className={styles.miniThumbnailImg}
+                loading="lazy"
+                decoding="async"
+              />
+
+              {/* Larper or Coder Logo Overlay on Active Mini Card */}
+              {logoIndex === i && (
+                <div
+                  className={`${styles.miniLogoOverlay} ${
+                    hasLogo ? styles.miniLogoVisible : styles.miniLogoHidden
+                  }`}
+                  aria-hidden="true"
+                >
+                  <picture>
+                    <source srcSet={logoWebp} type="image/webp" />
+                    <img
+                      src={logoPng}
+                      alt="LARPER OR CODER"
+                      className={styles.miniLogoImg}
+                    />
+                  </picture>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 3. Physical Flying Elements (literal shrinking and enlarging flight) */}
+      {flyingData && (
+        <>
+          {/* Flying Element 1: Large image literally shrinks & moves to preview slot */}
           <div
-            className={styles.galleryTrack}
-            style={{ '--index': activeIndex }}
+            className={`${styles.flyingCard} ${flyingData.active ? styles.flyingCardActive : ''}`}
+            style={flyingData.active ? flyingData.shrink.end : flyingData.shrink.start}
+            aria-hidden="true"
           >
-            {workshopPhotos.map((photo, i) => (
-              <div
-                key={photo.id}
-                className={styles.gallerySlide}
-                aria-hidden={activeIndex !== i}
+            <img
+              src={flyingData.shrink.photo.src}
+              alt=""
+              className={styles.flyingImg}
+            />
+          </div>
+
+          {/* Flying Element 2: Clicked preview literally enlarges & moves to large viewport */}
+          <div
+            className={`${styles.flyingCard} ${flyingData.active ? styles.flyingCardActive : ''}`}
+            style={flyingData.active ? flyingData.enlarge.end : flyingData.enlarge.start}
+            aria-hidden="true"
+          >
+            <img
+              src={flyingData.enlarge.photo.src}
+              alt=""
+              className={styles.flyingImg}
+            />
+          </div>
+        </>
+      )}
+
+      {/* 4. Lightbox Modal */}
+      {isLightboxOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className={styles.lightboxOverlay}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeLightbox();
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enlarged photo view"
+          >
+            <button
+              type="button"
+              className={styles.lightboxCloseBtn}
+              onClick={closeLightbox}
+              aria-label="Close enlarged view"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                aria-hidden="true"
               >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.lightboxNavBtn} ${styles.lightboxPrev}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prevIdx) => Math.max(0, prevIdx - 1));
+              }}
+              disabled={lightboxIndex === 0}
+              aria-disabled={lightboxIndex === 0}
+              aria-label="Previous image"
+            >
+              ‹
+            </button>
+
+            <div className={styles.lightboxContent}>
+              <div className={styles.lightboxFramedBox}>
                 <picture>
-                  <source srcSet={photo.srcset} type="image/webp" />
+                  <source srcSet={workshopPhotos[lightboxIndex].srcset} type="image/webp" />
                   <img
-                    src={photo.src}
-                    alt={photo.alt}
-                    width={photo.width}
-                    height={photo.height}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    draggable={false}
-                    className={styles.galleryImg}
+                    src={workshopPhotos[lightboxIndex].src}
+                    alt={workshopPhotos[lightboxIndex].alt}
+                    className={styles.lightboxImg}
                   />
                 </picture>
               </div>
-            ))}
-          </div>
-        </button>
-      </div>
-
-      {/* 2. Navigation Row: [arrow] [4 dots] [arrow] */}
-      <div className={styles.galleryNavRow}>
-        <button
-          type="button"
-          className={styles.galleryArrowBtn}
-          onClick={prev}
-          disabled={activeIndex === 0}
-          aria-disabled={activeIndex === 0}
-          aria-label="Previous photo"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-
-        <div className={styles.dotsGroup} role="group" aria-label="Choose photo">
-          {workshopPhotos.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`${styles.galleryDotBtn} ${activeIndex === i ? styles.galleryDotBtnActive : ''}`}
-              onClick={() => goTo(i)}
-              aria-label={`Show photo ${i + 1}`}
-              aria-current={activeIndex === i ? 'true' : undefined}
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className={styles.galleryArrowBtn}
-          onClick={next}
-          disabled={activeIndex === total - 1}
-          aria-disabled={activeIndex === total - 1}
-          aria-label="Next photo"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-      </div>
-
-      {/* 3. Lightbox: Portal, opaque backdrop, image keeps rounded corners and orange border */}
-      {isLightboxOpen && typeof document !== 'undefined' && createPortal(
-        <div
-          className={styles.lightboxOverlay}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeLightbox();
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Enlarged photo view"
-        >
-          <button
-            type="button"
-            className={styles.lightboxCloseBtn}
-            onClick={closeLightbox}
-            aria-label="Close enlarged view"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.lightboxNavBtn} ${styles.lightboxPrev}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex((prevIdx) => Math.max(0, prevIdx - 1));
-            }}
-            disabled={lightboxIndex === 0}
-            aria-disabled={lightboxIndex === 0}
-            aria-label="Previous image"
-          >
-            ‹
-          </button>
-
-          <div className={styles.lightboxContent}>
-            <div className={styles.lightboxFramedBox}>
-              <picture>
-                <source srcSet={workshopPhotos[lightboxIndex].srcset} type="image/webp" />
-                <img
-                  src={workshopPhotos[lightboxIndex].src}
-                  alt={workshopPhotos[lightboxIndex].alt}
-                  className={styles.lightboxImg}
-                />
-              </picture>
+              <p className={styles.lightboxCaption}>
+                {workshopPhotos[lightboxIndex].caption || workshopPhotos[lightboxIndex].alt}
+              </p>
             </div>
-            <p className={styles.lightboxCaption}>
-              {workshopPhotos[lightboxIndex].caption || workshopPhotos[lightboxIndex].alt}
-            </p>
-          </div>
 
-          <button
-            type="button"
-            className={`${styles.lightboxNavBtn} ${styles.lightboxNext}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex((prevIdx) => Math.min(total - 1, prevIdx + 1));
-            }}
-            disabled={lightboxIndex === total - 1}
-            aria-disabled={lightboxIndex === total - 1}
-            aria-label="Next image"
-          >
-            ›
-          </button>
-        </div>,
-        document.body
-      )}
+            <button
+              type="button"
+              className={`${styles.lightboxNavBtn} ${styles.lightboxNext}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prevIdx) => Math.min(total - 1, prevIdx + 1));
+              }}
+              disabled={lightboxIndex === total - 1}
+              aria-disabled={lightboxIndex === total - 1}
+              aria-label="Next image"
+            >
+              ›
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

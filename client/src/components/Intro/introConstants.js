@@ -1,29 +1,36 @@
 // client/src/components/Intro/introConstants.js
 
 export const INTRO_STATES = {
-  LOADING: 'LOADING',             // 0 -> 1.5s: counter to 99%, segmented bar, single status line
-  ALERT: 'ALERT',                 // 1.5s -> 2.7s: "LARPER DETECTED" banner above loader, 3x orange screen wash (peak 0.25)
-  TURN_GREEN: 'TURN_GREEN',       // 2.7s -> 4.1s: cut to green, 3x green wash (peak 0.28), counter 99% -> 100% over 1.4s
-  COMPLETE: 'COMPLETE',           // 4.1s -> 4.3s: 100% flash & 0.2s hold, clears loader & banner
-  TYPE_LOGO: 'TYPE_LOGO',         // 4.3s -> 6.3s: LARPER OR CODER image typing (1.4s), hold 0.6s
-  SWAP: 'SWAP',                   // 6.3s -> 8.5s: backspace (0.4s), then PRESENTED BY CELESTIUS (1.3s), hold 0.5s
-  AUTO_ENTER: 'AUTO_ENTER',       // Immediate handover to Splash
+  LOADING: 'LOADING',             // Rapid counter to 99%, segmented bar, dynamic changing telemetry lines
+  ALERT: 'ALERT',                 // "LARPER DETECTED" banner, fast orange screen wash
+  TURN_GREEN: 'TURN_GREEN',       // Snappy cut to green, counter 99% -> 100%
+  COMPLETE: 'COMPLETE',           // 100% flash & quick hold
+  TYPE_LOGO: 'TYPE_LOGO',         // Fast snappy LARPER OR CODER typing
+  LOGO_FADE_OUT: 'LOGO_FADE_OUT', // LARPER OR CODER vanishes cleanly
+  TRANSFORM: 'TRANSFORM',         // Centered POWERED BY + Celestius logo appearance & unified synchronized reforge
+  AUTO_ENTER: 'AUTO_ENTER',       // Clean fade out into the site
 };
 
 export const PRESENTER_NAME = 'CELESTIUS';
 
 export const TIMINGS = {
-  LOADING_DURATION: 1500,        // 0 to 99% in 1.5s
-  ALERT_DURATION: 1200,          // orange alert blink 1.2s
-  TURN_GREEN_DURATION: 1400,     // Counter animates 99% -> 100% over 1.4s
-  COMPLETE_HOLD: 200,            // 0.2s hold at 100%
-  HOLD_LOGO: 600,                // hold logo 0.6s
-  TYPE_STEP_SPEED: 108,          // logo typing 1.4s (13 boxes * 108ms = 1404ms)
-  BACKSPACE_STEP_SPEED: 30,      // backspace 0.4s (13 boxes * 30ms = 390ms)
-  TYPE_PRES_STEP_SPEED: 65,      // presented typing 1.3s (20 boxes * 65ms = 1300ms)
-  HOLD_SWAP: 500,                // hold presented 0.5s
-  FADE_OUT_DURATION: 0,          // Cut straight to splash with no extra delay
-  REDUCED_MOTION_HOLD: 1000,
+  LOADING_DURATION: 900,          // Fast climb: 0 to 99% in 0.9s
+  ALERT_DURATION: 750,            // Snappy orange alert: 0.75s
+  TURN_GREEN_DURATION: 800,       // Snappy green verify: 0.8s
+  COMPLETE_HOLD: 160,             // 0.16s snap flash
+  HOLD_LOGO: 700,                 // hold completed event title before disappearing
+  LOGO_DISAPPEAR: 300,            // time for event title to glitch/fade away completely
+  TYPE_STEP_SPEED: 78,            // fast logo typing: 13 boxes * 78ms = ~1014ms
+  PRESENTED_BY_DECODE: 320,       // "PRESENTED BY" decode scrambler animation
+  PRESENTED_BY_SOLO_HOLD: 750,    // distinct delay where "PRESENTED BY" is seen alone
+  LOGO_APPEAR_DURATION: 480,      // smooth entrance for original logo
+  ORIGINAL_LOGO_HOLD: 1250,       // clearly visible for 1.25s before sweep begins
+  TRANSFORM_SWEEP_DURATION: 2000, // 2.0s synchronized pixel-precise reforge sweep
+  TRANSFORM_MORPH_DURATION: 2000, // backward-compat alias
+  SETTLED_HOLD: 1400,             // 1.4s hold on modified logo for clear observation
+  DISAPPEAR_DURATION: 520,        // high-speed fine red particle scatter & laser rupture
+  FADE_OUT_DURATION: 280,         // smooth fade out to site
+  REDUCED_MOTION_HOLD: 1200,
 };
 
 export const SPLASH_TIMINGS = {
@@ -32,6 +39,16 @@ export const SPLASH_TIMINGS = {
   FADE_OUT: 300,
   REDUCED_HOLD: 1000,
 };
+
+// Dynamic changing status messages during the loading phase
+export const LOADING_STATUS_MESSAGES = [
+  '> telemetry: scanning memory space...',
+  '> initializing quantum kernel [OK]...',
+  '> decrypting payload signature...',
+  '> compiling neural telemetry...',
+  '> verifying participant clearance...',
+  '> integrity check in progress...',
+];
 
 // Exact sampled colors from client/src/assets/logo.png
 export const COLORS = {
@@ -54,10 +71,10 @@ export const STATUS_LINE_LOADING = '> telemetry: scanning memory space...';
 
 export const TOTAL_SEGMENTS = 26;
 
-// Particle density scaling constants (strictly viewport based, no area formula)
+// Particle density scaling constants
 export const PARTICLES_PHONE = 36;
-export const PARTICLES_TABLET = 54;    // Math.round(1.5 * 36)
-export const PARTICLES_DESKTOP = 72;   // Math.round(2 * 36)
+export const PARTICLES_TABLET = 54;
+export const PARTICLES_DESKTOP = 72;
 
 export const SESSION_KEYS = {
   INTRO_SEEN: 'larper_or_coder_intro_seen',
@@ -70,7 +87,6 @@ export const LOGO_CANVAS_HEIGHT = 328;
 
 /**
  * Letter reveal bounding boxes for logo-typing.png (LARPER OR CODER).
- * Hard-coded coordinates and percentages derived from pixel scanning.
  */
 export const LOGO_REVEAL_BOXES = [
   // Top line: LARPER
@@ -90,35 +106,4 @@ export const LOGO_REVEAL_BOXES = [
   { id: 'logo-bot-4', name: 'R', x: 545, y: 216, w: 100, h: 92, leftPct: '64.88%', topPct: '65.85%', wPct: '11.9%', hPct: '28.05%', cursor: { x: 653, y: 282, w: 53, h: 16 } },
   // End cursor reveal (the baked-in cursor)
   { id: 'logo-cur-0', name: 'CURSOR', x: 650, y: 275, w: 60, h: 28, leftPct: '77.38%', topPct: '83.84%', wPct: '7.14%', hPct: '8.54%', cursor: { x: 653, y: 282, w: 53, h: 16 } },
-];
-
-/**
- * Letter reveal bounding boxes for presented-typing.png (PRESENTED BY CELESTIUS).
- * Hard-coded coordinates and percentages derived from pixel scanning.
- */
-export const PRESENTED_REVEAL_BOXES = [
-  // Top line: PRESENTED
-  { id: 'pres-top-0', name: 'P', x: 10,  y: 10, w: 90,  h: 132, leftPct: '1.19%', topPct: '3.05%', wPct: '10.71%', hPct: '40.24%', cursor: { x: 102, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-1', name: 'R', x: 100, y: 10, w: 90,  h: 132, leftPct: '11.9%', topPct: '3.05%', wPct: '10.71%', hPct: '40.24%', cursor: { x: 192, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-2', name: 'E', x: 190, y: 10, w: 90,  h: 132, leftPct: '22.62%', topPct: '3.05%', wPct: '10.71%', hPct: '40.24%', cursor: { x: 282, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-3', name: 'S', x: 280, y: 10, w: 87,  h: 132, leftPct: '33.33%', topPct: '3.05%', wPct: '10.36%', hPct: '40.24%', cursor: { x: 370, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-4', name: 'E', x: 367, y: 10, w: 91,  h: 132, leftPct: '43.69%', topPct: '3.05%', wPct: '10.83%', hPct: '40.24%', cursor: { x: 460, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-5', name: 'N', x: 458, y: 10, w: 90,  h: 132, leftPct: '54.52%', topPct: '3.05%', wPct: '10.71%', hPct: '40.24%', cursor: { x: 550, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-6', name: 'T', x: 548, y: 10, w: 90,  h: 132, leftPct: '65.24%', topPct: '3.05%', wPct: '10.71%', hPct: '40.24%', cursor: { x: 640, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-7', name: 'E', x: 638, y: 10, w: 93,  h: 132, leftPct: '75.95%', topPct: '3.05%', wPct: '11.07%', hPct: '40.24%', cursor: { x: 733, y: 120, w: 34, h: 18 } },
-  { id: 'pres-top-8', name: 'D', x: 731, y: 10, w: 100, h: 132, leftPct: '87.02%', topPct: '3.05%', wPct: '11.9%', hPct: '40.24%', cursor: { x: 833, y: 120, w: 34, h: 18 } },
-  // Middle row: [-- BY --]
-  { id: 'pres-mid-0', name: 'TAG_BY', x: 135, y: 138, w: 575, h: 74, leftPct: '16.07%', topPct: '42.07%', wPct: '68.45%', hPct: '22.56%', cursor: { x: 140, y: 295, w: 44, h: 16 } },
-  // Bottom line: CELESTIUS
-  { id: 'pres-bot-0', name: 'C', x: 50,  y: 212, w: 90, h: 106, leftPct: '5.95%', topPct: '64.63%', wPct: '10.71%', hPct: '32.32%', cursor: { x: 142, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-1', name: 'E', x: 140, y: 212, w: 84, h: 106, leftPct: '16.67%', topPct: '64.63%', wPct: '10.0%', hPct: '32.32%', cursor: { x: 226, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-2', name: 'L', x: 224, y: 212, w: 84, h: 106, leftPct: '26.67%', topPct: '64.63%', wPct: '10.0%', hPct: '32.32%', cursor: { x: 310, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-3', name: 'E', x: 308, y: 212, w: 84, h: 106, leftPct: '36.67%', topPct: '64.63%', wPct: '10.0%', hPct: '32.32%', cursor: { x: 394, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-4', name: 'S', x: 392, y: 212, w: 84, h: 106, leftPct: '46.67%', topPct: '64.63%', wPct: '10.0%', hPct: '32.32%', cursor: { x: 478, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-5', name: 'T', x: 476, y: 212, w: 78, h: 106, leftPct: '56.67%', topPct: '64.63%', wPct: '9.29%', hPct: '32.32%', cursor: { x: 556, y: 295, w: 40, h: 16 } },
-  { id: 'pres-bot-6', name: 'I', x: 554, y: 212, w: 50, h: 106, leftPct: '65.95%', topPct: '64.63%', wPct: '5.95%', hPct: '32.32%', cursor: { x: 606, y: 295, w: 40, h: 16 } },
-  { id: 'pres-bot-7', name: 'U', x: 604, y: 212, w: 88, h: 106, leftPct: '71.9%', topPct: '64.63%', wPct: '10.48%', hPct: '32.32%', cursor: { x: 694, y: 295, w: 44, h: 16 } },
-  { id: 'pres-bot-8', name: 'S', x: 692, y: 212, w: 84, h: 106, leftPct: '82.38%', topPct: '64.63%', wPct: '10.0%', hPct: '32.32%', cursor: { x: 776, y: 295, w: 53, h: 16 } },
-  // End cursor reveal (the baked-in cursor)
-  { id: 'pres-cur-0', name: 'CURSOR', x: 774, y: 288, w: 60, h: 30, leftPct: '92.14%', topPct: '87.8%', wPct: '7.14%', hPct: '9.15%', cursor: { x: 776, y: 295, w: 53, h: 16 } },
 ];

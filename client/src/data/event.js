@@ -78,7 +78,7 @@ export const eventData = {
       title: "The Training Arc",
       type: "Workshop",
       description:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by Navadeep Anna, a 3rd year senior.",
+        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
       highlight: true,
       eventId: "training-arc",
     },
@@ -126,16 +126,16 @@ export const eventData = {
       accentColor: "#F26B3A",
       registrationType: "pair",
       blurb:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by Navadeep Anna, a 3rd year senior.",
+        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
       about:
-        "A hands-on workshop on competitive coding and problem-solving, conducted by Navadeep Anna, a 3rd year senior.",
+        "A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
         { label: "Pega Lab", type: "venue" },
         { label: "Pair entry", type: "entry" },
       ],
       instructor: {
-        name: "Navadeep Anna",
+        name: "a top coder of CIT",
         role: "3rd year senior",
         initials: "NA",
       },

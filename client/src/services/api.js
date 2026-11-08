@@ -66,7 +66,6 @@ export async function registerParticipant(payload) {
 
     if (response.status === 404) {
       // Endpoint not yet implemented on backend -> fall back to mock
-      console.info("[API] /api/register not found on server, using mock adapter.");
       return await mockRegister(payload);
     }
 
@@ -75,7 +74,6 @@ export async function registerParticipant(payload) {
   } catch (error) {
     if (error.name === "AbortError" || error.message.includes("Failed to fetch")) {
       // Backend is offline -> gracefully proceed with mock adapter
-      console.info("[API] Backend offline or timed out, using mock adapter.");
       return await mockRegister(payload);
     }
     throw error;

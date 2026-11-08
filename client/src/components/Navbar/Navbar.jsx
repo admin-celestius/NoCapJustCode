@@ -6,7 +6,7 @@ import navbarLogoPng from '../../assets/logo-navbar.png';
 import Button from '../ui/Button.jsx';
 import { useScrollSpy } from '../../hooks/useScrollSpy.js';
 
-export default function Navbar({ onOpenRegister }) {
+export default function Navbar({ onOpenRegister, animateIn }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuActive, setMenuActive] = useState(false);
@@ -117,7 +117,7 @@ export default function Navbar({ onOpenRegister }) {
   };
 
   return (
-    <header className={styles.headerWrapper}>
+    <header className={`${styles.headerWrapper} ${animateIn ? styles.navEntrance : ''}`}>
       {/* Mobile full-screen backdrop */}
       {menuMounted && (
         <div

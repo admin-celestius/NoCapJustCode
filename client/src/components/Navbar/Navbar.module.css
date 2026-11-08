@@ -1,32 +1,58 @@
 /* client/src/components/Navbar/Navbar.module.css */
 .headerWrapper {
   position: fixed;
-  top: 1.25rem;
+  top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
   display: flex;
   justify-content: center;
-  padding: 0 1rem;
+  padding: 1.25rem 1rem 1rem;
   pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
 }
 
+/* Floating pill navbar with ambient hover & breathing glow */
 .navbar {
   pointer-events: auto;
   width: 100%;
   max-width: 960px;
   height: 60px;
-  background-color: var(--surface-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
+  background-color: rgba(11, 11, 14, 0.62);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(247, 237, 216, 0.12);
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 0.85rem 0 1.25rem;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 12px 34px -8px rgba(0, 0, 0, 0.75), 
+    0 0 22px -2px rgba(242, 107, 58, 0.14),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  animation: navFloatPill 5s ease-in-out infinite alternate;
+  will-change: transform, box-shadow;
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+@keyframes navFloatPill {
+  0% {
+    transform: translateY(0px);
+    box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.65), 0 0 14px -3px rgba(242, 107, 58, 0.06), inset 0 1px 0 rgba(247, 237, 216, 0.06);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 38px -8px rgba(0, 0, 0, 0.75), 0 0 24px 0px rgba(242, 107, 58, 0.16), inset 0 1px 0 rgba(247, 237, 216, 0.15);
+  }
+  100% {
+    transform: translateY(-1.5px);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.68), 0 0 16px -2px rgba(242, 107, 58, 0.09), inset 0 1px 0 rgba(247, 237, 216, 0.08);
+  }
 }
 
 .brand {
@@ -244,8 +270,37 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .navbar {
+    animation: none !important;
+    transform: none !important;
+  }
+
   .menuBackdrop,
   .mobileMenu {
     transition: none !important;
+  }
+}
+
+/* STAGGERED ENTRANCE ANIMATION AFTER INTRO */
+.navEntrance {
+  animation: navSlideDown 680ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+@keyframes navSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navEntrance {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

@@ -86,29 +86,32 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 @media (hover: hover) {
   .statCard:hover {
-    border-color: var(--border-medium);
+    border-color: rgba(242, 107, 58, 0.4);
     background-color: var(--surface-2);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.6), 0 0 16px -4px rgba(242, 107, 58, 0.15);
   }
 }
 
 .statValue {
   font-family: var(--font-display);
-  font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--accent-orange);
   line-height: 1.1;
   margin-bottom: 0.35rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--accent-orange);
-  letter-spacing: 0.08em;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }

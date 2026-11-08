@@ -6,7 +6,6 @@ let t0 = null;
 /**
  * Dev-only timeline logger:
  * Records milestones: intro start, each phase start, skip pressed, splash start, splash end, site visible.
- * Outputs formatted console.table when site becomes visible.
  */
 export function logTimelineEvent(event, extra = {}) {
   const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -30,10 +29,7 @@ export function logTimelineEvent(event, extra = {}) {
   }
 
   if (event === 'site visible') {
-    if (typeof console !== 'undefined' && console.table) {
-      console.log('%c[Intro & Splash Timeline]', 'color: #F26B3A; font-weight: bold;');
-      console.table(timeline);
-    }
+    // Site visible
   }
 }
 
