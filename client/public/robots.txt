@@ -1,5 +1,25 @@
-# robots.txt for LARPER OR CODER
-User-agent: *
-Allow: /
+# ========================================================
+# robots.txt for LARPER OR CODER - Celestius
+# ========================================================
 
-Sitemap: https://YOUR-DOMAIN.com/sitemap.xml
+User-agent: *
+# Allow public landing, assets and documentation
+Allow: /
+Allow: /googledc7c284f7de85589.html
+Allow: /favicon-new.png
+Allow: /og-image.png
+
+# Disallow attendee pass verification URLs to protect student pass data
+Disallow: /verify
+Disallow: /verify/
+Disallow: /verify?*
+
+# Disallow organizer admin attendance scanner desk
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+
+# Disallow internal backend API routes
+Disallow: /api/
+
+Sitemap: https://celestius.in/sitemap.xml

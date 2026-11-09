@@ -643,6 +643,9 @@
 /* Pill Container (Slightly Reduced Size for Sleek, Premium Proportions) */
 .pillContainer {
   position: relative;
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
   width: clamp(230px, 52vw, 360px);
   aspect-ratio: 3.1 / 1;
   border-radius: 9999px;

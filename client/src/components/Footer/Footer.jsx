@@ -39,17 +39,25 @@ export default function Footer() {
 
               <span className={styles.brandDivider} aria-hidden="true" />
 
-              <picture className={styles.celestiusLogoWrapper}>
-                <source srcSet={celestiusWebp} type="image/webp" />
-                <img
-                  src={celestiusPng}
-                  alt="Celestius"
-                  className={styles.footerCelestiusLogo}
-                  width={386}
-                  height={120}
-                  style={{ aspectRatio: '386 / 120' }}
-                />
-              </picture>
+              <a
+                href="https://celestius.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.celestiusLogoWrapper}
+                aria-label="Celestius website (opens in a new tab)"
+              >
+                <picture>
+                  <source srcSet={celestiusWebp} type="image/webp" />
+                  <img
+                    src={celestiusPng}
+                    alt="Celestius"
+                    className={styles.footerCelestiusLogo}
+                    width={386}
+                    height={120}
+                    style={{ aspectRatio: '386 / 120' }}
+                  />
+                </picture>
+              </a>
             </div>
 
             {/* Standalone Distinctive Tagline Text (Pure text, no badge) */}
@@ -57,9 +65,78 @@ export default function Footer() {
               no larping. only coding.
             </div>
 
-            <p className={styles.brandBio}>
-              Presented by {eventData.presentedBy}. Built for the ones who actually code. No larping, no glazing, just pure problem-solving.
-            </p>
+            <p className={styles.brandBio}>Presented by {eventData.presentedBy}. Built for the ones who actually code. No larping, no glazing, just pure problem-solving.</p>
+
+
+
+            {/* Organiser Direct Comms */}
+            <div className={styles.contactSection}>
+              <span className={styles.contactHeaderLabel}>Need Backup? // Direct Comms</span>
+              <div className={styles.contactGrid}>
+                {eventData.organisers?.map((org, idx) => (
+                  <div key={idx} className={styles.contactCard}>
+                    <div className={styles.contactMeta}>
+                      <span className={styles.contactPersonName}>{org.name}</span>
+                      <a
+                        href={`tel:${org.rawPhone || org.phone.replace(/\s+/g, '')}`}
+                        className={styles.contactPhoneNumber}
+                        aria-label={`Call ${org.name} at ${org.phone}`}
+                      >
+                        {org.phone}
+                      </a>
+                    </div>
+                    <div className={styles.contactActions}>
+                      {/* Call Button - Opens Dialer */}
+                      <a
+                        href={`tel:${org.rawPhone || org.phone.replace(/\s+/g, '')}`}
+                        className={styles.phoneButton}
+                        aria-label={`Call ${org.name} at ${org.phone}`}
+                        title={`Call ${org.name}`}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                      </a>
+
+                      {/* WhatsApp Button - Direct Chat */}
+                      <a
+                        href={org.waLink || `https://wa.me/${org.phone.replace(/[^0-9]/g, '')}`}
+                        target={LINK_TARGET}
+                        rel="noopener noreferrer"
+                        className={styles.whatsappButton}
+                        aria-label={`Chat with ${org.name} on WhatsApp`}
+                        title={`WhatsApp ${org.name}`}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
 
           {/* Quick Links Column */}
@@ -87,7 +164,7 @@ export default function Footer() {
               <li>
                 <a href="#events" className={styles.colLink}>
                   <span className={styles.linkArrow} aria-hidden="true">▸</span>
-                  <span>The Battleground</span>
+                  <span>The Lineup</span>
                 </a>
               </li>
             </ul>

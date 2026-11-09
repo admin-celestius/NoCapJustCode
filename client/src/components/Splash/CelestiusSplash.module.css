@@ -60,6 +60,8 @@
   width: clamp(220px, 56vw, 480px);
   display: flex;
   justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .logoImg {

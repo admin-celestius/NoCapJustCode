@@ -42,7 +42,7 @@ let teamSeq = 0;
 const teamBody = () => {
   const n = ++teamSeq;
   return { teamName: `Test Duo ${n}`, members: [0, 1].map((i) => ({
-    name: `Test Player ${n}-${i}`, email: `test${n}-${i}@example.com`,
+    name: `Test Player ${n}-${i}`, email: `test${n}-${i}@citchennai.net`,
     phone: String(9000000000 + n * 2 + i), department: 'CSE', year: 3, rollNo: `REG${n}-${i}`,
   })) };
 };

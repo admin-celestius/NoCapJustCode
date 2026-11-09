@@ -293,6 +293,18 @@
   letter-spacing: 0.06em;
 }
 
+.celestiusLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 180ms ease);
+}
+
+.celestiusLink:hover {
+  transform: scale(1.04);
+}
+
 .celestiusLogoImg {
   height: 22px;
   width: auto;
@@ -1611,37 +1623,8 @@
   height: 100%;
 }
 
-.mobileResultStatusBadgeSuccess {
+.resultCenterSymbolZone {
   display: none;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: rgba(0, 240, 118, 0.12);
-  border: 2px solid #00F076;
-  box-shadow: 0 0 24px rgba(0, 240, 118, 0.45);
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 0.75rem auto;
-  animation: badgePop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.mobileResultStatusBadgeFailure {
-  display: none;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: rgba(255, 59, 48, 0.12);
-  border: 2px solid #FF3B30;
-  box-shadow: 0 0 24px rgba(255, 59, 48, 0.45);
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 0.75rem auto;
-  animation: badgePop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes badgePop {
-  0% { transform: scale(0.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 .fullscreenResultStage {
@@ -1658,9 +1641,12 @@
 }
 
 @media (max-width: 860px) {
-  .mobileResultStatusBadgeSuccess,
-  .mobileResultStatusBadgeFailure {
-    display: flex;
+  .resultCenterSymbolZone {
+    display: block;
+    width: 100%;
+    height: 185px;
+    flex-shrink: 0;
+    pointer-events: none;
   }
 
   .fullscreenResultStage {
@@ -1669,7 +1655,7 @@
     width: 100vw;
     height: 100vh;
     height: 100dvh;
-    padding: 3.2rem 1.15rem max(2rem, env(safe-area-inset-bottom)) 1.15rem;
+    padding: 2.2rem 1.15rem max(1.5rem, env(safe-area-inset-bottom)) 1.15rem;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -1678,8 +1664,8 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    gap: 1.25rem;
-    background: rgba(10, 8, 14, 0.94);
+    gap: 0;
+    background: transparent;
   }
 
   .resultFloatingCloseBtn {
@@ -1776,18 +1762,34 @@
 
   .passDownloadActions {
     width: 100%;
-    max-width: 100%;
+    max-width: 400px;
+    display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.65rem;
   }
 
-  .pdfDownloadBtn,
-  .pngDownloadBtn {
-    width: 100%;
-    min-height: 46px;
-    font-size: 0.9rem;
-    border-radius: 14px;
+  .pdfDownloadBtn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+    padding: 0 1.25rem !important;
     justify-content: center;
+    box-sizing: border-box !important;
+  }
+
+  .pngDownloadBtn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    border-radius: 14px !important;
+    font-size: 0.88rem !important;
+    padding: 0 1.15rem !important;
+    justify-content: center;
+    box-sizing: border-box !important;
   }
 
   .successActionsGroup {
@@ -1805,6 +1807,7 @@
     font-size: 0.82rem;
     line-height: 1.4;
     color: rgba(247, 237, 216, 0.7);
+    margin-top: 0.75rem;
     margin-bottom: 1.25rem;
     max-width: 340px;
   }
@@ -2249,4 +2252,40 @@
 @keyframes stageFadeIn {
   0% { opacity: 0; transform: scale(0.96) translateY(10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (max-width: 860px) {
+  .passDownloadActions {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+  }
+
+  .pdfDownloadBtn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+    padding: 0 1.25rem !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .pngDownloadBtn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    border-radius: 14px !important;
+    font-size: 0.88rem !important;
+    padding: 0 1.15rem !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
 }

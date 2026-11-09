@@ -86,13 +86,28 @@ export default function ParticleCanvas({ mode = 'ambient', isClosing = false }) 
 
     const computeShapeTargets = (shapeMode, w, h) => {
       const cx = w / 2;
-      // Measure top header zone and bottom actions zone to place the symbol exactly equidistant
-      const topSectionBottom = Math.max(120, h * 0.16);
-      const bottomSectionTop = Math.max(topSectionBottom + 160, h - 290);
-      const cy = Math.round((topSectionBottom + bottomSectionTop) / 2);
+      const isMobile = w < 600 || h < 750;
+      let cy;
+      let symbolSize;
 
-      const availableHeight = bottomSectionTop - topSectionBottom;
-      const symbolSize = Math.max(90, Math.min(w * 0.36, Math.min(availableHeight * 0.46, 140)));
+      if (isMobile) {
+        if (shapeMode === 'cross') {
+          // Precise optical center in failure mode with dedicated clearance from notes
+          cy = Math.round(Math.min(h * 0.28, 205));
+          symbolSize = Math.max(72, Math.min(w * 0.25, 88));
+        } else {
+          // High-visibility placement centered squarely between the header subtitle and registration card
+          cy = Math.round(Math.min(h * 0.31, 230));
+          symbolSize = Math.max(78, Math.min(w * 0.27, 98));
+        }
+      } else {
+        // Measure top header zone and bottom actions zone to place the symbol exactly equidistant
+        const topSectionBottom = Math.max(120, h * 0.16);
+        const bottomSectionTop = Math.max(topSectionBottom + 160, h - 290);
+        cy = Math.round((topSectionBottom + bottomSectionTop) / 2);
+        const availableHeight = bottomSectionTop - topSectionBottom;
+        symbolSize = Math.max(90, Math.min(w * 0.36, Math.min(availableHeight * 0.46, 140)));
+      }
 
       if (shapeMode === 'tick') {
         // Classic, bold checkmark geometry
@@ -143,7 +158,7 @@ export default function ParticleCanvas({ mode = 'ambient', isClosing = false }) 
         });
       } else if (shapeMode === 'cross') {
         // High-definition Cross mark geometry with multi-strand width
-        const armLen = symbolSize * 0.88;
+        const armLen = isMobile ? symbolSize * 0.48 : symbolSize * 0.72;
         const half = Math.floor(NUM_PARTICLES / 2);
         const strands = 3;
         const strandSpacing = 6;
@@ -309,23 +324,23 @@ export default function ParticleCanvas({ mode = 'ambient', isClosing = false }) 
 
         if (targetMode === 'tick' || targetMode === 'cross') {
           if (p.inMotionToTarget) {
-            // Ultra-slow cinematic convergence (~3.5s)
+            // Cinematic convergence (~2.2s) so formation completes clearly before text fades in
             const dx = p.targetX - p.x;
             const dy = p.targetY - p.y;
             const distToTarget = Math.hypot(dx, dy);
 
             // Gentle steer force
-            const steerForce = 0.0032 * dt;
+            const steerForce = 0.0055 * dt;
             p.vx += dx * steerForce;
             p.vy += dy * steerForce;
 
             // Fluid drag
-            p.vx *= Math.pow(0.95, dt);
-            p.vy *= Math.pow(0.95, dt);
+            p.vx *= Math.pow(0.94, dt);
+            p.vy *= Math.pow(0.94, dt);
 
-            // Strict speed limit for majestic slow motion
+            // Strict speed limit for majestic motion
             const speed = Math.hypot(p.vx, p.vy);
-            const maxSpeed = 1.85;
+            const maxSpeed = 2.6;
             if (speed > maxSpeed) {
               p.vx = (p.vx / speed) * maxSpeed;
               p.vy = (p.vy / speed) * maxSpeed;

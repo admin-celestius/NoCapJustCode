@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
-import { createOrder, verifyPayment, checkTeamNameAvailability } from '../../services/api.js';
+import { createOrder, verifyPayment, checkTeamNameAvailability, checkRegistrationConflicts } from '../../services/api.js';
 import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
 import { PRICING, WHATSAPP_GROUP_URL } from '../../data/event.js';
 import { downloadPassPdf, downloadPassImage } from '../../services/passGenerator.js';
@@ -272,21 +272,52 @@ export default function RegisterModal({ isOpen, onClose }) {
       return;
     }
 
-    if (!pendingPayment && formData?.pairName) {
-      const trimmed = (formData.pairName || '').trim();
+    if (!pendingPayment && formData) {
       try {
-        const teamCheck = await checkTeamNameAvailability(trimmed);
-        if (!teamCheck.available) {
-          setTeamNameStatus('taken');
-          setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
-          showToast('This duo codename is already taken. Please choose a unique name.');
-          return;
+        const checkPayload = {
+          teamName: (formData.pairName || '').trim(),
+          emails: (formData.members || []).map((m) => (m.email || '').trim().toLowerCase()),
+          phones: (formData.members || []).map((m) => (m.phone || '').trim().replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '')),
+          rollNos: (formData.members || []).map((m) => (m.rollNo || '').trim().toUpperCase()),
+        };
+        const checkRes = await checkRegistrationConflicts(checkPayload);
+        if (checkRes?.available === false && checkRes?.conflicts) {
+          const { conflicts } = checkRes;
+          let conflictFound = false;
+
+          if (conflicts.teamName) {
+            setTeamNameStatus('taken');
+            setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+            conflictFound = true;
+          }
+
+          formData.members.forEach((member, index) => {
+            const cleanPhone = (member.phone || '').trim().replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
+            const cleanEmail = (member.email || '').trim().toLowerCase();
+            const cleanRoll = (member.rollNo || '').trim().toUpperCase();
+
+            if (conflicts.emails?.some((e) => e.toLowerCase() === cleanEmail)) {
+              setError(`members.${index}.email`, { type: 'manual', message: "Bro, You're Already In. This email belongs to a registered participant." });
+              conflictFound = true;
+            }
+            if (conflicts.phones?.some((p) => p === cleanPhone)) {
+              setError(`members.${index}.phone`, { type: 'manual', message: "Bro, You're Already In. This mobile number belongs to a registered participant." });
+              conflictFound = true;
+            }
+            if (conflicts.rollNos?.some((r) => r.toUpperCase() === cleanRoll)) {
+              setError(`members.${index}.rollNo`, { type: 'manual', message: "Bro, You're Already In. This registration number belongs to a registered participant." });
+              conflictFound = true;
+            }
+          });
+
+          if (conflictFound) {
+            showToast("Bro, You're Already In. Some participant details are already registered.");
+            return;
+          }
         }
       } catch (err) {
-        if (err?.code === 'DUPLICATE_REGISTRATION' || err?.status === 409) {
-          setTeamNameStatus('taken');
-          setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
-          showToast('This duo codename is already taken. Please choose a unique name.');
+        if (err?.conflicts) {
+          showToast("Bro, You're Already In. Some participant details are already registered.");
           return;
         }
       }
@@ -527,11 +558,6 @@ export default function RegisterModal({ isOpen, onClose }) {
           {/* TOP SECTION: Confirmation Message above the symbol */}
           {showResultText ? (
             <div className={styles.resultFloatingTop}>
-              <div className={styles.mobileResultStatusBadgeSuccess} aria-hidden="true">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00F076" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
               <h2 className={styles.resultTitleSuccess}>
                 Your Registration to LOC is Officially Confirmed
               </h2>
@@ -542,6 +568,9 @@ export default function RegisterModal({ isOpen, onClose }) {
           ) : (
             <div className={styles.phase1Spacer} />
           )}
+
+          {/* Dedicated unobstructed clear zone on mobile for the particle tick symbol */}
+          {showResultText && <div className={styles.resultCenterSymbolZone} aria-hidden="true" />}
 
           {/* BOTTOM SECTION: Floating Registration ID & Actions (Zero Containers) */}
           {showResultText ? (
@@ -631,12 +660,6 @@ export default function RegisterModal({ isOpen, onClose }) {
           {/* TOP SECTION: Incomplete Message above the symbol */}
           {showResultText ? (
             <div className={styles.resultFloatingTop}>
-              <div className={styles.mobileResultStatusBadgeFailure} aria-hidden="true">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </div>
               <h2 className={styles.resultTitleFailure}>
                 Payment Incomplete
               </h2>
@@ -647,6 +670,9 @@ export default function RegisterModal({ isOpen, onClose }) {
           ) : (
             <div className={styles.phase1Spacer} />
           )}
+
+          {/* Dedicated unobstructed clear zone on mobile for the particle cross symbol */}
+          {showResultText && <div className={styles.resultCenterSymbolZone} aria-hidden="true" />}
 
           {/* BOTTOM SECTION: Preserved note & actions (Zero Containers) */}
           {showResultText ? (
@@ -728,14 +754,22 @@ export default function RegisterModal({ isOpen, onClose }) {
 
             <div className={styles.brandBottom}>
               <span className={styles.byLabel}>By</span>
-              <img
-                src="/Celestius_modified_curved.png"
-                alt="Celestius"
-                className={styles.celestiusLogoImg}
-                onError={(e) => {
-                  e.currentTarget.src = '/celestius_original.png';
-                }}
-              />
+              <a
+                href="https://celestius.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.celestiusLink}
+                aria-label="Celestius website (opens in a new tab)"
+              >
+                <img
+                  src="/Celestius_modified_curved.png"
+                  alt="Celestius"
+                  className={styles.celestiusLogoImg}
+                  onError={(e) => {
+                    e.currentTarget.src = '/celestius_original.png';
+                  }}
+                />
+              </a>
             </div>
           </aside>
 
@@ -957,13 +991,13 @@ export default function RegisterModal({ isOpen, onClose }) {
                             {/* Email */}
                             <div className={styles.formGroup}>
                               <label htmlFor={`member-${index}-email`} className={styles.fieldLabel}>
-                                Email Address
+                                College Email (@citchennai.net)
                               </label>
                               <input
                                 id={`member-${index}-email`}
                                 type="email"
                                 autoComplete={index === 0 ? 'email' : 'off'}
-                                placeholder="e.g. jane@example.com"
+                                placeholder="e.g. 2101001@citchennai.net"
                                 className={`${styles.inputField} ${memberErrors?.email ? styles.hasError : ''}`}
                                 aria-invalid={!!memberErrors?.email}
                                 onFocus={handleInputFocus}

@@ -1126,10 +1126,14 @@ export default function Intro({ onComplete }) {
                   <div className={styles.pillAura} aria-hidden="true" />
 
                   {/* Capsule Pill Frame with Smooth Reveal */}
-                  <div
+                  <a
+                    href="https://celestius.in"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`${styles.pillContainer} ${
                       transformStage === 'appearing' ? styles.pillAppearing : ''
                     }`}
+                    aria-label="Celestius website (opens in a new tab)"
                   >
                     {/* Synchronized Reforge Beam during morphing */}
                     {transformStage === 'morphing' && !isReducedMotion && (
@@ -1171,7 +1175,7 @@ export default function Intro({ onComplete }) {
                       }}
                       loading="eager"
                     />
-                  </div>
+                  </a>
                 </div>
               </div>
             )}

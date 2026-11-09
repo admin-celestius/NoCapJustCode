@@ -93,7 +93,13 @@ export default function CelestiusSplash({ onComplete }) {
         {/* Pixel-styled brand tag (cream parallelogram with yellow checkers & brackets) */}
         <PresentedBrandTag className={styles.brandTag} />
 
-        <div className={styles.logoWrapper}>
+        <a
+          href="https://celestius.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.logoWrapper}
+          aria-label="Celestius website (opens in a new tab)"
+        >
           <picture>
             <source
               srcSet={`${celestiusWebp} 1x, ${celestius2xWebp} 2x`}
@@ -110,7 +116,7 @@ export default function CelestiusSplash({ onComplete }) {
               loading="eager"
             />
           </picture>
-        </div>
+        </a>
       </div>
     </div>
   );

@@ -45,6 +45,7 @@ export async function checkTeamNameAvailability(teamName) {
   return request(`/api/registrations/check-team?name=${encodeURIComponent(trimmed)}`);
 }
 
+export const checkRegistrationConflicts = (payload) => request('/api/registrations/check', payload);
 export const createOrder = (payload) => request('/api/registrations/create-order', payload);
 export const verifyPayment = (payload) => request('/api/registrations/verify-payment', payload);
 
