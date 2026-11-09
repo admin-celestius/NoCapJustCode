@@ -1,0 +1,1022 @@
+/* client/src/components/PassVerification/VerifyPass.module.css */
+
+/* Custom Single Smooth Window Scrollbar */
+:global(html) {
+  scroll-behavior: smooth !important;
+}
+
+:global(::-webkit-scrollbar) {
+  width: 8px;
+}
+
+:global(::-webkit-scrollbar-track) {
+  background: #07050A;
+}
+
+:global(::-webkit-scrollbar-thumb) {
+  background: #F26B3A;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(242, 107, 58, 0.5);
+}
+
+:global(::-webkit-scrollbar-thumb:hover) {
+  background: #FFAE19;
+}
+
+.verifyPageContainer {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.25rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+  background-color: #07050A;
+  font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+  color: #F7EDD8;
+  /* Prevent nested internal scrollbars completely */
+  overflow: visible;
+}
+
+/* Background Cyberpunk Ambient Grid & Glow */
+.ambientGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(242, 107, 58, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 107, 58, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  animation: gridFadeIn 1s ease-out forwards;
+}
+
+.ambientGlow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, rgba(242, 107, 58, 0.14) 0%, transparent 65%);
+  filter: blur(90px);
+  pointer-events: none;
+  animation: glowPulse 10s ease-in-out infinite alternate;
+}
+
+/* Floating Decorative Pixel Clusters */
+.floatingPixelsTR {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.floatingPixelsBL {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.floatPixelDot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #F26B3A;
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.9);
+}
+
+/* ========================================================
+   TICKET OUTER CHASSIS (Pixel-Stepped Double Border)
+   ======================================================== */
+.ticketOuterWrapper {
+  width: 100%;
+  max-width: 580px;
+  position: relative;
+  background: linear-gradient(180deg, #F26B3A 0%, #FF9900 50%, #F26B3A 100%);
+  padding: 2.5px;
+  box-sizing: border-box;
+  clip-path: polygon(
+    /* Top Border & Center Notch */
+    24px 0,
+    calc(50% - 32px) 0,
+    calc(50% - 26px) 6px,
+    calc(50% + 26px) 6px,
+    calc(50% + 32px) 0,
+    calc(100% - 24px) 0,
+    /* Top-Right Stepped Corner */
+    calc(100% - 24px) 0,
+    calc(100% - 18px) 0,
+    calc(100% - 18px) 6px,
+    calc(100% - 12px) 6px,
+    calc(100% - 12px) 12px,
+    calc(100% - 6px) 12px,
+    calc(100% - 6px) 18px,
+    100% 18px,
+    100% 24px,
+    /* Right Side & Ticket Notch */
+    100% calc(40% - 24px),
+    calc(100% - 6px) calc(40% - 24px),
+    calc(100% - 6px) calc(40% - 16px),
+    calc(100% - 14px) calc(40% - 16px),
+    calc(100% - 14px) calc(40% + 16px),
+    calc(100% - 6px) calc(40% + 16px),
+    calc(100% - 6px) calc(40% + 24px),
+    100% calc(40% + 24px),
+    /* Bottom-Right Stepped Corner */
+    100% calc(100% - 24px),
+    calc(100% - 6px) calc(100% - 24px),
+    calc(100% - 6px) calc(100% - 18px),
+    calc(100% - 12px) calc(100% - 18px),
+    calc(100% - 12px) calc(100% - 12px),
+    calc(100% - 18px) calc(100% - 12px),
+    calc(100% - 18px) calc(100% - 6px),
+    calc(100% - 24px) calc(100% - 6px),
+    calc(100% - 24px) 100%,
+    /* Bottom Border & Center Notch */
+    calc(100% - 24px) 100%,
+    calc(50% + 32px) 100%,
+    calc(50% + 26px) calc(100% - 6px),
+    calc(50% - 26px) calc(100% - 6px),
+    calc(50% - 32px) 100%,
+    24px 100%,
+    /* Bottom-Left Stepped Corner */
+    24px 100%,
+    18px 100%,
+    18px calc(100% - 6px),
+    12px calc(100% - 6px),
+    12px calc(100% - 12px),
+    6px calc(100% - 12px),
+    6px calc(100% - 18px),
+    0 calc(100% - 18px),
+    0 calc(100% - 24px),
+    /* Left Side & Ticket Notch */
+    0 calc(40% + 24px),
+    6px calc(40% + 24px),
+    6px calc(40% + 16px),
+    14px calc(40% + 16px),
+    14px calc(40% - 16px),
+    6px calc(40% - 16px),
+    6px calc(40% - 24px),
+    0 calc(40% - 24px),
+    /* Top-Left Stepped Corner */
+    0 24px,
+    0 18px,
+    6px 18px,
+    6px 12px,
+    12px 12px,
+    12px 6px,
+    18px 6px,
+    18px 0,
+    24px 0
+  );
+  filter: drop-shadow(0 0 16px rgba(242, 107, 58, 0.45)) drop-shadow(0 16px 40px rgba(0, 0, 0, 0.95));
+  animation: ticketChassisEnter 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ticketInnerChassis {
+  width: 100%;
+  background: #0B0812;
+  box-sizing: border-box;
+  padding: 2.2rem 2rem 1.8rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  clip-path: polygon(
+    /* Inner Matching Stepped Polygon */
+    24px 0,
+    calc(50% - 32px) 0,
+    calc(50% - 26px) 6px,
+    calc(50% + 26px) 6px,
+    calc(50% + 32px) 0,
+    calc(100% - 24px) 0,
+    calc(100% - 24px) 0,
+    calc(100% - 18px) 0,
+    calc(100% - 18px) 6px,
+    calc(100% - 12px) 6px,
+    calc(100% - 12px) 12px,
+    calc(100% - 6px) 12px,
+    calc(100% - 6px) 18px,
+    100% 18px,
+    100% 24px,
+    100% calc(40% - 24px),
+    calc(100% - 6px) calc(40% - 24px),
+    calc(100% - 6px) calc(40% - 16px),
+    calc(100% - 14px) calc(40% - 16px),
+    calc(100% - 14px) calc(40% + 16px),
+    calc(100% - 6px) calc(40% + 16px),
+    calc(100% - 6px) calc(40% + 24px),
+    100% calc(40% + 24px),
+    100% calc(100% - 24px),
+    calc(100% - 6px) calc(100% - 24px),
+    calc(100% - 6px) calc(100% - 18px),
+    calc(100% - 12px) calc(100% - 18px),
+    calc(100% - 12px) calc(100% - 12px),
+    calc(100% - 18px) calc(100% - 12px),
+    calc(100% - 18px) calc(100% - 6px),
+    calc(100% - 24px) calc(100% - 6px),
+    calc(100% - 24px) 100%,
+    calc(100% - 24px) 100%,
+    calc(50% + 32px) 100%,
+    calc(50% + 26px) calc(100% - 6px),
+    calc(50% - 26px) calc(100% - 6px),
+    calc(50% - 32px) 100%,
+    24px 100%,
+    24px 100%,
+    18px 100%,
+    18px calc(100% - 6px),
+    12px calc(100% - 6px),
+    12px calc(100% - 12px),
+    6px calc(100% - 12px),
+    6px calc(100% - 18px),
+    0 calc(100% - 18px),
+    0 calc(100% - 24px),
+    0 calc(40% + 24px),
+    6px calc(40% + 24px),
+    6px calc(40% + 16px),
+    14px calc(40% + 16px),
+    14px calc(40% - 16px),
+    6px calc(40% - 16px),
+    6px calc(40% - 24px),
+    0 calc(40% - 24px),
+    0 24px,
+    0 18px,
+    6px 18px,
+    6px 12px,
+    12px 12px,
+    12px 6px,
+    18px 6px,
+    18px 0,
+    24px 0
+  );
+  box-shadow: inset 0 0 40px rgba(242, 107, 58, 0.08);
+  position: relative;
+}
+
+@media (max-width: 480px) {
+  .ticketInnerChassis {
+    padding: 1.8rem 1.25rem 1.5rem 1.25rem;
+    gap: 1.1rem;
+  }
+}
+
+/* ========================================================
+   1. TOP HEADER HERO: CELESTIUS | LOC LOGO (Sleek Glass Capsule)
+   ======================================================== */
+.headerBrandContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.2rem 0;
+}
+
+.headerBrandChassis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.8rem;
+  padding: 0.75rem 2.2rem;
+  background: linear-gradient(180deg, rgba(28, 20, 38, 0.92) 0%, rgba(14, 10, 20, 0.96) 100%);
+  border: 1.5px solid rgba(242, 107, 58, 0.6);
+  border-radius: 9999px;
+  box-shadow:
+    0 0 25px rgba(242, 107, 58, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.7),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.headerBrandChassis:hover {
+  transform: scale(1.02);
+  box-shadow:
+    0 0 35px rgba(242, 107, 58, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.headerBrandChassis::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 25%;
+  right: 25%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #FFAE19, #F26B3A, #FFAE19, transparent);
+  box-shadow: 0 0 8px #FFAE19;
+}
+
+@media (max-width: 480px) {
+  .headerBrandChassis {
+    padding: 0.6rem 1.4rem;
+    gap: 1.2rem;
+  }
+}
+
+.celestiusPillBadge {
+  display: flex;
+  align-items: center;
+}
+
+.celestiusLogoImg {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+}
+
+.headerVerticalDivider {
+  width: 1.5px;
+  height: 32px;
+  background: linear-gradient(180deg, #F26B3A, #FFAE19, #F26B3A);
+  box-shadow: 0 0 8px rgba(255, 174, 25, 0.8);
+  flex-shrink: 0;
+}
+
+.locLogoBox {
+  display: flex;
+  align-items: center;
+}
+
+.locLogoImg {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px rgba(242, 107, 58, 0.6));
+}
+
+/* ========================================================
+   2. SUB-HEADER: OFFICIAL ENTRY BADGE + SLANTED EVENT TAG
+   ======================================================== */
+.subHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.2rem;
+  gap: 0.75rem;
+}
+
+.officialBadgeLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.eventSlantedPill {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: linear-gradient(90deg, rgba(242, 107, 58, 0.18), rgba(242, 107, 58, 0.06));
+  border: 1px solid rgba(242, 107, 58, 0.45);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  transform: skewX(-10deg);
+}
+
+.eventPillTitle {
+  font-family: var(--font-pixel, "Press Start 2P", monospace);
+  font-size: 0.82rem;
+  color: #F26B3A;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 12px rgba(242, 107, 58, 0.6);
+  transform: skewX(10deg);
+}
+
+.hazardSlashesLeft {
+  display: flex;
+  gap: 3px;
+  transform: skewX(10deg);
+}
+
+.hazardSlashBar {
+  width: 4px;
+  height: 12px;
+  background: #F26B3A;
+  transform: skewX(-20deg);
+  border-radius: 1px;
+}
+
+.checkerMatrix {
+  display: grid;
+  grid-template-columns: repeat(4, 4px);
+  grid-template-rows: repeat(2, 4px);
+  gap: 2px;
+  transform: skewX(10deg);
+}
+
+.checkDot {
+  width: 4px;
+  height: 4px;
+  background: #F26B3A;
+}
+
+.checkDot:nth-child(even) {
+  background: #FFAE19;
+}
+
+/* ========================================================
+   UNCLIPPED CARD BLOCK CONTAINER (Keeps Tab 100% Visible)
+   ======================================================== */
+.cardBlock {
+  position: relative;
+  width: 100%;
+  padding-top: 12px;
+}
+
+/* Angled Cream Tab Tag on Top Border */
+.cardTabTag {
+  position: absolute;
+  top: 0;
+  left: 20px;
+  background: #FDE6C5;
+  color: #A83204;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transform: skewX(-12deg);
+  z-index: 10;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(168, 50, 4, 0.35);
+  border-radius: 2px;
+}
+
+.cardTabTag span,
+.cardTabTag svg {
+  transform: skewX(12deg);
+}
+
+.tabSlash {
+  color: #A83204;
+  font-weight: 900;
+}
+
+/* Reusable Chamfered Card Wrapper */
+.cyberCardWrapper {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(242, 107, 58, 0.85), rgba(255, 174, 25, 0.45), rgba(242, 107, 58, 0.75));
+  padding: 1.5px;
+  clip-path: polygon(
+    14px 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    14px 100%,
+    0 calc(100% - 14px),
+    0 14px
+  );
+  filter: drop-shadow(0 0 10px rgba(242, 107, 58, 0.25));
+  transition: transform 220ms ease, filter 220ms ease;
+}
+
+.cyberCardWrapper:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 16px rgba(242, 107, 58, 0.4));
+}
+
+.cardCornerChecker {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 4px);
+  grid-template-rows: repeat(2, 4px);
+  gap: 2px;
+  z-index: 4;
+}
+
+/* ========================================================
+   3. DUO CODENAME HERO CARD
+   ======================================================== */
+.cyberCardInnerDuo {
+  width: 100%;
+  background: #110C1A;
+  clip-path: polygon(
+    13px 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 13px) 100%,
+    13px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  padding: 1.4rem 1.4rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.duoNameText {
+  font-family: var(--font-display, var(--font-body));
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+  word-break: break-word;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.duoRegCodePill {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: 800;
+  color: #F26B3A;
+  background: rgba(242, 107, 58, 0.12);
+  border: 1.5px solid rgba(242, 107, 58, 0.55);
+  padding: 0.55rem 1.05rem;
+  border-radius: 8px;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0 16px rgba(242, 107, 58, 0.25);
+  white-space: nowrap;
+}
+
+/* ========================================================
+   4. REGISTERED DUO CODERS SECTION
+   ======================================================== */
+.sectionCluster {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.sectionHeaderLine {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 0.2rem;
+}
+
+.sectionIcon {
+  color: #F26B3A;
+  flex-shrink: 0;
+}
+
+.sectionTitleText {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(242, 107, 58, 0.4);
+}
+
+.codersGridRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 500px) {
+  .codersGridRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cyberCardInnerCoder {
+  width: 100%;
+  background: #110C1A;
+  clip-path: polygon(
+    13px 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 13px) 100%,
+    13px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  padding: 1.3rem 1.3rem 1.2rem 1.3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.coderName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 0.3rem;
+  word-break: break-word;
+}
+
+.coderDept {
+  font-size: 0.82rem;
+  color: rgba(247, 237, 216, 0.7);
+}
+
+/* ========================================================
+   5. VENUE INFORMATION (Clean Text, No Button)
+   ======================================================== */
+.cyberCardInnerVenue {
+  width: 100%;
+  background: #110C1A;
+  clip-path: polygon(
+    13px 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 13px) 100%,
+    13px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  padding: 1.4rem 1.4rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.venueNoticeText {
+  font-size: 0.95rem;
+  color: rgba(247, 237, 216, 0.94);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0.2rem 0;
+}
+
+/* ========================================================
+   6. OFFICIAL CONFIRMATION BANNER
+   ======================================================== */
+.cyberCardInnerConfirmation {
+  width: 100%;
+  background: #110C1A;
+  clip-path: polygon(
+    13px 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 13px) 100%,
+    13px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  padding: 1.25rem 1.4rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  position: relative;
+}
+
+.pixelCheckBadge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmationText {
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #FFFFFF;
+}
+
+.confirmationHazardSlashes {
+  position: absolute;
+  bottom: 8px;
+  right: 14px;
+  display: flex;
+  gap: 3px;
+}
+
+/* ========================================================
+   7. EVENT ORGANISERS HELPLINE SECTION (AT THE VERY LAST)
+   ======================================================== */
+.helplineGridRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 500px) {
+  .helplineGridRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cyberCardInnerContact {
+  width: 100%;
+  background: #110C1A;
+  clip-path: polygon(
+    13px 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 13px) 100%,
+    13px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  padding: 1.25rem 1.3rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.contactMetaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.contactName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 0.25rem;
+}
+
+.contactPhone {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85rem;
+  color: rgba(247, 237, 216, 0.85);
+  letter-spacing: 0.02em;
+}
+
+.contactActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+/* Square Call Action Button */
+.phoneSquareButton {
+  width: 38px;
+  height: 38px;
+  background: rgba(242, 107, 58, 0.12);
+  border: 1.5px solid rgba(242, 107, 58, 0.6);
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    0 calc(100% - 5px),
+    0 5px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F26B3A;
+  text-decoration: none;
+  box-shadow: 0 0 10px rgba(242, 107, 58, 0.25);
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.phoneSquareButton:hover {
+  transform: translateY(-2px) scale(1.08);
+  background: rgba(242, 107, 58, 0.25);
+  box-shadow: 0 0 16px rgba(242, 107, 58, 0.55);
+}
+
+/* Square WhatsApp Chat Action Button */
+.whatsappSquareButton {
+  width: 38px;
+  height: 38px;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1.5px solid rgba(37, 211, 102, 0.6);
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    0 calc(100% - 5px),
+    0 5px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #25D366;
+  text-decoration: none;
+  box-shadow: 0 0 10px rgba(37, 211, 102, 0.25);
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.whatsappSquareButton:hover {
+  transform: translateY(-2px) scale(1.08);
+  background: rgba(37, 211, 102, 0.25);
+  box-shadow: 0 0 16px rgba(37, 211, 102, 0.55);
+}
+
+/* ========================================================
+   8. PASS FOOTER BAR
+   ======================================================== */
+.footerRowBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.2rem 0.2rem 0.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0.3rem;
+  gap: 1rem;
+}
+
+.returnHomeLink {
+  color: #F26B3A;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.returnHomeLink:hover {
+  color: #FFAE19;
+  transform: translateX(-3px);
+}
+
+.footerHazardSlashes {
+  display: flex;
+  gap: 3px;
+}
+
+.footerBrandFootprint {
+  font-size: 0.78rem;
+  color: rgba(247, 237, 216, 0.55);
+  letter-spacing: 0.04em;
+}
+
+/* ========================================================
+   STATE NOTICES (LOADING / ERROR)
+   ======================================================== */
+.stateNoticeBox {
+  padding: 2.5rem 0;
+  text-align: center;
+}
+
+.stateNoticeText {
+  color: rgba(247, 237, 216, 0.75);
+  font-size: 0.92rem;
+}
+
+.errorNoticeBox {
+  padding: 1.25rem;
+  background: rgba(255, 90, 90, 0.1);
+  border: 1px solid rgba(255, 90, 90, 0.4);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.errorTitle {
+  color: #FF5A5A;
+  font-weight: 700;
+  margin: 0;
+}
+
+.errorSub {
+  color: rgba(247, 237, 216, 0.7);
+  font-size: 0.84rem;
+  margin: 0;
+}
+
+/* ========================================================
+   KEYFRAME ANIMATIONS & STAGGERED APPEARING CHOREOGRAPHY
+   ======================================================== */
+@keyframes ticketChassisEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(36px) scale(0.96);
+    filter: drop-shadow(0 0 0 rgba(242, 107, 58, 0));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 16px rgba(242, 107, 58, 0.45)) drop-shadow(0 16px 40px rgba(0, 0, 0, 0.95));
+  }
+}
+
+@keyframes cascadeFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cascadeFadeDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stampPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-15deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.15) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes gridFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Staggered Delay Cascade Classes */
+.animFadeDown {
+  animation: cascadeFadeDown 600ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+.animSlideIn {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 220ms both;
+}
+
+.animCascade1 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 320ms both;
+}
+
+.animCascade2 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both;
+}
+
+.animCascade3 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 560ms both;
+}
+
+.animCascade4 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 680ms both;
+}
+
+.animCascade5 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 800ms both;
+}
+
+.animCascade6 {
+  animation: cascadeFadeUp 600ms cubic-bezier(0.16, 1, 0.3, 1) 920ms both;
+}
+
+.animStampIn {
+  animation: stampPop 550ms cubic-bezier(0.34, 1.56, 0.64, 1) 750ms both;
+}

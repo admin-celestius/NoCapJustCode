@@ -6,7 +6,8 @@ import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
 import { createOrder, verifyPayment, checkTeamNameAvailability } from '../../services/api.js';
 import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
-import { PRICING } from '../../data/event.js';
+import { PRICING, WHATSAPP_GROUP_URL } from '../../data/event.js';
+import { downloadPassPdf, downloadPassImage } from '../../services/passGenerator.js';
 import Button from '../ui/Button.jsx';
 import ColorOSDropdown from './ColorOSDropdown.jsx';
 import ParticleCanvas from './ParticleCanvas.jsx';
@@ -57,6 +58,7 @@ export default function RegisterModal({ isOpen, onClose }) {
   const [awaitingNote, setAwaitingNote] = useState('Waiting for payment status...');
   const [failureMessage, setFailureMessage] = useState(null);
   const [showResultText, setShowResultText] = useState(false);
+  const [passDownloading, setPassDownloading] = useState(null); // 'pdf' | 'png' | null
 
   // ColorOS Toast Notification State
   const [toast, setToast] = useState(null);
@@ -64,6 +66,7 @@ export default function RegisterModal({ isOpen, onClose }) {
 
   // Collapse / Expand states for Player 1 & Player 2: default both expanded
   const [collapsed, setCollapsed] = useState({ 0: false, 1: false });
+  const [openDropdownPlayer, setOpenDropdownPlayer] = useState(null);
 
   const modalRef = useRef(null);
   const errorRef = useRef(null);
@@ -87,6 +90,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     setError,
     clearErrors,
     watch,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registrationSchema),
@@ -292,7 +296,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     setSubmitting(true);
     setServerError(null);
     setFailureMessage(null);
-    setFlowState('awaiting');
+    setFlowState('waiting');
     setAwaitingNote('Awaiting for payment status...');
 
     let paymentDetails = pendingPayment;
@@ -373,11 +377,50 @@ export default function RegisterModal({ isOpen, onClose }) {
       setFailureMessage(errorMsg);
       setServerError(errorMsg);
       setFlowState('failure');
-      setTimeout(() => setShowResultText(true), 3500);
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 860;
+      setTimeout(() => setShowResultText(true), isMobile ? 500 : 2200);
     }
 
     submittingRef.current = false;
     setSubmitting(false);
+  };
+
+  const handleDownloadPdf = async () => {
+    if (passDownloading) return;
+    try {
+      setPassDownloading('pdf');
+      const formMembers = getValues('members') || [];
+      const passData = {
+        regCode: registrationResult?.regCode || 'TEAM',
+        teamName: registrationResult?.teamName || getValues('pairName') || 'Duo Team',
+        members: registrationResult?.members?.length ? registrationResult.members : formMembers.map((m) => ({ name: m.fullName })),
+      };
+      await downloadPassPdf(passData);
+    } catch (err) {
+      console.error('Failed to generate PDF pass:', err);
+      showToast('Unable to generate PDF pass. Please try saving as PNG or taking a screenshot.');
+    } finally {
+      setPassDownloading(null);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (passDownloading) return;
+    try {
+      setPassDownloading('png');
+      const formMembers = getValues('members') || [];
+      const passData = {
+        regCode: registrationResult?.regCode || 'TEAM',
+        teamName: registrationResult?.teamName || getValues('pairName') || 'Duo Team',
+        members: registrationResult?.members?.length ? registrationResult.members : formMembers.map((m) => ({ name: m.fullName })),
+      };
+      await downloadPassImage(passData);
+    } catch (err) {
+      console.error('Failed to generate PNG pass:', err);
+      showToast('Unable to generate image pass. Please take a screenshot.');
+    } finally {
+      setPassDownloading(null);
+    }
   };
 
   const handleTryAgain = () => {
@@ -409,9 +452,17 @@ export default function RegisterModal({ isOpen, onClose }) {
   };
 
   const handleInputFocus = (e) => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 767) {
+    if (!e) return;
+    const target = e.target || (e.currentTarget ? e.currentTarget : null);
+    if (!target || typeof target.scrollIntoView !== 'function') return;
+
+    if (typeof window !== 'undefined' && window.innerWidth <= 860) {
       setTimeout(() => {
-        e.target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        try {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch {
+          // ignore unmounted elements
+        }
       }, 300);
     }
   };
@@ -422,7 +473,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     <div
       className={`${styles.backdrop} ${isClosing ? styles.backdropClosing : ''}`}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !submitting && flowState !== 'awaiting') handleModalClose();
+        if (e.target === e.currentTarget && !submitting && flowState !== 'waiting' && flowState !== 'awaiting') handleModalClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -435,7 +486,7 @@ export default function RegisterModal({ isOpen, onClose }) {
       {/* ========================================================
           STAGE 1: WAITING FOR PAYMENT (LOC Logo + Rotating Spinner)
           ======================================================== */}
-      {flowState === 'waiting' ? (
+      {flowState === 'waiting' || flowState === 'awaiting' ? (
         <div className={`${styles.modal} ${styles.modalStageCentered} ${isClosing ? styles.modalClosing : ''}`} ref={modalRef}>
           <div className={styles.stageContentCentered}>
             <div className={styles.locSpinnerContainer}>
@@ -476,6 +527,11 @@ export default function RegisterModal({ isOpen, onClose }) {
           {/* TOP SECTION: Confirmation Message above the symbol */}
           {showResultText ? (
             <div className={styles.resultFloatingTop}>
+              <div className={styles.mobileResultStatusBadgeSuccess} aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00F076" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
               <h2 className={styles.resultTitleSuccess}>
                 Your Registration to LOC is Officially Confirmed
               </h2>
@@ -498,8 +554,55 @@ export default function RegisterModal({ isOpen, onClose }) {
                 )}
               </div>
 
+              {/* WhatsApp Group Action (Emerald Green) */}
+              <a
+                href={WHATSAPP_GROUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.whatsappJoinBtn}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                <span>Join Official WhatsApp Group</span>
+              </a>
+              <span className={styles.whatsappNote}>
+                Mandatory for info exchanges, round timings, and official announcements.
+              </span>
+
+              {/* Dynamic Entry Pass Downloads */}
+              <div className={styles.passDownloadActions}>
+                <button
+                  type="button"
+                  className={styles.pdfDownloadBtn}
+                  onClick={handleDownloadPdf}
+                  disabled={passDownloading !== null}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>{passDownloading === 'pdf' ? 'Generating PDF...' : 'Download Entry Pass (PDF)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.pngDownloadBtn}
+                  onClick={handleDownloadImage}
+                  disabled={passDownloading !== null}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  <span>{passDownloading === 'png' ? 'Saving PNG...' : 'Save Pass (PNG)'}</span>
+                </button>
+              </div>
+
               <div className={styles.successActionsGroup}>
-                <Button size="md" variant="primary" onClick={handleModalClose}>
+                <Button size="md" variant="ghost" onClick={handleModalClose}>
                   Done, Close This
                 </Button>
               </div>
@@ -528,6 +631,12 @@ export default function RegisterModal({ isOpen, onClose }) {
           {/* TOP SECTION: Incomplete Message above the symbol */}
           {showResultText ? (
             <div className={styles.resultFloatingTop}>
+              <div className={styles.mobileResultStatusBadgeFailure} aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </div>
               <h2 className={styles.resultTitleFailure}>
                 Payment Incomplete
               </h2>
@@ -635,6 +744,18 @@ export default function RegisterModal({ isOpen, onClose }) {
             {/* Header Bar */}
             <div className={styles.modalHeader}>
               <div className={styles.headerTitleGroup}>
+                <div className={styles.mobileLocLogoWrapper}>
+                  <picture>
+                    <source srcSet={locLogoWebp} type="image/webp" />
+                    <img
+                      src={locLogoPng}
+                      alt="Larper or Coder"
+                      className={styles.mobileLocLogoImg}
+                      width={120}
+                      height={49}
+                    />
+                  </picture>
+                </div>
                 <h2 id="modal-title" className={styles.modalTitle}>
                   Assemble Your Duo
                 </h2>
@@ -753,7 +874,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                     return (
                       <div
                         key={field.id}
-                        className={`${styles.memberAccordionCard} ${isCollapsed ? styles.cardCollapsed : ''}`}
+                        className={`${styles.memberAccordionCard} ${isCollapsed ? styles.cardCollapsed : ''} ${openDropdownPlayer === index ? styles.cardWithOpenDropdown : ''}`}
                       >
                         {/* Header toggle button */}
                         <button
@@ -888,11 +1009,11 @@ export default function RegisterModal({ isOpen, onClose }) {
                                     value={field.value}
                                     onChange={(val) => {
                                       field.onChange(val);
-                                      handleInputFocus();
                                     }}
                                     options={YEAR_OPTIONS}
                                     hasError={!!memberErrors?.year}
                                     onFocus={handleInputFocus}
+                                    onOpenChange={(open) => setOpenDropdownPlayer(open ? index : null)}
                                     ariaLabel="Year of Study"
                                   />
                                 )}
@@ -913,11 +1034,11 @@ export default function RegisterModal({ isOpen, onClose }) {
                                     value={field.value}
                                     onChange={(val) => {
                                       field.onChange(val);
-                                      handleInputFocus();
                                     }}
                                     options={DEPARTMENT_OPTIONS}
                                     hasError={!!memberErrors?.department}
                                     onFocus={handleInputFocus}
+                                    onOpenChange={(open) => setOpenDropdownPlayer(open ? index : null)}
                                     ariaLabel="Department"
                                   />
                                 )}

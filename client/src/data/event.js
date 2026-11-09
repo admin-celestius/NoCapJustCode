@@ -17,6 +17,10 @@ export const QUOTE_ATTRIBUTION_ALTERNATIVES = [
 
 export const LINK_TARGET = "_blank";
 
+export const WHATSAPP_GROUP_URL =
+  import.meta.env.VITE_WHATSAPP_GROUP_URL ||
+  "https://chat.whatsapp.com/G3Z1LocCelestius2026";
+
 export const PRICING = {
   perHead: 149,
   pair: 149 * 2, // 298 per pair, before taxes

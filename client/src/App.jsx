@@ -14,6 +14,8 @@ import RegisterModal from './components/Register/RegisterModal.jsx';
 import Footer from './components/Footer/Footer.jsx';
 import { auditHardwarePlacement } from './utils/hardwareAudit.js';
 import { useScrollReveal } from './hooks/useScrollReveal.js';
+import VerifyPassPage from './components/PassVerification/VerifyPassPage.jsx';
+import AdminScannerPage from './components/PassVerification/AdminScannerPage.jsx';
 
 export default function App() {
   // Always start with 'INTRO' on every reload / visit as requested
@@ -59,16 +61,19 @@ export default function App() {
     }
   }, [appFlow]);
 
-  // Lock scroll while intro is active
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const isCustomRoute = pathname.startsWith('/verify/') || pathname.startsWith('/admin/');
+
+  // Lock scroll while intro is active on main site only
   useEffect(() => {
-    if (appFlow !== 'SITE') {
+    if (!isCustomRoute && appFlow !== 'SITE') {
       const prevOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = prevOverflow;
       };
     }
-  }, [appFlow]);
+  }, [appFlow, isCustomRoute]);
 
   const handleOpenRegister = () => {
     setRegisterModalOpen(true);
@@ -83,6 +88,17 @@ export default function App() {
     setSiteRevealed(true);
     logTimelineEvent('site visible');
   }, []);
+
+  // Public QR Pass Verification route (opens when scanned by Google Lens or camera)
+  if (pathname.startsWith('/verify/')) {
+    const code = pathname.replace('/verify/', '').replace(/\/+$/, '').trim();
+    return <VerifyPassPage regCode={code} />;
+  }
+
+  // Organiser Check-In / Attendance Scanner Desk
+  if (pathname.startsWith('/admin/scan') || pathname.startsWith('/admin/checkin')) {
+    return <AdminScannerPage />;
+  }
 
   return (
     <div className="appWrapper">

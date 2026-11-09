@@ -22,6 +22,19 @@ const registrationSchema = new Schema(
     payment: { type: Types.ObjectId, ref: 'Payment' }, // the successful payment
     confirmedAt: Date,
 
+    attendance: {
+      round1: {
+        attended: { type: Boolean, default: false },
+        markedAt: Date,
+        markedBy: { type: String, trim: true },
+      },
+      round2: {
+        attended: { type: Boolean, default: false },
+        markedAt: Date,
+        markedBy: { type: String, trim: true },
+      },
+    },
+
     expiresAt: Date, // TTL for abandoned pending registrations
   },
   { timestamps: true }

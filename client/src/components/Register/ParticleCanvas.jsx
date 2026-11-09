@@ -86,9 +86,13 @@ export default function ParticleCanvas({ mode = 'ambient', isClosing = false }) 
 
     const computeShapeTargets = (shapeMode, w, h) => {
       const cx = w / 2;
-      // Position symbol in viewport center between top message and bottom actions
-      const cy = Math.max(160, h * 0.46);
-      const symbolSize = Math.min(w * 0.42, Math.min(h * 0.32, 160));
+      // Measure top header zone and bottom actions zone to place the symbol exactly equidistant
+      const topSectionBottom = Math.max(120, h * 0.16);
+      const bottomSectionTop = Math.max(topSectionBottom + 160, h - 290);
+      const cy = Math.round((topSectionBottom + bottomSectionTop) / 2);
+
+      const availableHeight = bottomSectionTop - topSectionBottom;
+      const symbolSize = Math.max(90, Math.min(w * 0.36, Math.min(availableHeight * 0.46, 140)));
 
       if (shapeMode === 'tick') {
         // Classic, bold checkmark geometry
