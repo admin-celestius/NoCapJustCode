@@ -9,9 +9,12 @@ const {
   getPublicVerification,
   markAttendance,
   verifyPasskey,
+  getAttendanceRoster,
 } = require('../controllers/registration.controller');
 
 router.post('/admin/verify-passkey', verifyPasskey);
+router.post('/admin/roster', getAttendanceRoster);
+router.get('/admin/roster', getAttendanceRoster);
 router.get('/check-team', checkTeamName);
 router.post('/check-team', checkTeamName);
 router.post('/check', checkAvailability);

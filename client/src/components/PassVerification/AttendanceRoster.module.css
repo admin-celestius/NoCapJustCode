@@ -1,0 +1,678 @@
+/* client/src/components/PassVerification/AttendanceRoster.module.css */
+
+.rosterContainer {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1.25rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+  background-color: #07050A;
+  font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+  color: #F7EDD8;
+  overflow: visible;
+}
+
+/* Background Cyber Ambient Grid & Glow */
+.ambientGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(242, 107, 58, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 107, 58, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.ambientGlow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 750px;
+  height: 750px;
+  background: radial-gradient(circle, rgba(242, 107, 58, 0.12) 0%, transparent 65%);
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+/* Outer Ticket Chassis */
+.rosterOuterWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.rosterInnerFrame {
+  position: relative;
+  background: linear-gradient(180deg, #120D1A 0%, #0B0812 100%);
+  border: 1px solid rgba(242, 107, 58, 0.4);
+  box-shadow:
+    0 0 35px rgba(242, 107, 58, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 1.75rem 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .rosterContainer {
+    padding: 1.5rem 0.75rem;
+  }
+  .rosterInnerFrame {
+    padding: 1.25rem 1rem;
+    gap: 1.2rem;
+  }
+}
+
+/* Top Hero Brand Header */
+.headerBrandContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.headerBrandChassis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 22px;
+  background: rgba(18, 13, 26, 0.95);
+  border: 1.5px solid rgba(242, 107, 58, 0.6);
+  border-radius: 9999px;
+  box-shadow:
+    0 0 25px rgba(242, 107, 58, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  text-decoration: none;
+}
+
+.celestiusPillBadge {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.celestiusLogoImg {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
+.headerVerticalDivider {
+  width: 1.5px;
+  height: 28px;
+  background: linear-gradient(180deg, #F26B3A, #FFAE19, #F26B3A);
+  box-shadow: 0 0 8px rgba(255, 174, 25, 0.8);
+}
+
+.locLogoBox {
+  display: flex;
+  align-items: center;
+}
+
+.locLogoImg {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Sub-Header Row */
+.subHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed rgba(242, 107, 58, 0.3);
+}
+
+.subHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.officialTitle {
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.95rem;
+  color: #F26B3A;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 10px rgba(242, 107, 58, 0.6);
+}
+
+.officialSubtitle {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(247, 237, 216, 0.55);
+  letter-spacing: 0.08em;
+}
+
+.subHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navActionButton {
+  background: rgba(242, 107, 58, 0.12);
+  color: #FFAE19;
+  border: 1px solid rgba(242, 107, 58, 0.45);
+  padding: 0.38rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 160ms ease;
+}
+
+.navActionButton:hover {
+  background: rgba(242, 107, 58, 0.25);
+  color: #FFCD38;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(242, 107, 58, 0.45);
+}
+
+.refreshButton {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F7EDD8;
+  border: 1px solid rgba(247, 237, 216, 0.2);
+  padding: 0.38rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 160ms ease;
+}
+
+.refreshButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(247, 237, 216, 0.4);
+}
+
+.logoutButton {
+  background: rgba(255, 90, 90, 0.12);
+  color: #FF6666;
+  border: 1px solid rgba(255, 90, 90, 0.4);
+  padding: 0.38rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.logoutButton:hover {
+  background: rgba(255, 90, 90, 0.25);
+}
+
+/* Stats Metrics Cards */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.statCard {
+  background: rgba(18, 13, 26, 0.85);
+  border: 1px solid rgba(242, 107, 58, 0.28);
+  border-radius: 8px;
+  padding: 0.6rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2px;
+  min-height: 50px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.statLabel {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: rgba(247, 237, 216, 0.65);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.statNumber {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #F7EDD8;
+  line-height: 1.2;
+}
+
+.statHighlight {
+  color: #FFAE19;
+  text-shadow: 0 0 10px rgba(255, 174, 25, 0.5);
+}
+
+.statGreen {
+  color: #25D366;
+  text-shadow: 0 0 10px rgba(37, 211, 102, 0.4);
+}
+
+/* Filter & Search Bar */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.searchInputWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.searchInput {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(247, 237, 216, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  color: #F7EDD8;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.searchInput:focus {
+  border-color: #F26B3A;
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.35);
+}
+
+.filterPills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.filterPills::-webkit-scrollbar {
+  display: none;
+}
+
+.filterPill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(247, 237, 216, 0.15);
+  border-radius: 9999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(247, 237, 216, 0.7);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 140ms ease;
+}
+
+.filterPill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F7EDD8;
+}
+
+.filterPillActive {
+  background: rgba(242, 107, 58, 0.2);
+  border-color: #F26B3A;
+  color: #FFAE19;
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.35);
+}
+
+/* Roster Table View */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(242, 107, 58, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.rosterTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.84rem;
+}
+
+.rosterTable th {
+  background: rgba(242, 107, 58, 0.08);
+  color: #FFAE19;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(242, 107, 58, 0.3);
+  white-space: nowrap;
+}
+
+.rosterTable td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(247, 237, 216, 0.06);
+  vertical-align: middle;
+}
+
+.rosterTable tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.teamNameCell {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-weight: 700;
+  color: #F7EDD8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.regCodeMini {
+  font-size: 0.68rem;
+  color: rgba(247, 237, 216, 0.45);
+  font-weight: 500;
+}
+
+.memberNameCell {
+  color: rgba(247, 237, 216, 0.85);
+  white-space: nowrap;
+}
+
+/* Status Badges */
+.statusBadgeAttended {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(37, 211, 102, 0.12);
+  color: #25D366;
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(37, 211, 102, 0.2);
+}
+
+.statusBadgeNotAttended {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(242, 107, 58, 0.06);
+  color: rgba(247, 237, 216, 0.5);
+  border: 1px solid rgba(247, 237, 216, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.statusDotGreen {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #25D366;
+  box-shadow: 0 0 6px #25D366;
+}
+
+.statusDotDim {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(247, 237, 216, 0.4);
+}
+
+/* Empty / Loading State */
+.emptyStateBlock {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: rgba(247, 237, 216, 0.5);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.85rem;
+}
+
+/* Security Passkey Gate (Login) */
+.securityGateWrapper {
+  max-width: 480px;
+  margin: 2rem auto;
+  width: 100%;
+}
+
+.gateCard {
+  background: rgba(18, 13, 26, 0.95);
+  border: 1px solid rgba(242, 107, 58, 0.5);
+  border-radius: 8px;
+  padding: 2.2rem 1.8rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 0 35px rgba(242, 107, 58, 0.15);
+}
+
+.lockIconWrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(242, 107, 58, 0.12);
+  border: 1px solid rgba(242, 107, 58, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gateTitle {
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.95rem;
+  color: #FFAE19;
+  margin: 0;
+}
+
+.gateDescription {
+  font-size: 0.82rem;
+  color: rgba(247, 237, 216, 0.65);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.passkeyForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.passkeyInput {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1.5px solid rgba(242, 107, 58, 0.5);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.3rem;
+  color: #F7EDD8;
+  letter-spacing: 0.3em;
+  text-align: center;
+  outline: none;
+}
+
+.passkeyInput:focus {
+  border-color: #FFAE19;
+  box-shadow: 0 0 15px rgba(255, 174, 25, 0.4);
+}
+
+.errorMessage {
+  font-size: 0.78rem;
+  color: #FF5555;
+  margin: 0;
+}
+
+.submitGateButton {
+  background: linear-gradient(135deg, #F26B3A, #FFAE19);
+  color: #0E0A14;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.submitGateButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(242, 107, 58, 0.6);
+}
+
+.submitGateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========================================================
+   MOBILE RESPONSIVE TWEAKS (Compact Badges & Seamless Flow)
+   ======================================================== */
+@media (max-width: 600px) {
+  .rosterOuterWrapper {
+    padding: 0.8rem 0.45rem;
+  }
+
+  .rosterInnerFrame {
+    padding: 1.1rem 0.65rem 1.4rem 0.65rem;
+    gap: 0.75rem;
+  }
+
+  .subHeaderRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .subHeaderActions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .navActionButton {
+    flex: 1;
+    justify-content: center;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .refreshButton {
+    flex: 1;
+    justify-content: center;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .logoutButton {
+    flex-shrink: 0;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  /* Compact 3-Column Badges on Mobile */
+  .statsRow {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
+  }
+
+  .statCard {
+    padding: 0.45rem 0.35rem;
+    min-height: 46px;
+    gap: 2px;
+  }
+
+  .statLabel {
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+  }
+
+  .statNumber {
+    font-size: 1.05rem;
+  }
+
+  .filterBar {
+    gap: 0.55rem;
+  }
+
+  .searchInputWrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .searchInput {
+    font-size: 0.88rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .filterPills {
+    width: 100%;
+    padding-bottom: 3px;
+    gap: 5px;
+  }
+
+  .filterPill {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+  }
+
+  .tableWrapper {
+    max-height: 55vh;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rosterTable th,
+  .rosterTable td {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.76rem;
+  }
+}

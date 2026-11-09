@@ -16,6 +16,7 @@ import { auditHardwarePlacement } from './utils/hardwareAudit.js';
 import { useScrollReveal } from './hooks/useScrollReveal.js';
 import VerifyPassPage from './components/PassVerification/VerifyPassPage.jsx';
 import AdminScannerPage from './components/PassVerification/AdminScannerPage.jsx';
+import AttendanceRosterPage from './components/PassVerification/AttendanceRosterPage.jsx';
 
 export default function App() {
   // Always start with 'INTRO' on every reload / visit as requested
@@ -62,7 +63,17 @@ export default function App() {
   }, [appFlow]);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const isCustomRoute = pathname.startsWith('/verify') || pathname.startsWith('/admin');
+  const normalizedPath = pathname.replace(/\/+$/, '') || '/';
+  const isAdminScan = normalizedPath === '/admin/scan';
+  const isAdminRoster = normalizedPath === '/admin/roster' || normalizedPath === '/admin/attendance';
+  const isCustomRoute = pathname.startsWith('/verify') || isAdminScan || isAdminRoster;
+
+  // Redirect unauthorized/playful admin path attempts to root URL
+  useEffect(() => {
+    if (normalizedPath.startsWith('/admin') && !isAdminScan && !isAdminRoster) {
+      window.location.replace('/');
+    }
+  }, [normalizedPath, isAdminScan, isAdminRoster]);
 
   // Lock scroll while intro is active on main site only
   useEffect(() => {
@@ -97,14 +108,22 @@ export default function App() {
     return <VerifyPassPage regCode={code} />;
   }
 
-  // Organiser Check-In / Attendance Scanner Desk (e.g. /admin, /admin/scan, /admin/checkin, /admin/scanner)
-  if (
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname.startsWith('/admin/scan') ||
-    pathname.startsWith('/admin/checkin')
-  ) {
+  // Organiser Check-In / Attendance Scanner Desk - strictly matches /admin/scan only
+  if (isAdminScan) {
     return <AdminScannerPage />;
+  }
+
+  // Organiser Attendance Live Roster - strictly matches /admin/roster (or /admin/attendance)
+  if (isAdminRoster) {
+    return <AttendanceRosterPage />;
+  }
+
+  // Any other playful/probing admin attempts redirect to root URL
+  if (normalizedPath.startsWith('/admin')) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+    }
+    return null;
   }
 
   return (

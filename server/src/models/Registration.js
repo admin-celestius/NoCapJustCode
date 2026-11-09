@@ -23,6 +23,17 @@ const registrationSchema = new Schema(
     confirmedAt: Date,
 
     attendance: {
+      workshop: {
+        attended: { type: Boolean, default: false },
+        markedAt: Date,
+        markedBy: { type: String, trim: true },
+      },
+      competition: {
+        attended: { type: Boolean, default: false },
+        markedAt: Date,
+        markedBy: { type: String, trim: true },
+      },
+      // Backward-compatible fallback fields for older records
       round1: {
         attended: { type: Boolean, default: false },
         markedAt: Date,

@@ -70,3 +70,9 @@ export async function checkInAttendance(regCode, { round, passcode, markedBy }) 
     markedBy,
   });
 }
+
+export async function getAttendanceRoster(passcode) {
+  const code = (passcode || '').trim();
+  if (!code) throw new Error('6-digit security passkey is required.');
+  return request('/api/registrations/admin/roster', { passcode: code });
+}
