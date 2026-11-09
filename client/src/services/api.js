@@ -38,5 +38,13 @@ export async function checkHealth() {
   }
 }
 
+export async function checkTeamNameAvailability(teamName) {
+  const trimmed = (teamName || '').trim();
+  if (!trimmed || trimmed.length < 2) {
+    return { available: false, message: 'Duo codename must be at least 2 characters' };
+  }
+  return request(`/api/registrations/check-team?name=${encodeURIComponent(trimmed)}`);
+}
+
 export const createOrder = (payload) => request('/api/registrations/create-order', payload);
 export const verifyPayment = (payload) => request('/api/registrations/verify-payment', payload);

@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
-import { createOrder, verifyPayment } from '../../services/api.js';
+import { createOrder, verifyPayment, checkTeamNameAvailability } from '../../services/api.js';
 import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
 import { PRICING } from '../../data/event.js';
 import Button from '../ui/Button.jsx';
@@ -47,6 +47,11 @@ export default function RegisterModal({ isOpen, onClose }) {
   const checkoutRef = useRef(null);
   const submittingRef = useRef(false);
 
+  // Live Duo Codename Status: 'idle' | 'checking' | 'available' | 'taken'
+  const [teamNameStatus, setTeamNameStatus] = useState('idle');
+  const checkDebounceRef = useRef(null);
+  const currentQueryRef = useRef('');
+
   // Flow State: 'form' | 'awaiting' | 'success' | 'failure'
   const [flowState, setFlowState] = useState('form');
   const [awaitingNote, setAwaitingNote] = useState('Waiting for payment status...');
@@ -80,6 +85,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     handleSubmit,
     reset,
     setError,
+    clearErrors,
     watch,
     formState: { errors },
   } = useForm({
@@ -95,6 +101,51 @@ export default function RegisterModal({ isOpen, onClose }) {
   });
 
   const watchedMembers = watch('members') || [];
+  const watchedPairName = watch('pairName');
+
+  // Live Duo Codename Availability Checker with Debounce
+  useEffect(() => {
+    const trimmed = (watchedPairName || '').trim();
+
+    if (!trimmed || trimmed.length < 2) {
+      setTeamNameStatus('idle');
+      if (checkDebounceRef.current) clearTimeout(checkDebounceRef.current);
+      return;
+    }
+
+    setTeamNameStatus('checking');
+
+    if (checkDebounceRef.current) clearTimeout(checkDebounceRef.current);
+
+    checkDebounceRef.current = setTimeout(async () => {
+      currentQueryRef.current = trimmed;
+      try {
+        const res = await checkTeamNameAvailability(trimmed);
+        if (currentQueryRef.current === trimmed) {
+          if (res.available) {
+            setTeamNameStatus('available');
+            clearErrors('pairName');
+          } else {
+            setTeamNameStatus('taken');
+            setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+          }
+        }
+      } catch (err) {
+        if (currentQueryRef.current === trimmed) {
+          if (err?.code === 'DUPLICATE_REGISTRATION' || err?.status === 409) {
+            setTeamNameStatus('taken');
+            setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+          } else {
+            setTeamNameStatus('idle');
+          }
+        }
+      }
+    }, 350);
+
+    return () => {
+      if (checkDebounceRef.current) clearTimeout(checkDebounceRef.current);
+    };
+  }, [watchedPairName, setError, clearErrors]);
 
   // Exactly 2 members (fixed duo)
   const { fields } = useFieldArray({
@@ -211,6 +262,32 @@ export default function RegisterModal({ isOpen, onClose }) {
 
   const onSubmit = async (formData) => {
     if (submittingRef.current) return;
+    if (teamNameStatus === 'taken') {
+      setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+      showToast('This duo codename is already taken. Please choose a unique name.');
+      return;
+    }
+
+    if (!pendingPayment && formData?.pairName) {
+      const trimmed = (formData.pairName || '').trim();
+      try {
+        const teamCheck = await checkTeamNameAvailability(trimmed);
+        if (!teamCheck.available) {
+          setTeamNameStatus('taken');
+          setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+          showToast('This duo codename is already taken. Please choose a unique name.');
+          return;
+        }
+      } catch (err) {
+        if (err?.code === 'DUPLICATE_REGISTRATION' || err?.status === 409) {
+          setTeamNameStatus('taken');
+          setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
+          showToast('This duo codename is already taken. Please choose a unique name.');
+          return;
+        }
+      }
+    }
+
     submittingRef.current = true;
     setSubmitting(true);
     setServerError(null);
@@ -322,6 +399,7 @@ export default function RegisterModal({ isOpen, onClose }) {
       setServerError(null);
       setFlowState('form');
       setFailureMessage(null);
+      setTeamNameStatus('idle');
       if (registrationResult) {
         reset();
         setRegistrationResult(null);
@@ -595,24 +673,72 @@ export default function RegisterModal({ isOpen, onClose }) {
                   </div>
                 )}
 
-                {/* Duo Codename Input Field (No inline error text below) */}
+                {/* Duo Codename Input Field with Live Availability Indicator */}
                 <div className={styles.formGroupTop}>
                   <div className={styles.labelRow}>
                     <label htmlFor="reg-pairname" className={styles.fieldLabel}>
                       Duo Codename
                     </label>
-                    <span className={styles.fieldHelper}>Required · Don't name it Team 1</span>
+                    {teamNameStatus === 'checking' ? (
+                      <span className={styles.statusBadgeChecking}>
+                        <span className={styles.miniSpinner} aria-hidden="true" />
+                        Checking...
+                      </span>
+                    ) : teamNameStatus === 'available' ? (
+                      <span className={styles.statusBadgeAvailable}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Codename Available
+                      </span>
+                    ) : teamNameStatus === 'taken' ? (
+                      <span className={styles.statusBadgeTaken}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Already Taken
+                      </span>
+                    ) : (
+                      <span className={styles.fieldHelper}>Required · Don't name it Team 1</span>
+                    )}
                   </div>
-                  <input
-                    id="reg-pairname"
-                    type="text"
-                    autoComplete="off"
-                    placeholder="e.g. Runtime Terrors"
-                    className={`${styles.inputField} ${errors.pairName ? styles.hasError : ''}`}
-                    aria-invalid={!!errors.pairName}
-                    onFocus={handleInputFocus}
-                    {...register('pairName')}
-                  />
+
+                  <div className={styles.inputWrapperWithStatus}>
+                    <input
+                      id="reg-pairname"
+                      type="text"
+                      autoComplete="off"
+                      placeholder="e.g. Runtime Terrors"
+                      className={`${styles.inputField} ${styles.inputFieldWithStatus} ${
+                        teamNameStatus === 'available'
+                          ? styles.inputAvailable
+                          : teamNameStatus === 'taken' || errors.pairName
+                          ? styles.inputTaken
+                          : ''
+                      }`}
+                      aria-invalid={teamNameStatus === 'taken' || !!errors.pairName}
+                      onFocus={handleInputFocus}
+                      {...register('pairName')}
+                    />
+
+                    <div className={styles.inputStatusIcon} aria-hidden="true">
+                      {teamNameStatus === 'checking' && (
+                        <span className={styles.miniSpinner} />
+                      )}
+                      {teamNameStatus === 'available' && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00F076" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      {teamNameStatus === 'taken' && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Member 1 & Member 2 Accordion Cards (No inline error text below) */}
@@ -829,10 +955,16 @@ export default function RegisterModal({ isOpen, onClose }) {
                     onClick={pendingPayment ? () => onSubmit() : undefined}
                     variant="primary"
                     size="lg"
-                    disabled={submitting}
+                    disabled={submitting || (!pendingPayment && teamNameStatus === 'taken')}
                     className={styles.submitBtn}
                   >
-                    {submitting ? 'Locking In...' : pendingPayment ? 'Retry Verification' : `Lock In Duo · ₹${PRICING.pair}`}
+                    {submitting
+                      ? 'Locking In...'
+                      : (!pendingPayment && teamNameStatus === 'taken')
+                      ? 'Codename Taken'
+                      : pendingPayment
+                      ? 'Retry Verification'
+                      : `Lock In Duo · ₹${PRICING.pair}`}
                   </Button>
                 </div>
               </div>
