@@ -19,7 +19,7 @@ export const LINK_TARGET = "_blank";
 
 export const WHATSAPP_GROUP_URL =
   import.meta.env.VITE_WHATSAPP_GROUP_URL ||
-  "https://chat.whatsapp.com/G3Z1LocCelestius2026";
+  "https://chat.whatsapp.com/EwBezpPV7OKDwMI0SMBQrA";
 
 export const PRICING = {
   perHead: 149,
@@ -30,11 +30,29 @@ export const PRICING = {
 
 export const PAYMENT_NOTE = "Payment instructions will be shared by the organizers.";
 
+export const ORGANISERS = [
+  {
+    name: "Varun M",
+    role: "Organiser",
+    phone: "+91 755 017 2567",
+    rawPhone: "+917550172567",
+    waLink: "https://wa.me/917550172567",
+  },
+  {
+    name: "Aakashraj S",
+    role: "Organiser",
+    phone: "+91 94423 11522",
+    rawPhone: "+919442311522",
+    waLink: "https://wa.me/919442311522",
+  },
+];
+
 export const eventData = {
   name: "LARPER OR CODER",
   edition: null,
   presentedBy: CLUB_NAME,
   tagline: "no larping. just lock in.",
+  organisers: ORGANISERS,
   description:
     "No amount of resume glazing can save you here. Just you, your homie, and the problems that are about to humble you.",
 

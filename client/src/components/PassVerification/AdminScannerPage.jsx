@@ -297,7 +297,13 @@ export default function AdminScannerPage() {
           <div className={`${styles.headerBrandContainer} ${styles.animFadeDown}`}>
             <div className={styles.headerBrandChassis}>
               {/* Celestius Brand */}
-              <div className={styles.celestiusPillBadge}>
+              <a
+                href="https://celestius.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.celestiusPillBadge}
+                aria-label="Celestius website (opens in a new tab)"
+              >
                 <picture>
                   <source srcSet={celestiusLogoWebp} type="image/webp" />
                   <img
@@ -306,7 +312,7 @@ export default function AdminScannerPage() {
                     className={styles.celestiusLogoImg}
                   />
                 </picture>
-              </div>
+              </a>
 
               {/* Glowing Amber Vertical Divider */}
               <div className={styles.headerVerticalDivider} />

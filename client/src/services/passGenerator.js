@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
 import blankTemplateUrl from '../assets/entry-pass-blank.png';
 
-const PASS_FONT_FAMILY = '"Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const PASS_FONT_FAMILY = '"Space Grotesk", "JetBrains Mono", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 /**
  * Ensures the grotesque sans fonts are fully loaded before drawing to canvas.
@@ -12,6 +12,8 @@ async function ensureFontReady() {
   if (typeof document !== 'undefined' && document.fonts) {
     try {
       await Promise.all([
+        document.fonts.load('italic 700 24px "Space Grotesk"'),
+        document.fonts.load('italic 700 24px "JetBrains Mono"'),
         document.fonts.load('700 24px "Space Grotesk"'),
         document.fonts.load('700 24px "Inter"'),
       ]);
@@ -38,12 +40,12 @@ function loadImage(src) {
 /**
  * Calculates responsive font size to fit inside capsule width without spilling.
  */
-function fitText(ctx, text, maxWidth, initialSize = 25, minSize = 13) {
+function fitText(ctx, text, maxWidth, initialSize = 24, minSize = 13) {
   let size = initialSize;
-  ctx.font = `700 ${size}px ${PASS_FONT_FAMILY}`;
+  ctx.font = `italic 700 ${size}px ${PASS_FONT_FAMILY}`;
   while (ctx.measureText(text).width > maxWidth && size > minSize) {
     size -= 1;
-    ctx.font = `700 ${size}px ${PASS_FONT_FAMILY}`;
+    ctx.font = `italic 700 ${size}px ${PASS_FONT_FAMILY}`;
   }
   return size;
 }
@@ -64,14 +66,14 @@ export async function generatePassCanvas(data) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://loc.celestius.in';
   const qrUrl = `${baseUrl}/verify/${encodeURIComponent(regCode)}`;
 
-  // 1. Generate crisp QR Code Image Data URL (Error Correction Level H, margin: 0 for uniform centering)
+  // 1. Generate crisp QR Code Image Data URL matching the cream card background
   const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-    width: 200,
+    width: 264,
     margin: 0,
     errorCorrectionLevel: 'H',
     color: {
-      dark: '#0C0A10',
-      light: '#FFFFFF',
+      dark: '#000000',
+      light: '#FFF0D0',
     },
   });
 
@@ -89,27 +91,28 @@ export async function generatePassCanvas(data) {
   // Draw master template
   ctx.drawImage(templateImg, 0, 0, 768, 1024);
 
-  // 3. Draw dynamic QR Code inside yellow brackets (White box bounds: X: 484..694, Y: 466..670)
-  // Perfectly centered with uniform padding
-  ctx.drawImage(qrImg, 489, 471, 200, 200);
+  // 3. Draw dynamic QR Code inside cream rounded card
+  // Cream card bounds: X: 407..715 (width 308), Y: 319..626 (height 307)
+  // Centered at X = 561, Y = 472.5
+  ctx.drawImage(qrImg, 429, 341, 264, 264);
 
   // 4. Configure text styling
   ctx.fillStyle = '#FFFFFF';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  const maxPillWidth = 310;
+  const maxPillWidth = 260;
 
-  // 5. Draw Duo Codename inside Capsule 1 (Inner Center: Y=497)
-  fitText(ctx, teamName, maxPillWidth, 25, 14);
-  ctx.fillText(teamName, 96, 497);
+  // 5. Draw Duo Codename inside Capsule 1 (Inner Center: Y=375)
+  fitText(ctx, teamName, maxPillWidth, 24, 13);
+  ctx.fillText(teamName, 84, 375);
 
-  // 6. Draw Member 1 Name inside Capsule 2 (Inner Center: Y=587)
+  // 6. Draw Member 1 Name inside Capsule 2 (Inner Center: Y=496)
   fitText(ctx, m1, maxPillWidth, 24, 13);
-  ctx.fillText(m1, 96, 587);
+  ctx.fillText(m1, 84, 496);
 
-  // 7. Draw Member 2 Name inside Capsule 3 (Inner Center: Y=672)
+  // 7. Draw Member 2 Name inside Capsule 3 (Inner Center: Y=620)
   fitText(ctx, m2, maxPillWidth, 24, 13);
-  ctx.fillText(m2, 96, 672);
+  ctx.fillText(m2, 84, 620);
 
   return canvas;
 }

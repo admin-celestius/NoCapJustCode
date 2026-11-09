@@ -10,7 +10,11 @@ export const memberSchema = z.object({
   email: z
     .string({ error: 'You missed a spot, chief. Email is required.' })
     .trim()
-    .email("Bro, that email ain't emailing. Use a format like name@example.com."),
+    .toLowerCase()
+    .email("Bro, that email ain't emailing. Enter a valid email address.")
+    .refine((val) => val.endsWith('@citchennai.net'), {
+      message: 'Restricted event: Only official CIT college emails (@citchennai.net) are permitted.',
+    }),
   phone: z
     .string({ error: 'You missed a spot, chief. Phone number is required.' })
     .trim()

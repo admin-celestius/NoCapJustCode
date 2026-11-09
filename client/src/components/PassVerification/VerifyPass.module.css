@@ -328,6 +328,13 @@
 .celestiusPillBadge {
   display: flex;
   align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms ease;
+}
+
+.celestiusPillBadge:hover {
+  transform: scale(1.05);
 }
 
 .celestiusLogoImg {
@@ -539,7 +546,9 @@
   color: #FFFFFF;
   letter-spacing: -0.01em;
   word-break: break-word;
+  overflow-wrap: break-word;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  min-width: 0;
 }
 
 .duoRegCodePill {
@@ -555,6 +564,28 @@
   letter-spacing: 0.08em;
   box-shadow: 0 0 16px rgba(242, 107, 58, 0.25);
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .cyberCardInnerDuo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.25rem 1.2rem;
+  }
+
+  .duoNameText {
+    width: 100%;
+    font-size: 1.45rem;
+    line-height: 1.25;
+  }
+
+  .duoRegCodePill {
+    align-self: flex-start;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.9rem;
+  }
 }
 
 /* ========================================================

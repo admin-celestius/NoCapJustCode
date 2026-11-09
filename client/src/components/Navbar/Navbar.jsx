@@ -151,24 +151,26 @@ export default function Navbar({ onOpenRegister, animateIn }) {
 
       <nav className={styles.navbar} aria-label="Main Navigation">
         {/* Brand: LOC Logo (Stable) + Constantly Glitching Celestius Logos (New <-> Old) */}
-        <a
-          href="#hero"
-          className={styles.brand}
-          onClick={(e) => handleNavClick(e, '#hero')}
-          aria-label="Larper or Coder presented by Celestius"
-        >
+        <div className={styles.brand}>
           {/* LOC Logo: Steady, never glitches */}
-          <picture className={styles.brandLogoWrapper}>
-            <source srcSet={navbarLogoWebp} type="image/webp" />
-            <img
-              src={navbarLogoPng}
-              alt="Larper or Coder"
-              className={styles.brandLogo}
-              width={320}
-              height={163}
-              style={{ aspectRatio: '320 / 163' }}
-            />
-          </picture>
+          <a
+            href="#hero"
+            className={styles.brandLogoWrapper}
+            onClick={(e) => handleNavClick(e, '#hero')}
+            aria-label="Larper or Coder - Back to top"
+          >
+            <picture>
+              <source srcSet={navbarLogoWebp} type="image/webp" />
+              <img
+                src={navbarLogoPng}
+                alt="Larper or Coder"
+                className={styles.brandLogo}
+                width={320}
+                height={163}
+                style={{ aspectRatio: '320 / 163' }}
+              />
+            </picture>
+          </a>
 
           {/* Animated Vertical Divider */}
           <span
@@ -179,10 +181,14 @@ export default function Navbar({ onOpenRegister, animateIn }) {
           />
 
           {/* Celestius Glitch Arena: Constantly Glitches Alternatively Between New Curved & Old Logos */}
-          <div
+          <a
+            href="https://celestius.in"
+            target="_blank"
+            rel="noopener noreferrer"
             className={`${styles.celestiusLogoWrapper} ${
               celestiusRevealed ? styles.celestiusActiveLoop : styles.celestiusHidden
             }`}
+            aria-label="Celestius website (opens in a new tab)"
           >
             {/* Digital Scanline Noise Layer */}
             <div className={styles.glitchNoiseOverlay} aria-hidden="true" />
@@ -212,8 +218,8 @@ export default function Navbar({ onOpenRegister, animateIn }) {
               alt="Celestius Original"
               className={`${styles.celestiusImg} ${styles.celestiusOldLoop}`}
             />
-          </div>
-        </a>
+          </a>
+        </div>
 
         {/* Desktop Links (>= 1024px) */}
         <ul className={styles.navLinks}>

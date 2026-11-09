@@ -6,7 +6,7 @@ const { isValidCheckoutSignature } = require('../src/utils/signature');
 const Participant = require('../src/models/Participant');
 
 const body = () => ({ teamName: ' Test Duo ', members: [0, 1].map((i) => ({
-  name: `Player ${i}`, email: `PLAYER${i}@example.com`, phone: `+91 900000000${i}`,
+  name: `Player ${i}`, email: `PLAYER${i}@citchennai.net`, phone: `+91 900000000${i}`,
   department: 'CSE', year: '3', rollNo: ` reg${i} `,
 })) });
 
@@ -15,7 +15,7 @@ test('normalizes a complete pair without renaming database fields', () => {
   assert.deepEqual(errors, []);
   assert.equal(data.teamName, 'Test Duo');
   assert.equal(data.members[0].rollNo, 'REG0');
-  assert.equal(data.members[0].email, 'player0@example.com');
+  assert.equal(data.members[0].email, 'player0@citchennai.net');
   assert.equal(data.members[0].phone, '9000000000');
   assert.equal(data.members[0].year, 3);
   assert.equal(new Participant(data.members[0]).rollNo, 'REG0');
@@ -58,6 +58,13 @@ test('rejects duplicate email, phone and registration number within the pair', (
     const value = body(); value.members[1][field] = value.members[0][field].toLowerCase();
     assert.ok(validateRegistration(value).errors.some((e) => e.field === `members.1.${field}`));
   }
+});
+
+test('rejects non-citchennai.net email addresses', () => {
+  const value = body();
+  value.members[0].email = 'outsider@gmail.com';
+  const { errors } = validateRegistration(value);
+  assert.ok(errors.some((e) => e.field === 'members.0.email'));
 });
 
 test('check and payment endpoints validate malformed input', () => {

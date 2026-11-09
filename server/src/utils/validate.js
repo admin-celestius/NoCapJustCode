@@ -1,6 +1,13 @@
 const { z } = require('zod');
 
-const email = z.string().trim().toLowerCase().email();
+const email = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email('Enter a valid email address')
+  .refine((v) => v.endsWith('@citchennai.net'), {
+    message: 'Only official @citchennai.net email addresses are permitted',
+  });
 const phone = z.string().trim()
   .transform((v) => v.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, ''))
   .pipe(z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number'));

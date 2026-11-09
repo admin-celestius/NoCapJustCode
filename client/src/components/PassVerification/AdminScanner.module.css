@@ -318,6 +318,13 @@
 .celestiusPillBadge {
   display: flex;
   align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms ease;
+}
+
+.celestiusPillBadge:hover {
+  transform: scale(1.05);
 }
 
 .celestiusLogoImg {
