@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // Expose to local network (WiFi)
+    port: 5173,
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

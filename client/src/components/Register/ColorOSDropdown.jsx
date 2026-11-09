@@ -9,6 +9,7 @@ export default function ColorOSDropdown({
   options = [],
   hasError = false,
   onFocus,
+  onOpenChange,
   ariaLabel = 'Select option',
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,18 +18,33 @@ export default function ColorOSDropdown({
 
   const selectedOption = options.find((opt) => opt.value === value) || options[0];
 
-  // Auto-detect whether to open downward or upward based on viewport space
+  // Auto-detect whether to open downward or upward based on modal & scroll boundaries
   useEffect(() => {
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      if (spaceBelow < 250 && rect.top > 250) {
+      const scrollParent = containerRef.current.closest('fieldset, form, [class*="formScrollBody"], [class*="modal"]');
+      const parentRect = scrollParent ? scrollParent.getBoundingClientRect() : null;
+
+      const bottomLimit = parentRect ? Math.min(parentRect.bottom, window.innerHeight) : window.innerHeight;
+      const topLimit = parentRect ? Math.max(parentRect.top, 0) : 0;
+
+      const spaceBelow = bottomLimit - rect.bottom;
+      const spaceAbove = rect.top - topLimit;
+
+      // When space below is tight (< 220px) and there is more room above, open upward
+      if (spaceBelow < 220 && spaceAbove > spaceBelow) {
         setOpenUpward(true);
       } else {
         setOpenUpward(false);
       }
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (onOpenChange) {
+      onOpenChange(isOpen);
+    }
+  }, [isOpen, onOpenChange]);
 
   // Close when clicking outside or pressing Escape
   useEffect(() => {

@@ -1,7 +1,6 @@
-const API_BASE_URL = (import.meta.env?.VITE_API_URL || 'http://localhost:5000').trim().replace(/\/+$/, '');
+const API_BASE_URL = (import.meta.env?.VITE_API_URL || '').trim().replace(/\/+$/, '');
 
 async function request(path, payload, timeout = 20000) {
-  if (!API_BASE_URL) throw new Error('Registration is not configured. Please contact the organisers.');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
@@ -48,3 +47,25 @@ export async function checkTeamNameAvailability(teamName) {
 
 export const createOrder = (payload) => request('/api/registrations/create-order', payload);
 export const verifyPayment = (payload) => request('/api/registrations/verify-payment', payload);
+
+export async function verifyPass(regCode) {
+  const code = (regCode || '').trim();
+  if (!code) throw new Error('Registration code is required.');
+  return request(`/api/registrations/${encodeURIComponent(code)}/verify`);
+}
+
+export async function verifyAdminPasskey(passcode) {
+  const code = (passcode || '').trim();
+  if (!code) throw new Error('6-digit security passkey is required.');
+  return request('/api/registrations/admin/verify-passkey', { passcode: code });
+}
+
+export async function checkInAttendance(regCode, { round, passcode, markedBy }) {
+  const code = (regCode || '').trim();
+  if (!code) throw new Error('Registration code is required.');
+  return request(`/api/registrations/${encodeURIComponent(code)}/checkin`, {
+    round,
+    passcode,
+    markedBy,
+  });
+}

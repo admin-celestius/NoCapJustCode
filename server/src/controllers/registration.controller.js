@@ -77,6 +77,151 @@ exports.checkTeamName = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/registrations/:code/verify
+ * Public verification endpoint when QR pass is scanned by Google Lens, Camera, or browser.
+ */
+exports.getPublicVerification = async (req, res, next) => {
+  try {
+    const rawCode = (req.params.code || '').trim().toUpperCase();
+    if (!rawCode) {
+      return res.status(400).json({ valid: false, message: 'Invalid registration code.' });
+    }
+
+    const reg = await Registration.findOne({ regCode: rawCode, status: 'confirmed' })
+      .select('regCode teamName status confirmedAt members attendance')
+      .populate('members', 'name role department year')
+      .lean();
+
+    if (!reg) {
+      return res.status(404).json({
+        valid: false,
+        message: 'No confirmed entry pass found for this code. Please verify with the Celestius organisers desk.',
+      });
+    }
+
+    const memberList = (reg.members || []).map((m) => ({
+      name: m.name,
+      role: m.role || 'member',
+      department: m.department || '',
+    }));
+
+    return res.json({
+      valid: true,
+      eventName: 'LARPER OR CODER',
+      edition: '2026',
+      presentedBy: 'Celestius',
+      venue: 'CIT Campus',
+      regCode: reg.regCode,
+      teamName: reg.teamName,
+      status: 'CONFIRMED',
+      confirmedAt: reg.confirmedAt,
+      members: memberList,
+      attendance: {
+        round1: reg.attendance?.round1 || { attended: false },
+        round2: reg.attendance?.round2 || { attended: false },
+      },
+      message: 'Official Entry Pass Verified. This duo is officially confirmed by Celestius for LARPER OR CODER.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/registrations/admin/verify-passkey
+ * Validates the 6-digit organiser security passkey.
+ */
+exports.verifyPasskey = async (req, res) => {
+  const passcode = (req.body?.passcode || req.headers['x-organiser-passcode'] || '').trim();
+  const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
+  if (passcode && passcode === expectedPasscode) {
+    return res.json({ success: true, message: 'Security passkey authenticated.' });
+  }
+  return res.status(401).json({ success: false, message: 'Invalid 6-digit security passkey.' });
+};
+
+/**
+ * POST /api/registrations/:code/checkin
+ * Protected check-in endpoint for event organisers to mark attendance for Round 1 & Round 2.
+ */
+exports.markAttendance = async (req, res, next) => {
+  try {
+    const passcode = (req.headers['x-organiser-passcode'] || req.body?.passcode || '').trim();
+    const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
+
+    if (!passcode || passcode !== expectedPasscode) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized. Invalid organiser passcode.',
+      });
+    }
+
+    const rawCode = (req.params.code || '').trim().toUpperCase();
+    const round = (req.body?.round || '').trim().toLowerCase(); // 'round1' or 'round2'
+    const markedBy = (req.body?.markedBy || 'Organiser Desk').trim();
+
+    if (!['round1', 'round2'].includes(round)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid round specified. Must be "round1" or "round2".',
+      });
+    }
+
+    const reg = await Registration.findOne({ regCode: rawCode, status: 'confirmed' })
+      .populate('members', 'name role');
+
+    if (!reg) {
+      return res.status(404).json({
+        success: false,
+        message: 'No confirmed registration found for this code.',
+      });
+    }
+
+    if (!reg.attendance) {
+      reg.attendance = { round1: { attended: false }, round2: { attended: false } };
+    }
+
+    const roundName = round === 'round1' ? 'Round 1 (The Training Arc)' : 'Round 2 (TLE)';
+    const roundAttendance = reg.attendance[round];
+
+    if (roundAttendance?.attended) {
+      const timeStr = roundAttendance.markedAt
+        ? new Date(roundAttendance.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : 'earlier';
+      return res.status(409).json({
+        success: false,
+        alreadyCheckedIn: true,
+        message: `Attendance for ${roundName} has already been marked at ${timeStr}.`,
+        attendance: reg.attendance,
+        regCode: reg.regCode,
+        teamName: reg.teamName,
+        members: reg.members.map((m) => ({ name: m.name, role: m.role })),
+      });
+    }
+
+    reg.attendance[round] = {
+      attended: true,
+      markedAt: new Date(),
+      markedBy,
+    };
+
+    reg.markModified('attendance');
+    await reg.save();
+
+    return res.json({
+      success: true,
+      message: `Check-in recorded successfully for ${roundName}.`,
+      attendance: reg.attendance,
+      regCode: reg.regCode,
+      teamName: reg.teamName,
+      members: reg.members.map((m) => ({ name: m.name, role: m.role })),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.checkAvailability = async (req, res, next) => {
   try {
     const parsed = checkSchema.safeParse(req.body);
@@ -233,6 +378,7 @@ exports.verifyPayment = async (req, res, next) => {
           registrationId: result.registration._id,
           regCode: result.registration.regCode,
           teamName: result.registration.teamName,
+          members: (await Participant.find({ registration: result.registration._id }).select('name role department year').lean() || []).map((m) => ({ name: m.name, role: m.role })),
         });
       case 'conflict':
         return res.status(409).json({
