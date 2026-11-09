@@ -258,7 +258,7 @@ export default function VerifyPassPage({ regCode }) {
               <div className={styles.errorNoticeBox}>
                 <p className={styles.errorTitle}>{error}</p>
                 <p className={styles.errorSub}>
-                  If payment was recently completed, present transaction confirmation receipt at the reception desk or contact the event organisers below.
+                  If payment was recently completed, please contact the organizers to get help.
                 </p>
               </div>
 

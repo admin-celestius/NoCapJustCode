@@ -96,7 +96,7 @@ exports.getPublicVerification = async (req, res, next) => {
     if (!reg) {
       return res.status(404).json({
         valid: false,
-        message: 'No confirmed entry pass found for this code. Please verify with the Celestius organisers desk.',
+        message: 'No confirmed entry pass found.',
       });
     }
 
@@ -118,8 +118,10 @@ exports.getPublicVerification = async (req, res, next) => {
       confirmedAt: reg.confirmedAt,
       members: memberList,
       attendance: {
-        round1: reg.attendance?.round1 || { attended: false },
-        round2: reg.attendance?.round2 || { attended: false },
+        workshop: reg.attendance?.workshop || reg.attendance?.round1 || { attended: false },
+        competition: reg.attendance?.competition || reg.attendance?.round2 || { attended: false },
+        round1: reg.attendance?.workshop || reg.attendance?.round1 || { attended: false },
+        round2: reg.attendance?.competition || reg.attendance?.round2 || { attended: false },
       },
       message: 'Official Entry Pass Verified. This duo is officially confirmed by Celestius for LARPER OR CODER.',
     });
@@ -143,7 +145,7 @@ exports.verifyPasskey = async (req, res) => {
 
 /**
  * POST /api/registrations/:code/checkin
- * Protected check-in endpoint for event organisers to mark attendance for Round 1 & Round 2.
+ * Protected check-in endpoint for event organisers to mark attendance for Workshop & Competition.
  */
 exports.markAttendance = async (req, res, next) => {
   try {
@@ -158,15 +160,19 @@ exports.markAttendance = async (req, res, next) => {
     }
 
     const rawCode = (req.params.code || '').trim().toUpperCase();
-    const round = (req.body?.round || '').trim().toLowerCase(); // 'round1' or 'round2'
-    const markedBy = (req.body?.markedBy || 'Organiser Desk').trim();
+    const rawRound = (req.body?.round || '').trim().toLowerCase();
+    let targetRound = rawRound;
+    if (rawRound === 'round1') targetRound = 'workshop';
+    if (rawRound === 'round2') targetRound = 'competition';
 
-    if (!['round1', 'round2'].includes(round)) {
+    if (!['workshop', 'competition'].includes(targetRound)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid round specified. Must be "round1" or "round2".',
+        message: 'Invalid round specified. Must be "workshop" or "competition".',
       });
     }
+
+    const markedBy = (req.body?.markedBy || 'Organiser Desk').trim();
 
     const reg = await Registration.findOne({ regCode: rawCode, status: 'confirmed' })
       .populate('members', 'name role');
@@ -179,11 +185,16 @@ exports.markAttendance = async (req, res, next) => {
     }
 
     if (!reg.attendance) {
-      reg.attendance = { round1: { attended: false }, round2: { attended: false } };
+      reg.attendance = {
+        workshop: { attended: false },
+        competition: { attended: false },
+      };
     }
 
-    const roundName = round === 'round1' ? 'Round 1 (The Training Arc)' : 'Round 2 (TLE)';
-    const roundAttendance = reg.attendance[round];
+    const roundName = targetRound === 'workshop' ? 'The Training Arc (Workshop)' : 'TLE (Competition)';
+    const roundAttendance =
+      reg.attendance[targetRound] ||
+      (targetRound === 'workshop' ? reg.attendance.round1 : reg.attendance.round2);
 
     if (roundAttendance?.attended) {
       const timeStr = roundAttendance.markedAt
@@ -193,18 +204,31 @@ exports.markAttendance = async (req, res, next) => {
         success: false,
         alreadyCheckedIn: true,
         message: `Attendance for ${roundName} has already been marked at ${timeStr}.`,
-        attendance: reg.attendance,
+        attendance: {
+          workshop: reg.attendance.workshop || reg.attendance.round1 || { attended: false },
+          competition: reg.attendance.competition || reg.attendance.round2 || { attended: false },
+          round1: reg.attendance.workshop || reg.attendance.round1 || { attended: false },
+          round2: reg.attendance.competition || reg.attendance.round2 || { attended: false },
+        },
         regCode: reg.regCode,
         teamName: reg.teamName,
         members: reg.members.map((m) => ({ name: m.name, role: m.role })),
       });
     }
 
-    reg.attendance[round] = {
+    const attendanceRecord = {
       attended: true,
       markedAt: new Date(),
       markedBy,
     };
+
+    reg.attendance[targetRound] = attendanceRecord;
+    // Maintain legacy aliases
+    if (targetRound === 'workshop') {
+      reg.attendance.round1 = attendanceRecord;
+    } else if (targetRound === 'competition') {
+      reg.attendance.round2 = attendanceRecord;
+    }
 
     reg.markModified('attendance');
     await reg.save();
@@ -212,10 +236,72 @@ exports.markAttendance = async (req, res, next) => {
     return res.json({
       success: true,
       message: `Check-in recorded successfully for ${roundName}.`,
-      attendance: reg.attendance,
+      attendance: {
+        workshop: reg.attendance.workshop,
+        competition: reg.attendance.competition,
+        round1: reg.attendance.workshop,
+        round2: reg.attendance.competition,
+      },
       regCode: reg.regCode,
       teamName: reg.teamName,
       members: reg.members.map((m) => ({ name: m.name, role: m.role })),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/registrations/admin/roster
+ * GET /api/registrations/admin/roster
+ * Protected endpoint returning list of confirmed teams with workshop & competition attendance status.
+ */
+exports.getAttendanceRoster = async (req, res, next) => {
+  try {
+    const passcode = (req.headers['x-organiser-passcode'] || req.body?.passcode || req.query?.passcode || '').trim();
+    const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
+
+    if (!passcode || passcode !== expectedPasscode) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized. Invalid organiser passcode.',
+      });
+    }
+
+    const registrations = await Registration.find({ status: 'confirmed' })
+      .populate('members', 'name role email phone rollNo department')
+      .sort({ confirmedAt: 1, createdAt: 1 })
+      .lean();
+
+    const teams = registrations.map((reg) => {
+      const mem1 = reg.members?.[0];
+      const mem2 = reg.members?.[1];
+
+      const workshopAttended = Boolean(
+        reg.attendance?.workshop?.attended || reg.attendance?.round1?.attended
+      );
+      const competitionAttended = Boolean(
+        reg.attendance?.competition?.attended || reg.attendance?.round2?.attended
+      );
+
+      return {
+        regCode: reg.regCode || 'PENDING',
+        teamName: reg.teamName,
+        mem1Name: mem1?.name || 'N/A',
+        mem2Name: mem2?.name || 'N/A',
+        workshopStatus: workshopAttended ? 'attended' : 'not_attended',
+        competitionStatus: competitionAttended ? 'attended' : 'not_attended',
+        workshopMarkedAt: reg.attendance?.workshop?.markedAt || reg.attendance?.round1?.markedAt || null,
+        competitionMarkedAt: reg.attendance?.competition?.markedAt || reg.attendance?.round2?.markedAt || null,
+      };
+    });
+
+    return res.json({
+      success: true,
+      totalTeams: teams.length,
+      workshopAttendedCount: teams.filter((t) => t.workshopStatus === 'attended').length,
+      competitionAttendedCount: teams.filter((t) => t.competitionStatus === 'attended').length,
+      teams,
     });
   } catch (err) {
     next(err);

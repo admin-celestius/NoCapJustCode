@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import styles from './AdminScanner.module.css';
-import { verifyPass, checkInAttendance, verifyAdminPasskey } from '../../services/api.js';
+import { verifyPass, checkInAttendance, verifyAdminPasskey, getAttendanceRoster } from '../../services/api.js';
 import celestiusLogoWebp from '../../assets/celestius-transparent.webp';
 import celestiusLogoPng from '../../assets/celestius-transparent.png';
 import locLogoWebp from '../../assets/logo-transparent.webp';
@@ -58,7 +58,15 @@ export default function AdminScannerPage() {
   // Scanner UI State
   const [activeTab, setActiveTab] = useState('camera'); // 'camera' | 'manual'
   const [manualCode, setManualCode] = useState('');
-  const [markedBy, setMarkedBy] = useState('Desk Organiser');
+  const markedBy = 'Organiser Desk';
+
+  // Live Roster Search & Quick Mark State
+  const [rosterTeams, setRosterTeams] = useState([]);
+  const [loadingRoster, setLoadingRoster] = useState(false);
+  const [rosterError, setRosterError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'needs_workshop' | 'needs_competition'
+  const [markingTeamKey, setMarkingTeamKey] = useState(null); // `${regCode}-${round}`
 
   // Camera State
   const [cameraRunning, setCameraRunning] = useState(false);
@@ -71,8 +79,32 @@ export default function AdminScannerPage() {
   const [duoError, setDuoError] = useState(null);
 
   // Session-bound round marking restriction
-  const [markedRoundInSession, setMarkedRoundInSession] = useState(null); // 'round1' | 'round2' | null
+  const [markedRoundInSession, setMarkedRoundInSession] = useState(null); // 'workshop' | 'competition' | null
   const [markingAttendance, setMarkingAttendance] = useState(false);
+
+  // Load roster of confirmed teams
+  const loadRoster = async (passkeyToUse = authenticatedPasskey) => {
+    if (!passkeyToUse) return;
+    try {
+      setLoadingRoster(true);
+      setRosterError(null);
+      const data = await getAttendanceRoster(passkeyToUse);
+      if (data?.teams) {
+        setRosterTeams(data.teams);
+      }
+    } catch (err) {
+      console.error('Failed to load roster:', err);
+      setRosterError(err.message || 'Failed to load teams list.');
+    } finally {
+      setLoadingRoster(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authenticatedPasskey) {
+      loadRoster(authenticatedPasskey);
+    }
+  }, [authenticatedPasskey]);
 
   // Guarantee clean single-track window scrolling
   useEffect(() => {
@@ -106,6 +138,7 @@ export default function AdminScannerPage() {
       setAuthenticatedPasskey(cleanPasskey);
       setPasskeyInput('');
       playChime('success');
+      loadRoster(cleanPasskey);
     } catch (err) {
       setAuthError(err.message || 'Invalid security passkey. Access denied.');
       playChime('error');
@@ -122,6 +155,9 @@ export default function AdminScannerPage() {
     setCurrentDuo(null);
     setMarkedRoundInSession(null);
     setAuthError(null);
+    setRosterTeams([]);
+    setSearchQuery('');
+    setRosterError(null);
   };
 
   // Stop camera helper
@@ -165,7 +201,7 @@ export default function AdminScannerPage() {
       setCurrentDuo(duoData);
       playChime('success');
     } catch (err) {
-      setDuoError(err.message || 'No confirmed pass found for this code.');
+      setDuoError(err.message || 'No confirmed pass found.');
       playChime('error');
     } finally {
       setFetchingDuo(false);
@@ -229,6 +265,20 @@ export default function AdminScannerPage() {
         },
       }));
 
+      // Keep rosterTeams list synchronized in real time
+      setRosterTeams((prev) =>
+        prev.map((t) => {
+          if (t.regCode === currentDuo.regCode) {
+            return {
+              ...t,
+              workshopStatus: round === 'workshop' ? 'attended' : t.workshopStatus,
+              competitionStatus: round === 'competition' ? 'attended' : t.competitionStatus,
+            };
+          }
+          return t;
+        })
+      );
+
       // Lock other round marking for this session
       setMarkedRoundInSession(round);
       playChime('success');
@@ -237,6 +287,80 @@ export default function AdminScannerPage() {
       playChime('error');
     } finally {
       setMarkingAttendance(false);
+    }
+  };
+
+  // Mark attendance directly from a search result card
+  const handleDirectCardMark = async (team, round) => {
+    const key = `${team.regCode}-${round}`;
+    if (markingTeamKey) return;
+    try {
+      setMarkingTeamKey(key);
+      await checkInAttendance(team.regCode, {
+        round,
+        passcode: authenticatedPasskey,
+        markedBy,
+      });
+
+      // Update roster state locally
+      setRosterTeams((prev) =>
+        prev.map((t) => {
+          if (t.regCode === team.regCode) {
+            return {
+              ...t,
+              workshopStatus: round === 'workshop' ? 'attended' : t.workshopStatus,
+              competitionStatus: round === 'competition' ? 'attended' : t.competitionStatus,
+            };
+          }
+          return t;
+        })
+      );
+      playChime('success');
+    } catch (err) {
+      alert(err.message || 'Failed to mark attendance.');
+      playChime('error');
+    } finally {
+      setMarkingTeamKey(null);
+    }
+  };
+
+  // Filtered teams list based on search query and status filter
+  const filteredTeams = rosterTeams.filter((team) => {
+    const q = searchQuery.trim().toLowerCase();
+    let matchesText = true;
+    if (q) {
+      const teamName = (team.teamName || '').toLowerCase();
+      const mem1 = (team.mem1Name || '').toLowerCase();
+      const mem2 = (team.mem2Name || '').toLowerCase();
+      const code = (team.regCode || '').toLowerCase();
+      matchesText =
+        teamName.includes(q) ||
+        mem1.includes(q) ||
+        mem2.includes(q) ||
+        code.includes(q);
+    }
+    if (!matchesText) return false;
+
+    if (statusFilter === 'needs_workshop') {
+      return team.workshopStatus !== 'attended';
+    }
+    if (statusFilter === 'needs_competition') {
+      return team.competitionStatus !== 'attended';
+    }
+    return true;
+  });
+
+  // Handle search or direct code submit
+  const handleSearchSubmit = (e) => {
+    e?.preventDefault();
+    const q = searchQuery.trim().toUpperCase();
+    if (!q) return;
+
+    // If exactly one match in filtered list, load that duo directly
+    if (filteredTeams.length === 1) {
+      handleScannedCode(filteredTeams[0].regCode);
+    } else {
+      handleScannedCode(q);
     }
   };
 
@@ -332,7 +456,7 @@ export default function AdminScannerPage() {
           </div>
 
           {/* ========================================================
-              2. SUB-HEADER: LOC ORGANISER DESK + STATUS BADGE + LOGOUT
+              2. SUB-HEADER: LOC ORGANISER DESK + ROSTER LINK + LOGOUT
               ======================================================== */}
           <div className={`${styles.subHeaderRow} ${styles.animSlideIn}`}>
             <div className={styles.subHeaderLeft}>
@@ -340,22 +464,33 @@ export default function AdminScannerPage() {
               <span className={styles.officialDeskSubtitle}>ATTENDANCE CONTROL DESK</span>
             </div>
 
-            <div className={styles.subHeaderRight}>
-              <span className={authenticatedPasskey ? styles.statusOnlineBadge : styles.statusLockedBadge}>
-                <span className={styles.statusDot} />
-                {authenticatedPasskey ? 'DESK ONLINE' : 'LOCKED'}
-              </span>
-
-              {authenticatedPasskey && (
+            {authenticatedPasskey && (
+              <div className={styles.subHeaderActionsRow}>
+                <a
+                  href="/admin/roster"
+                  className={styles.viewRosterButton}
+                  title="View Full Live Attendance Roster"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M3 9h18M9 21V9" />
+                  </svg>
+                  <span>Live Roster</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7 7 17 7 17 17" />
+                  </svg>
+                </a>
                 <button
                   type="button"
                   className={styles.logoutButton}
                   onClick={handleLogout}
+                  title="Log Out of Organiser Desk"
                 >
                   Log Out
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* ========================================================
@@ -414,28 +549,6 @@ export default function AdminScannerPage() {
                STAGE 2: AUTHENTICATED SCANNER DESK
                ======================================================== */
             <>
-              {/* Desk Staff Meta */}
-              <div className={`${styles.cardBlock} ${styles.animCascade1}`}>
-                <div className={styles.cardTabTag}>
-                  <span>ACTIVE ORGANISER DESK</span>
-                </div>
-                <div className={styles.cyberCardWrapper}>
-                  <div className={styles.cyberCardInnerMeta}>
-                    <div className={styles.deskMetaInfo}>
-                      <span className={styles.deskMetaLabel}>Active Station Staff</span>
-                      <div className={styles.deskMetaValue}>{markedBy}</div>
-                    </div>
-                    <input
-                      type="text"
-                      value={markedBy}
-                      onChange={(e) => setMarkedBy(e.target.value)}
-                      className={styles.deskStaffInput}
-                      placeholder="Staff Name"
-                    />
-                  </div>
-                </div>
-              </div>
-
               {/* If no duo is currently loaded, show scanner interface */}
               {!currentDuo && (
                 <>
@@ -456,13 +569,18 @@ export default function AdminScannerPage() {
                     <button
                       type="button"
                       className={`${styles.modeTabButton} ${activeTab === 'manual' ? styles.modeTabActive : ''}`}
-                      onClick={() => setActiveTab('manual')}
+                      onClick={() => {
+                        setActiveTab('manual');
+                        if (!rosterTeams.length && authenticatedPasskey) {
+                          loadRoster(authenticatedPasskey);
+                        }
+                      }}
                     >
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8" />
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
                       </svg>
-                      <span>Manual Code</span>
+                      <span>Search & Code</span>
                     </button>
                   </div>
 
@@ -550,36 +668,206 @@ export default function AdminScannerPage() {
                     </div>
                   )}
 
-                  {/* MANUAL CODE ENTRY TAB */}
+                  {/* MANUAL SEARCH & QUICK ATTENDANCE TAB */}
                   {activeTab === 'manual' && !fetchingDuo && (
                     <div className={`${styles.cardBlock} ${styles.animCascade3}`}>
                       <div className={styles.cardTabTag}>
-                        <span>MANUAL CODE ENTRY</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <span>SEARCH & MARK ATTENDANCE</span>
                       </div>
                       <div className={styles.cyberCardWrapper}>
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleScannedCode(manualCode);
-                          }}
-                          className={styles.cyberCardInnerManual}
-                        >
-                          <input
-                            type="text"
-                            className={styles.manualCodeInput}
-                            placeholder="e.g. TEAM-6CDC4E"
-                            value={manualCode}
-                            onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                            autoFocus
-                          />
-                          <button
-                            type="submit"
-                            className={styles.amberActionButton}
-                            disabled={!manualCode.trim()}
-                          >
-                            Fetch Duo Pass
-                          </button>
-                        </form>
+                        <div className={styles.cyberCardInnerSearch}>
+                          {/* Search Input Bar */}
+                          <form onSubmit={handleSearchSubmit} className={styles.searchBarForm}>
+                            <div className={styles.searchInputWrapper}>
+                              <svg
+                                className={styles.searchBarIcon}
+                                width="17"
+                                height="17"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                aria-hidden="true"
+                              >
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                              </svg>
+                              <input
+                                type="text"
+                                className={styles.searchBarInput}
+                                placeholder="Search by team, member, or code..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck="false"
+                              />
+                              {searchQuery && (
+                                <button
+                                  type="button"
+                                  className={styles.clearSearchButton}
+                                  onClick={() => setSearchQuery('')}
+                                  aria-label="Clear search query"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </form>
+
+                          {/* Quick Filter Chips Bar */}
+                          <div className={styles.filterStatsBar}>
+                            <div className={styles.filterChipsRow}>
+                              <button
+                                type="button"
+                                className={`${styles.filterChip} ${statusFilter === 'all' ? styles.filterChipActive : ''}`}
+                                onClick={() => setStatusFilter('all')}
+                              >
+                                All ({rosterTeams.length})
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.filterChip} ${statusFilter === 'needs_workshop' ? styles.filterChipActive : ''}`}
+                                onClick={() => setStatusFilter('needs_workshop')}
+                              >
+                                Need Workshop
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.filterChip} ${statusFilter === 'needs_competition' ? styles.filterChipActive : ''}`}
+                                onClick={() => setStatusFilter('needs_competition')}
+                              >
+                                Need Competition
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={styles.syncRefreshButton}
+                              onClick={() => loadRoster()}
+                              title="Refresh teams list"
+                              aria-label="Refresh roster"
+                              disabled={loadingRoster}
+                            >
+                              {loadingRoster ? '...' : '↻'}
+                            </button>
+                          </div>
+
+                          {/* Search Results / Scrollable Teams List */}
+                          <div className={styles.teamsResultsScroll}>
+                            {loadingRoster && rosterTeams.length === 0 ? (
+                              <div className={styles.rosterLoadingState}>
+                                <div className={styles.rosterLoadingSpinner} />
+                                <p>Loading confirmed teams...</p>
+                              </div>
+                            ) : rosterError ? (
+                              <div className={styles.rosterErrorState}>
+                                <p>{rosterError}</p>
+                                <button
+                                  type="button"
+                                  className={styles.clearRetryButton}
+                                  onClick={() => loadRoster()}
+                                >
+                                  Retry loading teams
+                                </button>
+                              </div>
+                            ) : filteredTeams.length === 0 ? (
+                              <div className={styles.emptyResultsState}>
+                                <p>No teams matching &ldquo;{searchQuery}&rdquo;</p>
+                                <button
+                                  type="button"
+                                  className={styles.resetSearchLink}
+                                  onClick={() => {
+                                    setSearchQuery('');
+                                    setStatusFilter('all');
+                                  }}
+                                >
+                                  Reset filters
+                                </button>
+                              </div>
+                            ) : (
+                              filteredTeams.map((team) => {
+                                const isWorkshopDone = team.workshopStatus === 'attended';
+                                const isCompDone = team.competitionStatus === 'attended';
+                                const isMarkingWorkshop = markingTeamKey === `${team.regCode}-workshop`;
+                                const isMarkingComp = markingTeamKey === `${team.regCode}-competition`;
+
+                                return (
+                                  <div key={team.regCode} className={styles.teamResultCard}>
+                                    {/* Card Header: Team Name & Reg Code + Pass Button */}
+                                    <div className={styles.teamCardTopRow}>
+                                      <div className={styles.teamCardMeta}>
+                                        <span className={styles.teamCardName}>{team.teamName}</span>
+                                        <span className={styles.teamCardCodeBadge}>{team.regCode}</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className={styles.inspectPassButton}
+                                        onClick={() => handleScannedCode(team.regCode)}
+                                        title="Open full duo ticket"
+                                      >
+                                        Pass ↗
+                                      </button>
+                                    </div>
+
+                                    {/* Card Members (Compact Inline) */}
+                                    <div className={styles.teamCardMembersRow}>
+                                      <span className={styles.memberPrefixIcon}>👥</span>
+                                      <span className={styles.memberTextName}>
+                                        {team.mem1Name} <span className={styles.memberDivider}>•</span> {team.mem2Name}
+                                      </span>
+                                    </div>
+
+                                    {/* Card Attendance Controls: 2 Columns Side-by-Side */}
+                                    <div className={styles.teamCardAttendanceRow}>
+                                      {/* Workshop Button / Badge */}
+                                      {isWorkshopDone ? (
+                                        <div className={styles.attendanceDoneBadge}>
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          <span>✓ Workshop</span>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className={styles.markWorkshopDirectButton}
+                                          onClick={() => handleDirectCardMark(team, 'workshop')}
+                                          disabled={Boolean(markingTeamKey)}
+                                        >
+                                          {isMarkingWorkshop ? 'Marking...' : '+ Workshop'}
+                                        </button>
+                                      )}
+
+                                      {/* Competition Button / Badge */}
+                                      {isCompDone ? (
+                                        <div className={styles.attendanceDoneBadge}>
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                          <span>✓ Competition</span>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className={styles.markCompDirectButton}
+                                          onClick={() => handleDirectCardMark(team, 'competition')}
+                                          disabled={Boolean(markingTeamKey)}
+                                        >
+                                          {isMarkingComp ? 'Marking...' : '+ Competition'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -632,13 +920,13 @@ export default function AdminScannerPage() {
                     </div>
                     <div className={styles.cyberCardWrapper}>
                       <div className={styles.cyberCardInnerAttendance}>
-                        {/* Round 1 Check-In Item */}
+                        {/* Workshop Check-In Item */}
                         <div className={styles.attendanceActionRow}>
                           <div className={styles.attendanceRowMeta}>
-                            <span className={styles.roundTitleText}>Round 1: The Training Arc</span>
+                            <span className={styles.roundTitleText}>Workshop: The Training Arc</span>
                             <span className={styles.roundStatusText}>
                               Status:{' '}
-                              {currentDuo.attendance?.round1?.attended ? (
+                              {currentDuo.attendance?.workshop?.attended || currentDuo.attendance?.round1?.attended ? (
                                 <span className={styles.statusMarked}>Marked</span>
                               ) : (
                                 <span className={styles.statusNotMarked}>Not Marked</span>
@@ -646,7 +934,7 @@ export default function AdminScannerPage() {
                             </span>
                           </div>
 
-                          {currentDuo.attendance?.round1?.attended ? (
+                          {currentDuo.attendance?.workshop?.attended || currentDuo.attendance?.round1?.attended ? (
                             <span className={styles.checkedInBadge}>
                               Marked
                             </span>
@@ -654,25 +942,25 @@ export default function AdminScannerPage() {
                             <button
                               type="button"
                               className={styles.markRoundButton}
-                              onClick={() => handleMarkRound('round1')}
+                              onClick={() => handleMarkRound('workshop')}
                               disabled={markingAttendance || markedRoundInSession !== null}
                             >
-                              {markingAttendance && markedRoundInSession === 'round1'
+                              {markingAttendance && markedRoundInSession === 'workshop'
                                 ? 'Recording...'
-                                : 'Mark Round 1'}
+                                : 'Mark Workshop'}
                             </button>
                           )}
                         </div>
 
                         <div className={styles.attendanceDivider} />
 
-                        {/* Round 2 Check-In Item */}
+                        {/* Competition Check-In Item */}
                         <div className={styles.attendanceActionRow}>
                           <div className={styles.attendanceRowMeta}>
-                            <span className={styles.roundTitleText}>Round 2: TLE</span>
+                            <span className={styles.roundTitleText}>Competition: TLE</span>
                             <span className={styles.roundStatusText}>
                               Status:{' '}
-                              {currentDuo.attendance?.round2?.attended ? (
+                              {currentDuo.attendance?.competition?.attended || currentDuo.attendance?.round2?.attended ? (
                                 <span className={styles.statusMarked}>Marked</span>
                               ) : (
                                 <span className={styles.statusNotMarked}>Not Marked</span>
@@ -680,7 +968,7 @@ export default function AdminScannerPage() {
                             </span>
                           </div>
 
-                          {currentDuo.attendance?.round2?.attended ? (
+                          {currentDuo.attendance?.competition?.attended || currentDuo.attendance?.round2?.attended ? (
                             <span className={styles.checkedInBadge}>
                               Marked
                             </span>
@@ -688,12 +976,12 @@ export default function AdminScannerPage() {
                             <button
                               type="button"
                               className={styles.markRoundButton}
-                              onClick={() => handleMarkRound('round2')}
+                              onClick={() => handleMarkRound('competition')}
                               disabled={markingAttendance || markedRoundInSession !== null}
                             >
-                              {markingAttendance && markedRoundInSession === 'round2'
+                              {markingAttendance && markedRoundInSession === 'competition'
                                 ? 'Recording...'
-                                : 'Mark Round 2'}
+                                : 'Mark Competition'}
                             </button>
                           )}
                         </div>
@@ -704,7 +992,7 @@ export default function AdminScannerPage() {
                   {/* Notice when attendance was recorded */}
                   {markedRoundInSession && (
                     <div className={`${styles.sessionLockedNotice} ${styles.animCascade4}`}>
-                      Attendance for {markedRoundInSession === 'round1' ? 'Round 1' : 'Round 2'} recorded successfully. To scan the next duo, tap below.
+                      Attendance for {markedRoundInSession === 'workshop' ? 'The Training Arc (Workshop)' : 'TLE (Competition)'} recorded successfully. To scan the next duo, tap below.
                     </div>
                   )}
 
