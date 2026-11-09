@@ -62,7 +62,7 @@ export default function App() {
   }, [appFlow]);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const isCustomRoute = pathname.startsWith('/verify/') || pathname.startsWith('/admin/');
+  const isCustomRoute = pathname.startsWith('/verify') || pathname.startsWith('/admin');
 
   // Lock scroll while intro is active on main site only
   useEffect(() => {
@@ -89,14 +89,21 @@ export default function App() {
     logTimelineEvent('site visible');
   }, []);
 
-  // Public QR Pass Verification route (opens when scanned by Google Lens or camera)
-  if (pathname.startsWith('/verify/')) {
-    const code = pathname.replace('/verify/', '').replace(/\/+$/, '').trim();
+  // Public QR Pass Verification route (e.g. /verify/123 or /verify?code=123)
+  if (pathname === '/verify' || pathname.startsWith('/verify/')) {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const codeFromPath = pathname.replace(/^\/verify\/?/, '').replace(/\/+$/, '').trim();
+    const code = codeFromPath || urlParams?.get('code') || '';
     return <VerifyPassPage regCode={code} />;
   }
 
-  // Organiser Check-In / Attendance Scanner Desk
-  if (pathname.startsWith('/admin/scan') || pathname.startsWith('/admin/checkin')) {
+  // Organiser Check-In / Attendance Scanner Desk (e.g. /admin, /admin/scan, /admin/checkin, /admin/scanner)
+  if (
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname.startsWith('/admin/scan') ||
+    pathname.startsWith('/admin/checkin')
+  ) {
     return <AdminScannerPage />;
   }
 
