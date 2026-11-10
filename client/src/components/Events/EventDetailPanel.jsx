@@ -331,7 +331,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                   <section className={styles.detailSection}>
                     <h2 className={styles.sectionMonoLabel}>THE LORE</h2>
                     <p className={styles.sectionParagraph}>
-                      {event.about || 'A hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior.'}
+                      {event.about || 'A structured, hands-on workshop on competitive programming and algorithmic problem-solving, led by an experienced senior competitive programmer at CIT.'}
                     </p>
                   </section>
 

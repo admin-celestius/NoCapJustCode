@@ -7,7 +7,7 @@ const Participant = require('../src/models/Participant');
 
 const body = () => ({ teamName: ' Test Duo ', members: [0, 1].map((i) => ({
   name: `Player ${i}`, email: `PLAYER${i}@citchennai.net`, phone: `+91 900000000${i}`,
-  department: 'CSE', year: '3', rollNo: ` reg${i} `,
+  department: 'CSE', year: '1', rollNo: ` reg${i} `,
 })) });
 
 test('normalizes a complete pair without renaming database fields', () => {
@@ -17,7 +17,7 @@ test('normalizes a complete pair without renaming database fields', () => {
   assert.equal(data.members[0].rollNo, 'REG0');
   assert.equal(data.members[0].email, 'player0@citchennai.net');
   assert.equal(data.members[0].phone, '9000000000');
-  assert.equal(data.members[0].year, 3);
+  assert.equal(data.members[0].year, 1);
   assert.equal(new Participant(data.members[0]).rollNo, 'REG0');
   const participant = new Participant({
     ...data.members[0], registration: '000000000000000000000001', role: 'leader',
@@ -65,6 +65,15 @@ test('rejects non-citchennai.net email addresses', () => {
   value.members[0].email = 'outsider@gmail.com';
   const { errors } = validateRegistration(value);
   assert.ok(errors.some((e) => e.field === 'members.0.email'));
+});
+
+test('rejects 2nd, 3rd, and 4th year students (1st year only)', () => {
+  for (const invalidYear of ['2', '3', '4', 2, 3, 4]) {
+    const value = body();
+    value.members[1].year = invalidYear;
+    const { errors } = validateRegistration(value);
+    assert.ok(errors.some((e) => e.field === 'members.1.year'), `Expected rejection for year ${invalidYear}`);
+  }
 });
 
 test('check and payment endpoints validate malformed input', () => {
