@@ -1,0 +1,17 @@
+{
+  "name": "LarperOrCoder",
+  "version": "1.0.0",
+  "description": "A Event registration site for club celestius",
+  "main": "index.js",
+  "repository": "https://github.com/admin-celestius/NoCapJustCode",
+  "author": "Varun Mahendran",
+  "license": "MIT",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}

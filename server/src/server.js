@@ -17,7 +17,7 @@ async function start() {
   for (const model of models) await model.init();
   await require('./services/capacity').ensureEventConfig();
   const port = process.env.PORT || 5000;
-  const server = app.listen(port, () => console.log(`The server is running on port ${server.address().port}`));
+  const server = app.listen(port, '0.0.0.0',() => console.log(`The server is running on port ${server.address().port}`));
   return server;
 }
 
