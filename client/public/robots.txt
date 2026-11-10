@@ -22,4 +22,5 @@ Disallow: /admin/*
 # Disallow internal backend API routes
 Disallow: /api/
 
+Sitemap: https://loc.celestius.in/sitemap.xml
 Sitemap: https://celestius.in/sitemap.xml

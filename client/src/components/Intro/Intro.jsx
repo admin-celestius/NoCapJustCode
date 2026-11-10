@@ -4,6 +4,7 @@ import styles from './Intro.module.css';
 import ImageTypewriter from './ImageTypewriter.jsx';
 import logoTypingImg from '../../assets/intro/logo-typing.png';
 import { logTimelineEvent } from '../../utils/timelineLogger.js';
+import { startAssetPreloader, ALL_PRELOAD_IMAGES } from '../../utils/assetPreloader.js';
 import {
   INTRO_STATES,
   PRESENTER_NAME,
@@ -46,6 +47,27 @@ export default function Intro({ onComplete }) {
 
   // Loading & status values
   const [progress, setProgress] = useState(0);
+  const [preloadState, setPreloadState] = useState({
+    loaded: 0,
+    total: ALL_PRELOAD_IMAGES.length + 1,
+    percentage: 0,
+    currentItem: '',
+    finished: false,
+  });
+  const preloadInfoRef = useRef({
+    loaded: 0,
+    total: ALL_PRELOAD_IMAGES.length + 1,
+    percentage: 0,
+    currentItem: '',
+    finished: false,
+  });
+
+  // Preload assets in background if reduced motion skips the intro loading screen
+  useEffect(() => {
+    if (isReducedMotion) {
+      startAssetPreloader();
+    }
+  }, [isReducedMotion]);
 
   // Event title typing: revealed count of LARPER OR CODER
   const [revealedCount, setRevealedCount] = useState(() =>
@@ -656,42 +678,91 @@ export default function Intro({ onComplete }) {
   useEffect(() => {
     if (isReducedMotion) return;
 
-    // 1. FAST LOADING (0 to 900ms): Rapid non-linear climb to 99%
+    // 1. REAL ASSET PRELOADING & PACED LOADING (Min TIMINGS.LOADING_DURATION, tracks real asset downloads)
     if (state === INTRO_STATES.LOADING) {
       const startTime = performance.now();
       const tickTracker = { lastTick: 0 };
+      let isMounted = true;
 
+      // Start actual concurrent asset downloading & web font decoding
+      startAssetPreloader((info) => {
+        if (!isMounted) return;
+        preloadInfoRef.current = {
+          loaded: info.loaded,
+          total: info.total,
+          percentage: info.percentage,
+          currentItem: info.item,
+          finished: info.loaded >= info.total,
+        };
+        setPreloadState({
+          loaded: info.loaded,
+          total: info.total,
+          percentage: info.percentage,
+          currentItem: info.item,
+          finished: info.loaded >= info.total,
+        });
+      }).then(() => {
+        if (!isMounted) return;
+        preloadInfoRef.current.finished = true;
+        setPreloadState((prev) => ({ ...prev, percentage: 100, finished: true }));
+      });
+
+      // Pacing interval: smoothly advances displayed progress up to real download percentage
       const progressInterval = setInterval(() => {
         const elapsed = performance.now() - startTime;
-        const ratio = Math.min(elapsed / TIMINGS.LOADING_DURATION, 1);
+        const timeRatio = Math.min(elapsed / TIMINGS.LOADING_DURATION, 1);
 
-        let target;
-        if (ratio < 0.3) {
-          target = Math.floor(ratio * 1.8 * 100);
-        } else if (ratio < 0.6) {
-          target = 54 + Math.floor((ratio - 0.3) * 70);
-        } else if (ratio < 0.85) {
-          target = 75 + Math.floor((ratio - 0.6) * 80);
+        let timeTarget;
+        if (timeRatio < 0.3) {
+          timeTarget = Math.floor(timeRatio * 1.8 * 100);
+        } else if (timeRatio < 0.6) {
+          timeTarget = 54 + Math.floor((timeRatio - 0.3) * 70);
+        } else if (timeRatio < 0.85) {
+          timeTarget = 75 + Math.floor((timeRatio - 0.6) * 80);
         } else {
-          target = 95 + Math.floor((ratio - 0.85) * 26);
+          timeTarget = 95 + Math.floor((timeRatio - 0.85) * 26);
         }
 
-        const nextProgress = Math.min(Math.max(target, 0), 99);
-        setProgress(nextProgress);
+        const realPct = preloadInfoRef.current.percentage || 0;
+        // On slow networks, display progress is constrained by actual downloaded assets (with a 10% handshake initial buffer)
+        // On fast networks, display progress smoothly follows the minimum pacing curve (1.2s)
+        const allowedCeiling = preloadInfoRef.current.finished ? 99 : Math.max(realPct, 10);
+        const nextProgress = Math.min(Math.max(timeTarget, 0), allowedCeiling, 99);
 
-        if (nextProgress > tickTracker.lastTick + 15) {
-          tickTracker.lastTick = nextProgress;
-          playTick();
-        }
+        setProgress((prev) => {
+          const clamped = Math.max(prev, nextProgress);
+          if (clamped > tickTracker.lastTick + 15) {
+            tickTracker.lastTick = clamped;
+            playTick();
+          }
+          return clamped;
+        });
 
-        if (ratio >= 1) {
+        // Advance to ALERT phase only when:
+        // 1. All assets are downloaded & decoded (finished === true)
+        // 2. Minimum pacing duration has elapsed (timeRatio >= 1)
+        if (timeRatio >= 1 && preloadInfoRef.current.finished) {
           clearInterval(progressInterval);
           setProgress(99);
           setState(INTRO_STATES.ALERT);
         }
       }, 30);
 
-      return () => clearInterval(progressInterval);
+      // Safeguard timer (12s) to prevent any indefinite lock on dead or stalled network
+      const safeguardTimer = setTimeout(() => {
+        if (isMounted && state === INTRO_STATES.LOADING) {
+          preloadInfoRef.current.finished = true;
+          clearInterval(progressInterval);
+          setProgress(99);
+          setState(INTRO_STATES.ALERT);
+        }
+      }, 12000);
+
+      return () => {
+        isMounted = false;
+        clearInterval(progressInterval);
+        clearTimeout(safeguardTimer);
+      };
     }
 
     // 2. ALERT (750ms duration): Logic integrity scan (sleek laser sweep & harmonic tone, no blinking)
@@ -918,6 +989,12 @@ export default function Intro({ onComplete }) {
     if (state === INTRO_STATES.COMPLETE) {
       return '> RUNTIME VERIFIED // INITIALIZING ENVIRONMENT [100%]';
     }
+    if (preloadState.loaded > 0 && !preloadState.finished) {
+      return `> PRELOADING ASSETS: ${preloadState.loaded}/${preloadState.total} [${preloadState.percentage}% READY]`;
+    }
+    if (preloadState.finished) {
+      return `> CORE ASSETS DECODED & CACHED [${preloadState.total}/${preloadState.total} READY]`;
+    }
     const step = Math.min(
       Math.floor((progress / 100) * LOADING_STATUS_MESSAGES.length),
       LOADING_STATUS_MESSAGES.length - 1
@@ -1025,7 +1102,11 @@ export default function Intro({ onComplete }) {
               <div className={styles.progressTelemetryHeader}>
                 <span className={styles.telemetryTag}>
                   <span className={`${styles.statusDot} ${isGreenPhase ? styles.statusDotGreen : ''}`} />
-                  {isGreenPhase ? 'VERIFICATION // CLEARED' : 'STREAM // KERNEL_INIT'}
+                  {isGreenPhase
+                    ? 'VERIFICATION // CLEARED'
+                    : preloadState.finished
+                    ? 'STREAM // ASSETS_CACHED'
+                    : `STREAM // ASSETS [${preloadState.loaded}/${preloadState.total}]`}
                 </span>
                 <span className={styles.telemetryRate}>
                   {displayProgress < 100 ? `${(displayProgress * 14.2).toFixed(0)} KB/s` : 'LOCKED 1.2 GB/s'}

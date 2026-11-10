@@ -273,12 +273,12 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
               aria-label="Close details"
             >
               <svg
-                width="20"
-                height="20"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.75"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
@@ -669,25 +669,6 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                               <span className={styles.roundMetaVal}>Speed, Accuracy & Live Kinetic Force Control</span>
                             </div>
                           </div>
-
-                          <div className={styles.tabNavRow}>
-                            <button
-                              type="button"
-                              className={styles.tabNavBackBtn}
-                              onClick={() => switchTab('overview')}
-                            >
-                              <span>←</span>
-                              <span>Back to Overview</span>
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.tabNavNextBtn}
-                              onClick={() => switchTab('round2')}
-                            >
-                              <span>Next: Round 2</span>
-                              <span>→</span>
-                            </button>
-                          </div>
                         </section>
 
                         {/* On phone: Show visual inside panel */}
@@ -736,25 +717,6 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
                               <span className={styles.roundMetaKey}>CORE FOCUS</span>
                               <span className={styles.roundMetaVal}>Only Raw Input & Output Provided · No Complexity Clues</span>
                             </div>
-                          </div>
-
-                          <div className={styles.tabNavRow}>
-                            <button
-                              type="button"
-                              className={styles.tabNavBackBtn}
-                              onClick={() => switchTab('round1')}
-                            >
-                              <span>←</span>
-                              <span>Round 1: Tug of Aura</span>
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.tabNavNextBtn}
-                              onClick={() => switchTab('overview')}
-                            >
-                              <span>Back to Overview</span>
-                              <span>→</span>
-                            </button>
                           </div>
                         </section>
 

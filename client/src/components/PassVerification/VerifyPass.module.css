@@ -696,6 +696,116 @@
   padding: 0.2rem 0;
 }
 
+.venueWhatsappJoinBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  margin-top: 0.4rem;
+  background: linear-gradient(135deg, #25D366 0%, #1da851 100%);
+  color: #FFFFFF;
+  text-decoration: none;
+  font-family: var(--font-body, 'Space Grotesk', sans-serif);
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(37, 211, 102, 0.35), 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 160ms ease, background 160ms ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.venueWhatsappIcon {
+  flex-shrink: 0;
+}
+
+.venueWhatsappText {
+  flex-shrink: 1;
+}
+
+.venueWhatsappArrow {
+  flex-shrink: 0;
+  transition: transform 180ms ease;
+}
+
+.venueWhatsappJoinBtn:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 0 30px rgba(37, 211, 102, 0.55), 0 6px 18px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #2be570 0%, #20b859 100%);
+  color: #FFFFFF;
+}
+
+.venueWhatsappJoinBtn:hover .venueWhatsappArrow {
+  transform: translateX(3px);
+}
+
+.venueWhatsappJoinBtn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Mobile-only Cyber Overhaul */
+@media (max-width: 640px) {
+  .venueWhatsappJoinBtn {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.65rem 0.95rem;
+    margin-top: 0.55rem;
+    background: rgba(37, 211, 102, 0.10);
+    border: 1.5px solid rgba(37, 211, 102, 0.5);
+    border-radius: 0;
+    clip-path: polygon(
+      8px 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      8px 100%,
+      0 calc(100% - 8px),
+      0 8px
+    );
+    box-shadow: 0 0 16px rgba(37, 211, 102, 0.18), inset 0 0 10px rgba(37, 211, 102, 0.06);
+    color: #F7EDD8;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    gap: 0.55rem;
+    justify-content: center;
+  }
+
+  .venueWhatsappJoinBtn .venueWhatsappIcon {
+    color: #25D366;
+    width: 17px;
+    height: 17px;
+  }
+
+  .venueWhatsappJoinBtn .venueWhatsappText {
+    color: #F7EDD8;
+    letter-spacing: 0.04em;
+  }
+
+  .venueWhatsappJoinBtn .venueWhatsappArrow {
+    color: #25D366;
+  }
+
+  .venueWhatsappJoinBtn:hover,
+  .venueWhatsappJoinBtn:active {
+    background: rgba(37, 211, 102, 0.22);
+    border-color: #25D366;
+    box-shadow: 0 0 24px rgba(37, 211, 102, 0.42), inset 0 0 14px rgba(37, 211, 102, 0.14);
+    color: #FFFFFF;
+    transform: none;
+  }
+
+  .venueWhatsappJoinBtn:active {
+    transform: scale(0.985);
+  }
+}
+
 /* ========================================================
    6. OFFICIAL CONFIRMATION BANNER
    ======================================================== */
