@@ -19,8 +19,13 @@ const memberSchema = z.object({
   email,
   phone,
   department: z.string().trim().min(2).max(100),
-  year: z.union([z.number(), z.enum(['1', '2', '3', '4', '5'])])
-    .transform(Number).pipe(z.number().int().min(1).max(5)),
+  year: z.union([z.number(), z.string()])
+    .transform(Number)
+    .pipe(
+      z.number().int().refine((v) => v === 1, {
+        message: 'Registration is strictly restricted to 1st-year students only',
+      })
+    ),
   rollNo,
 });
 

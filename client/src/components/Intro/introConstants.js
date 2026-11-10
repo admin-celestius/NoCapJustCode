@@ -14,7 +14,7 @@ export const INTRO_STATES = {
 export const PRESENTER_NAME = 'CELESTIUS';
 
 export const TIMINGS = {
-  LOADING_DURATION: 900,          // Fast climb: 0 to 99% in 0.9s
+  LOADING_DURATION: 1200,         // Minimum pacing duration: smooth climb up to 99% while preloading
   ALERT_DURATION: 750,            // Snappy orange alert: 0.75s
   TURN_GREEN_DURATION: 800,       // Snappy green verify: 0.8s
   COMPLETE_HOLD: 160,             // 0.16s snap flash

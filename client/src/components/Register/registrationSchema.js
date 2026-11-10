@@ -27,7 +27,7 @@ export const memberSchema = z.object({
     .trim()
     .min(2, 'You missed a spot, chief. Department is required.').max(100),
   rollNo: z.string().trim().toUpperCase().min(1, 'Drop your registration number, chief.').max(60),
-  year: z.enum(['1', '2', '3', '4', '5'], { error: 'Pick your current year of study.' }),
+  year: z.enum(['1'], { error: 'Registration is strictly restricted to 1st-year students only.' }),
 });
 
 export const registrationSchema = z

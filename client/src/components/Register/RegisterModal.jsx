@@ -16,10 +16,7 @@ import locLogoWebp from '../../assets/logo-transparent.webp';
 import locLogoPng from '../../assets/logo-transparent.png';
 
 const YEAR_OPTIONS = [
-  { value: '1', label: '1st Year · Fresh Spawn' },
-  { value: '2', label: '2nd Year · Side Quests' },
-  { value: '3', label: '3rd Year · Main Story' },
-  { value: '4', label: '4th Year · Final Boss' },
+  { value: '1', label: '1st Year (Only 1st-Year Students Eligible)' },
 ];
 
 const DEPARTMENT_OPTIONS = [
@@ -794,7 +791,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                   Assemble Your Duo
                 </h2>
                 <p className={styles.modalSubtitle}>
-                  One duo registration covers both events for 2 coders.
+                  Exclusively for 1st-year CIT students · Covers both events for 2 coders.
                 </p>
               </div>
 

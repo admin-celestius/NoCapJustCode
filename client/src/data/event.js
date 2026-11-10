@@ -103,7 +103,7 @@ export const eventData = {
       title: "The Training Arc",
       type: "Workshop",
       description:
-        "Time to upgrade your problem-solving skills before the real boss fight. A hands-on competitive coding workshop led by a top coder of CIT, a 3rd year senior.",
+        "Sharpen your algorithmic thinking and problem-solving skills ahead of the main competition. A hands-on competitive programming workshop led by a seasoned senior competitive programmer at CIT.",
       highlight: true,
       eventId: "training-arc",
     },
@@ -156,15 +156,15 @@ export const eventData = {
       blurb:
         "Every main character needs a training arc. Level up before the real fight.",
       about:
-        "Every main character needs a training arc. This is a hands-on workshop on competitive coding and problem-solving, conducted by a top coder of CIT, a 3rd year senior. Level up before the final boss.",
+        "A structured, hands-on workshop on competitive programming and algorithmic problem-solving, led by an experienced senior competitive programmer at CIT to prepare you for the competition.",
       metaChips: [
         { label: "13 Nov 2026", type: "date" },
 
         { label: "With Your Homie", type: "entry" },
       ],
       instructor: {
-        name: "a top coder of CIT",
-        role: "3rd year senior",
+        name: "Senior Competitive Programmer",
+        role: "CIT Competitive Coding Lead",
         initials: "NA",
       },
       atAGlance: [
