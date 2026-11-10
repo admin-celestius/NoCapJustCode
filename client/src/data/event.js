@@ -133,11 +133,11 @@ export const eventData = {
       id: "results",
       time: "2:30 PM - 3:00 PM",
       startHour: "2:30 PM",
-      title: "Results & Prize Distribution",
+      title: "Results & Certificate Distribution",
       type: "Closing",
       label: "GGs",
       description:
-        "The leaderboard doesn't lie. Winners announced, prizes handed out, and we see who actually cooked.",
+        "The leaderboard doesn't lie. Winners announced and we see who actually cooked.",
       highlight: false,
     },
   ],
@@ -231,7 +231,7 @@ export const eventData = {
         },
         {
           time: "2:30 PM to 3:00 PM",
-          title: "Results & Prize Distribution",
+          title: "Results & Certificate Distribution",
         },
       ],
       noteCard: "Your aura is officially on the line. Bring your homie: one registration covers both events.",
