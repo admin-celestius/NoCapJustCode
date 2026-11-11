@@ -11,6 +11,8 @@ import About from './components/About/About.jsx';
 import Schedule from './components/Schedule/Schedule.jsx';
 import EventCards from './components/Events/EventCards.jsx';
 import RegisterModal from './components/Register/RegisterModal.jsx';
+import PromoPopup from './components/PromoPopup/PromoPopup.jsx';
+import { isPromoActive } from './data/event.js';
 import Footer from './components/Footer/Footer.jsx';
 import { auditHardwarePlacement } from './utils/hardwareAudit.js';
 import { useScrollReveal } from './hooks/useScrollReveal.js';
@@ -23,6 +25,16 @@ export default function App() {
   const [appFlow, setAppFlow] = useState('INTRO');
   const [siteRevealed, setSiteRevealed] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [promoModalOpen, setPromoModalOpen] = useState(false);
+
+  // Show promotional offer popup on every visit/refresh of the root route while active
+  useEffect(() => {
+    if (!siteRevealed || !isPromoActive()) return;
+    const timer = setTimeout(() => {
+      setPromoModalOpen(true);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [siteRevealed]);
 
   // Activate independent scroll reveals across all site elements
   useScrollReveal(appFlow === 'SITE');
@@ -156,6 +168,13 @@ export default function App() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* National Education Day Promotional Offer Popup (shows on every root visit/refresh while active) */}
+      <PromoPopup
+        isOpen={promoModalOpen && !registerModalOpen}
+        onClose={() => setPromoModalOpen(false)}
+        onRegister={handleOpenRegister}
+      />
 
       {/* Registration Modal / Bottom Sheet */}
       <RegisterModal

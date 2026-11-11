@@ -255,6 +255,15 @@
   font-weight: 600;
 }
 
+.brandPromoNote {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.68rem;
+  color: rgba(250, 160, 18, 0.88);
+  font-weight: 600;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
 /* Bottom "By Celestius" Pill Section */
 .brandBottom {
   display: flex;
@@ -367,7 +376,8 @@
   }
 
   .modalSubtitle {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
   }
 
   .closeButton {
