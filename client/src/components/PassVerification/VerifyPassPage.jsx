@@ -356,7 +356,7 @@ export default function VerifyPassPage({ regCode }) {
                   </div>
                   <div className={styles.cyberCardInnerVenue}>
                     <p className={styles.venueNoticeText}>
-                      Venue will be conveyed through official WhatsApp group. If you have not Joined the WhatsApp group please contact the Organizers.
+                      Venue will be conveyed through official WhatsApp group. Kindly make sure both members of the team joined this WhatsApp group.
                     </p>
                     <a
                       href={WHATSAPP_GROUP_URL}
