@@ -19,12 +19,15 @@ import w3_700 from '../assets/workshop/workshop-3-700w.webp';
 import w4 from '../assets/workshop/workshop-4.webp';
 import w4_700 from '../assets/workshop/workshop-4-700w.webp';
 
+import { isPromoActive } from '../data/event.js';
+
 // Static public directory assets
 const PUBLIC_ASSETS = [
   '/celestius_original.png',
   '/Celestius_modified.png',
   '/icons.svg',
   '/favicon-new.png',
+  ...(isPromoActive() ? ['/national-education-day.png'] : []),
 ];
 
 // Bundled assets

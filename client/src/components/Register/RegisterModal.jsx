@@ -6,7 +6,7 @@ import styles from './Register.module.css';
 import { registrationSchema } from './registrationSchema.js';
 import { createOrder, verifyPayment, checkTeamNameAvailability, checkRegistrationConflicts } from '../../services/api.js';
 import { loadCheckout, startPayment, readPendingPayment, savePendingPayment } from '../../services/payment.js';
-import { PRICING, WHATSAPP_GROUP_URL } from '../../data/event.js';
+import { getActivePricing, WHATSAPP_GROUP_URL } from '../../data/event.js';
 import { downloadPassPdf, downloadPassImage } from '../../services/passGenerator.js';
 import Button from '../ui/Button.jsx';
 import ColorOSDropdown from './ColorOSDropdown.jsx';
@@ -342,8 +342,9 @@ export default function RegisterModal({ isOpen, onClose }) {
         await loadCheckout();
         const fingerprint = JSON.stringify(payload);
         if (checkoutRef.current?.fingerprint !== fingerprint) {
+          const currentPricing = getActivePricing();
           const order = await createOrder(payload);
-          if (!order.orderId || !order.registrationId || !order.keyId || order.amount !== PRICING.orderAmountPaise || order.currency !== 'INR') {
+          if (!order.orderId || !order.registrationId || !order.keyId || order.amount !== currentPricing.orderAmountPaise || order.currency !== 'INR') {
             throw new Error('The payment order is invalid. Please contact the organisers.');
           }
           checkoutRef.current = { fingerprint, order };
@@ -495,6 +496,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     }
   };
 
+  const activePricing = getActivePricing();
   const backdropMode = flowState === 'success' ? 'tick' : flowState === 'failure' ? 'cross' : 'ambient';
 
   return (
@@ -745,7 +747,12 @@ export default function RegisterModal({ isOpen, onClose }) {
 
               <div className={styles.brandMeta}>
                 <span className={styles.brandEventName}>The Training Arc &amp; TLE</span>
-                <span className={styles.brandPassInfo}>2 Coders · ₹{PRICING.pair}</span>
+                <span className={styles.brandPassInfo}>
+                  2 Coders · {activePricing.isPromo && <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>₹{activePricing.regularPair}</span>}₹{activePricing.pair}
+                </span>
+                {activePricing.isPromo && (
+                  <span className={styles.brandPromoNote}>National Education Day Offer · Ends Nov 11</span>
+                )}
               </div>
             </div>
 
@@ -791,7 +798,9 @@ export default function RegisterModal({ isOpen, onClose }) {
                   Assemble Your Duo
                 </h2>
                 <p className={styles.modalSubtitle}>
-                  Exclusively for 1st-year CIT students · Covers both events for 2 coders.
+                  {activePricing.isPromo
+                    ? `Exclusively for 1st-year CIT students · National Education Day Offer (₹${activePricing.pair} for both).`
+                    : 'Exclusively for 1st-year CIT students · Covers both events for 2 coders.'}
                 </p>
               </div>
 
@@ -1087,8 +1096,15 @@ export default function RegisterModal({ isOpen, onClose }) {
             {/* Clean Footer Bar */}
               <div className={styles.modalFooter}>
                 <div className={styles.footerInfo}>
-                  <span>₹{PRICING.pair} {PRICING.taxNote}</span>
-                  <span className={styles.footerSubText}>· Covers both members for both events</span>
+                  <span>
+                    {activePricing.isPromo && <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '5px' }}>₹{activePricing.regularPair}</span>}
+                    ₹{activePricing.pair} {activePricing.taxNote}
+                  </span>
+                  <span className={styles.footerSubText}>
+                    {activePricing.isPromo
+                      ? ' · National Education Day Offer (ends Nov 11)'
+                      : ' · Covers both members for both events'}
+                  </span>
                 </div>
 
                 <div className={styles.footerButtons}>
@@ -1116,7 +1132,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                       ? 'Codename Taken'
                       : pendingPayment
                       ? 'Retry Verification'
-                      : `Lock In Duo · ₹${PRICING.pair}`}
+                      : `Lock In Duo · ₹${activePricing.pair}`}
                   </Button>
                 </div>
               </div>

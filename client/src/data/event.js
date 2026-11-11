@@ -21,12 +21,33 @@ export const WHATSAPP_GROUP_URL =
   import.meta.env.VITE_WHATSAPP_GROUP_URL ||
   "https://chat.whatsapp.com/EwBezpPV7OKDwMI0SMBQrA";
 
-export const PRICING = {
+export const PROMO_END_ISO = "2026-11-11T23:59:59.999+05:30";
+export const PROMO_END_MS = new Date(PROMO_END_ISO).getTime();
+
+export const isPromoActive = (now = Date.now()) => now <= PROMO_END_MS;
+
+export const REGULAR_PRICING = {
   perHead: 149,
   pair: 149 * 2, // 298 per pair, before taxes
   taxNote: "+ taxes",
   orderAmountPaise: 30726, // what the backend charges: ₹298 + taxes
+  isPromo: false,
 };
+
+export const PROMO_PRICING = {
+  perHead: 99.5,
+  pair: 199,
+  regularPair: 298,
+  taxNote: "+ taxes",
+  orderAmountPaise: 20518, // what the backend charges during promo: ₹199 + taxes = ₹205.18
+  isPromo: true,
+};
+
+export const getActivePricing = (now = Date.now()) =>
+  isPromoActive(now) ? PROMO_PRICING : REGULAR_PRICING;
+
+export const PRICING = getActivePricing();
+
 
 export const PAYMENT_NOTE = "Payment instructions will be shared by the organizers.";
 
@@ -62,8 +83,12 @@ export const eventData = {
 
   pricingSummary: {
     pair: `₹${PRICING.pair} ${PRICING.taxNote} per duo`,
-    split: `₹${PRICING.perHead} × 2 coders · covers both events`,
-    splitShort: `₹${PRICING.perHead} × 2 coders`,
+    split: PRICING.isPromo
+      ? `National Education Day Offer (was ₹${PRICING.regularPair}) · covers both events`
+      : `₹${PRICING.perHead} × 2 coders · covers both events`,
+    splitShort: PRICING.isPromo
+      ? `was ₹${PRICING.regularPair} · Education Day Offer`
+      : `₹${PRICING.perHead} × 2 coders`,
   },
 
   connect: {

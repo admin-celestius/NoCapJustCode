@@ -1,0 +1,807 @@
+/* client/src/components/PromoPopup/PromoPopup.module.css */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(4, 4, 7, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  animation: promoFadeIn 220ms ease-out both;
+}
+
+.cardWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 24px rgba(242, 107, 58, 0.14));
+  animation: promoCardEntrance 340ms cubic-bezier(0.16, 1, 0.3, 1) 40ms both;
+}
+
+/* Floating Circular Close Button Straddling Top-Right Corner */
+.closeBtn {
+  position: absolute;
+  top: -13px;
+  right: -13px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  max-width: 34px;
+  max-height: 34px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 34px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid rgba(247, 237, 216, 0.22);
+  background: #18171F;
+  color: rgba(247, 237, 216, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+  animation: promoPopScale 240ms cubic-bezier(0.34, 1.56, 0.64, 1) 220ms both;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.closeBtn:hover {
+  background: #23212D;
+  border-color: rgba(242, 107, 58, 0.7);
+  color: #FFFFFF;
+}
+
+.closeBtn:active {
+  transform: scale(0.92);
+}
+
+/* Outer 1px Chamfered Cyber Border Shell */
+.cardShell {
+  width: 100%;
+  padding: 1px;
+  box-sizing: border-box;
+  background: linear-gradient(
+    145deg,
+    rgba(242, 107, 58, 0.92) 0%,
+    rgba(250, 160, 18, 0.45) 48%,
+    rgba(242, 107, 58, 0.85) 100%
+  );
+  clip-path: polygon(
+    22px 0,
+    100% 0,
+    100% calc(100% - 22px),
+    calc(100% - 22px) 100%,
+    0 100%,
+    0 22px
+  );
+}
+
+.cardInner {
+  width: 100%;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #111016 0%, #0A0A0E 100%);
+  clip-path: polygon(
+    21.5px 0,
+    100% 0,
+    100% calc(100% - 21.5px),
+    calc(100% - 21.5px) 100%,
+    0 100%,
+    0 21.5px
+  );
+  padding: 22px 26px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(247, 237, 216, 0.2) transparent;
+}
+
+/* Stage 2: Top Eyebrow */
+.eyebrowRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  animation: promoSlideDown 280ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #F26B3A;
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.9);
+  flex-shrink: 0;
+}
+
+.eyebrowText {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(247, 237, 216, 0.68);
+  text-transform: uppercase;
+}
+
+/* Stage 3: Large Hero Portrait */
+.portraitStage {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px 0 -4px;
+  flex-shrink: 0;
+}
+
+.portraitGlow {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 107, 58, 0.30) 0%, rgba(250, 160, 18, 0.08) 54%, transparent 74%);
+  pointer-events: none;
+  animation: promoGlowBloom 480ms ease-out 240ms both;
+}
+
+.portraitImg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.8));
+  animation: promoPortraitReveal 420ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+}
+
+/* Stage 4: Honoree Attribution + Classy Serif Quote */
+.honoreeBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.honoreeName {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(247, 237, 216, 0.78);
+  letter-spacing: 0.02em;
+  animation: promoFadeUp 300ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both;
+}
+
+.honoreeYears {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  color: rgba(247, 237, 216, 0.45);
+}
+
+.quoteLine {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 12.5px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.38;
+  color: #D99B3E;
+  margin: 0;
+  max-width: 315px;
+  animation: promoFadeUp 320ms cubic-bezier(0.16, 1, 0.3, 1) 540ms both;
+}
+
+/* Stage 5 & Stage 7: Center-Out Drawn Hairline Dividers */
+.hairlineDivider {
+  width: 100%;
+  height: 1px;
+  background: rgba(247, 237, 216, 0.09);
+  margin: 2px 0;
+  flex-shrink: 0;
+  transform-origin: center;
+}
+
+.hairlineTop {
+  animation: promoLineDraw 300ms cubic-bezier(0.16, 1, 0.3, 1) 640ms both;
+}
+
+.hairlineBottom {
+  animation: promoLineDraw 300ms cubic-bezier(0.16, 1, 0.3, 1) 1520ms both;
+}
+
+/* Stage 6: Highlight Centerpiece — ₹298 Appears -> Slashed -> ₹199 Pops In */
+.priceBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 2px 0;
+  width: 100%;
+}
+
+.priceLockup {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+
+.oldPriceWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: promoOldPriceIn 260ms cubic-bezier(0.16, 1, 0.3, 1) 760ms both;
+}
+
+.oldPriceText {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(247, 237, 216, 0.9);
+  line-height: 1;
+  animation: promoOldPriceDim 280ms ease-out 1040ms forwards;
+}
+
+/* Animated left-to-right diagonal/horizontal strike bar across ₹298 */
+.oldPriceSlash {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 52%;
+  height: 2.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #F26B3A 0%, #FAA012 100%);
+  box-shadow: 0 0 8px rgba(242, 107, 58, 0.65);
+  transform-origin: left center;
+  animation: promoStrikeSweep 280ms cubic-bezier(0.22, 1, 0.36, 1) 1020ms both;
+  pointer-events: none;
+}
+
+.newPrice {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #FFF5E1 0%, #FAA012 52%, #F26B3A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: promoNewPriceReveal 420ms cubic-bezier(0.22, 1.35, 0.36, 1) 1240ms both;
+}
+
+.priceMeta {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(247, 237, 216, 0.62);
+  animation: promoFadeUp 260ms cubic-bezier(0.16, 1, 0.3, 1) 1440ms both;
+}
+
+/* Stage 8: Bold Attention-Grabbing Offer Section */
+.offerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.offerHeading {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 17.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #F7EDD8;
+  margin: 0;
+  animation: promoFadeUp 300ms cubic-bezier(0.16, 1, 0.3, 1) 1600ms both;
+}
+
+.catchyLine {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(247, 237, 216, 0.72);
+  margin: 0;
+  max-width: 335px;
+  animation: promoFadeUp 280ms cubic-bezier(0.16, 1, 0.3, 1) 1700ms both;
+}
+
+/* Stage 9: Split-Flap Precision Countdown Timer */
+.timerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.timerHeader {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(247, 237, 216, 0.5);
+  text-transform: uppercase;
+  animation: promoFadeIn 240ms ease-out 1780ms both;
+}
+
+.timerGrid {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 6px;
+}
+
+.timerTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: promoTileFlipIn 300ms cubic-bezier(0.16, 1, 0.3, 1) calc(1820ms + var(--tile-idx, 0) * 55ms) both;
+}
+
+.tileCard {
+  position: relative;
+  width: 58px;
+  height: 46px;
+  border-radius: 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(28, 27, 36, 0.95) 0%,
+    rgba(16, 15, 21, 0.98) 50%,
+    rgba(11, 10, 15, 1) 100%
+  );
+  border: 1px solid rgba(247, 237, 216, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 14px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tileCard::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.65);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.tileCardLive {
+  border-color: rgba(250, 160, 18, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 160, 18, 0.1),
+    0 6px 16px rgba(0, 0, 0, 0.55),
+    0 0 14px rgba(250, 160, 18, 0.12);
+}
+
+.tileNumber {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #F7EDD8;
+  line-height: 1;
+}
+
+.tileNumberLive {
+  color: #FAA012;
+}
+
+.tileUnit {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(247, 237, 216, 0.45);
+}
+
+.timerColon {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 18px;
+  font-weight: 800;
+  color: rgba(242, 107, 58, 0.72);
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  animation: promoFadeIn 240ms ease-out calc(1840ms + var(--tile-idx, 0) * 55ms) both;
+}
+
+/* Stage 10: CTA Button & Footer Caption */
+.ctaBtn {
+  width: 100%;
+  height: 46px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 10px;
+  background: #F26B3A;
+  color: #0B0B0D;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(242, 107, 58, 0.36);
+  animation: promoCtaReveal 340ms cubic-bezier(0.16, 1, 0.3, 1) 2060ms both;
+  transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.ctaBtn:hover {
+  background: #FF7847;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(242, 107, 58, 0.5);
+}
+
+.ctaBtn:active {
+  transform: scale(0.985);
+}
+
+.footerCaption {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  color: rgba(247, 237, 216, 0.5);
+  margin-top: 1px;
+  animation: promoFadeIn 280ms ease-out 2180ms both;
+}
+
+.footerHighlight {
+  color: #F26B3A;
+}
+
+/* Mobile Scaling (< 640px) */
+@media (max-width: 639px) {
+  .backdrop {
+    padding: 20px 16px;
+  }
+
+  .cardWrapper {
+    max-width: 365px;
+  }
+
+  .closeBtn {
+    top: -11px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    max-width: 32px;
+    max-height: 32px;
+    flex: 0 0 32px;
+  }
+
+  .cardShell {
+    clip-path: polygon(
+      18px 0,
+      100% 0,
+      100% calc(100% - 18px),
+      calc(100% - 18px) 100%,
+      0 100%,
+      0 18px
+    );
+  }
+
+  .cardInner {
+    max-height: calc(100dvh - 40px);
+    clip-path: polygon(
+      17.5px 0,
+      100% 0,
+      100% calc(100% - 17.5px),
+      calc(100% - 17.5px) 100%,
+      0 100%,
+      0 17.5px
+    );
+    padding: 18px 16px 15px;
+    gap: 6px;
+  }
+
+  .eyebrowText {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+  }
+
+  .portraitStage {
+    width: 146px;
+    height: 146px;
+  }
+
+  .honoreeName {
+    font-size: 11.5px;
+  }
+
+  .honoreeYears {
+    font-size: 9px;
+  }
+
+  .quoteLine {
+    font-size: 11.5px;
+    line-height: 1.35;
+    max-width: 280px;
+  }
+
+  .hairlineDivider {
+    margin: 2px 0;
+  }
+
+  .offerSection {
+    gap: 5px;
+  }
+
+  .offerHeading {
+    font-size: 15.5px;
+  }
+
+  .catchyLine {
+    font-size: 11.5px;
+    line-height: 1.38;
+  }
+
+  .oldPriceText {
+    font-size: 16px;
+  }
+
+  .newPrice {
+    font-size: 36px;
+  }
+
+  .priceMeta {
+    font-size: 9px;
+  }
+
+  .timerContainer {
+    gap: 5px;
+    margin-top: 4px;
+  }
+
+  .timerHeader {
+    font-size: 8.5px;
+  }
+
+  .timerGrid {
+    gap: 4px;
+  }
+
+  .tileCard {
+    width: 50px;
+    height: 40px;
+    border-radius: 7px;
+  }
+
+  .tileNumber {
+    font-size: 18px;
+  }
+
+  .tileUnit {
+    font-size: 8px;
+  }
+
+  .timerColon {
+    font-size: 15px;
+    height: 40px;
+  }
+
+  .ctaBtn {
+    height: 42px;
+    font-size: 12px;
+  }
+
+  .footerCaption {
+    font-size: 9.5px;
+  }
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .cardWrapper,
+  .closeBtn,
+  .eyebrowRow,
+  .portraitGlow,
+  .portraitImg,
+  .honoreeName,
+  .quoteLine,
+  .hairlineTop,
+  .hairlineBottom,
+  .oldPriceWrap,
+  .oldPriceText,
+  .oldPriceSlash,
+  .newPrice,
+  .priceMeta,
+  .offerHeading,
+  .catchyLine,
+  .timerHeader,
+  .timerTile,
+  .timerColon,
+  .ctaBtn,
+  .footerCaption {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .oldPriceText {
+    opacity: 0.42 !important;
+  }
+}
+
+/* Sequential Keyframes */
+@keyframes promoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes promoCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes promoPopScale {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes promoSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes promoGlowBloom {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes promoPortraitReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes promoFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes promoLineDraw {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes promoOldPriceIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes promoOldPriceDim {
+  from {
+    color: rgba(247, 237, 216, 0.9);
+  }
+  to {
+    color: rgba(247, 237, 216, 0.4);
+  }
+}
+
+@keyframes promoStrikeSweep {
+  from {
+    opacity: 0.7;
+    transform: translateY(-50%) rotate(-5deg) scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) rotate(-5deg) scaleX(1);
+  }
+}
+
+@keyframes promoNewPriceReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.76);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes promoTileFlipIn {
+  from {
+    opacity: 0;
+    transform: perspective(400px) rotateX(-28deg) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(400px) rotateX(0deg) translateY(0);
+  }
+}
+
+@keyframes promoCtaReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

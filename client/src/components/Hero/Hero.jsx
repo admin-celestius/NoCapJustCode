@@ -3,7 +3,7 @@ import React from 'react';
 import styles from './Hero.module.css';
 import logoImg from '../../assets/logo-transparent.webp';
 import logoPngFallback from '../../assets/logo-transparent.png';
-import { eventData } from '../../data/event.js';
+import { eventData, getActivePricing } from '../../data/event.js';
 import Button from '../ui/Button.jsx';
 import Chip from '../ui/Chip.jsx';
 import Marquee from './Marquee.jsx';
@@ -65,7 +65,14 @@ export default function Hero({ onOpenRegister, animateIn }) {
                     <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>₹</span>
                   }
                 >
-                  ₹149 per person // ₹298 + taxes per pair
+                  {getActivePricing().isPromo ? (
+                    <>
+                      <span style={{ textDecoration: 'line-through', opacity: 0.55, marginRight: '6px' }}>₹{getActivePricing().regularPair}</span>
+                      <span>₹{getActivePricing().pair} {getActivePricing().taxNote}/pair · Nov 11 Offer</span>
+                    </>
+                  ) : (
+                    <>₹{getActivePricing().perHead} per person // ₹{getActivePricing().pair} {getActivePricing().taxNote} per pair</>
+                  )}
                 </Chip>
               </div>
 

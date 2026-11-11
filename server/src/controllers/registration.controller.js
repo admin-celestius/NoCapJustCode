@@ -12,8 +12,13 @@ const capacity = require('../services/capacity');
 const TEAM_SIZE = 2;
 const FEE_PER_PERSON_PAISE = Math.round(Number(process.env.FEE_PER_PERSON_INR || 149) * 100);
 if (FEE_PER_PERSON_PAISE !== 14900) throw new Error('FEE_PER_PERSON_INR must be 149 for this event');
-// Charged per pair: ₹298 + taxes (Razorpay gateway fees passed on).
-const ORDER_AMOUNT_PAISE = 30726;
+// Regular price per pair: ₹298 + taxes (30726 paise).
+// National Education Day promo (through 2026-11-11 23:59:59.999 IST): ₹199 + taxes = ₹205.18 (20518 paise).
+const REGULAR_ORDER_AMOUNT_PAISE = 30726;
+const PROMO_ORDER_AMOUNT_PAISE = 20518;
+const PROMO_END_MS = new Date('2026-11-11T23:59:59.999+05:30').getTime();
+const getActiveOrderAmountPaise = (now = Date.now()) =>
+  now <= PROMO_END_MS ? PROMO_ORDER_AMOUNT_PAISE : REGULAR_ORDER_AMOUNT_PAISE;
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000; 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
 
@@ -347,7 +352,7 @@ exports.createOrder = async (req, res, next) => {
       return res.status(409).json({ code: 'SOLD_OUT', message: 'Registrations are full' });
     }
 
-    const amount = ORDER_AMOUNT_PAISE;
+    const amount = getActiveOrderAmountPaise();
     const expiresAt = new Date(Date.now() + PENDING_TTL_MS);
 
     // Persist a complete pair atomically before creating an external order.

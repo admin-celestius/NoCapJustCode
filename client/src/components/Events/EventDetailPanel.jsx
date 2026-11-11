@@ -5,7 +5,7 @@ import styles from './Events.module.css';
 import TugOfAuraVisual from './TugOfAuraVisual.jsx';
 import GoatTerminalVisual from './GoatTerminalVisual.jsx';
 import TrainingArcGallery from './TrainingArcGallery.jsx';
-import { eventData } from '../../data/event.js';
+import { eventData, getActivePricing } from '../../data/event.js';
 
 const TAB_INDEX_MAP = {
   overview: 0,
@@ -173,6 +173,7 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
   const isTrainingArc = event.id === 'training-arc';
   const isTle = event.id === 'tle';
   const eyebrowText = event.eyebrow || (isTrainingArc ? 'WORKSHOP 01' : 'COMPETITION 02');
+  const activePricing = getActivePricing();
 
   const handleRegisterClick = () => {
     if (onRegister) {
@@ -746,13 +747,22 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
         <div className={styles.stickyFooterBar}>
           <div className={styles.footerPricingBlock}>
             <span className={styles.footerPricePrimary}>
-              {eventData.pricingSummary.pair}
+              {activePricing.isPromo && (
+                <span style={{ textDecoration: 'line-through', opacity: 0.48, fontSize: '0.78em', marginRight: '6px' }}>
+                  ₹{activePricing.regularPair}
+                </span>
+              )}
+              ₹{activePricing.pair} {activePricing.taxNote} per duo
             </span>
             <span className={styles.footerPriceSplitLaptop}>
-              {eventData.pricingSummary.split}
+              {activePricing.isPromo
+                ? 'National Education Day Offer · covers both events'
+                : eventData.pricingSummary.split}
             </span>
             <span className={styles.footerPriceSplitPhone}>
-              {eventData.pricingSummary.splitShort}
+              {activePricing.isPromo
+                ? 'Education Day Offer · both events'
+                : eventData.pricingSummary.splitShort}
             </span>
           </div>
 

@@ -6,10 +6,11 @@ async function main() {
   const t = await setup();
   let checks = 0;
   const check = (label) => { console.log(`PASS ${label}`); checks++; };
+  const expectedAmount = Date.now() <= new Date('2026-11-11T23:59:59.999+05:30').getTime() ? 20518 : 30726;
   const mustCreate = async (body) => {
     const r = await t.create(body);
     assert.equal(r.status, 201, JSON.stringify(r.body));
-    assert.equal(r.body.amount, 30726); assert.equal(r.body.currency, 'INR');
+    assert.equal(r.body.amount, expectedAmount); assert.equal(r.body.currency, 'INR');
     return r.body;
   };
   const availability = async () => (await t.api('/api/registrations/availability')).body;
