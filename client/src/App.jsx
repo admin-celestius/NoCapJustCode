@@ -19,6 +19,7 @@ import { useScrollReveal } from './hooks/useScrollReveal.js';
 import VerifyPassPage from './components/PassVerification/VerifyPassPage.jsx';
 import AdminScannerPage from './components/PassVerification/AdminScannerPage.jsx';
 import AttendanceRosterPage from './components/PassVerification/AttendanceRosterPage.jsx';
+import AdminPassGeneratorPage from './components/PassVerification/AdminPassGeneratorPage.jsx';
 
 export default function App() {
   // Always start with 'INTRO' on every reload / visit as requested
@@ -78,14 +79,18 @@ export default function App() {
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
   const isAdminScan = normalizedPath === '/admin/scan';
   const isAdminRoster = normalizedPath === '/admin/roster' || normalizedPath === '/admin/attendance';
-  const isCustomRoute = pathname.startsWith('/verify') || isAdminScan || isAdminRoster;
+  const isAdminPass =
+    normalizedPath === '/admin/pass' ||
+    normalizedPath === '/admin/passes' ||
+    normalizedPath === '/admin/generate-pass';
+  const isCustomRoute = pathname.startsWith('/verify') || isAdminScan || isAdminRoster || isAdminPass;
 
   // Redirect unauthorized/playful admin path attempts to root URL
   useEffect(() => {
-    if (normalizedPath.startsWith('/admin') && !isAdminScan && !isAdminRoster) {
+    if (normalizedPath.startsWith('/admin') && !isAdminScan && !isAdminRoster && !isAdminPass) {
       window.location.replace('/');
     }
-  }, [normalizedPath, isAdminScan, isAdminRoster]);
+  }, [normalizedPath, isAdminScan, isAdminRoster, isAdminPass]);
 
   // Lock scroll while intro is active on main site only
   useEffect(() => {
@@ -128,6 +133,11 @@ export default function App() {
   // Organiser Attendance Live Roster - strictly matches /admin/roster (or /admin/attendance)
   if (isAdminRoster) {
     return <AttendanceRosterPage />;
+  }
+
+  // Organiser Pass Generator & Recovery Desk (/admin/pass)
+  if (isAdminPass) {
+    return <AdminPassGeneratorPage />;
   }
 
   // Any other playful/probing admin attempts redirect to root URL

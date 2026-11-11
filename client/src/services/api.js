@@ -76,3 +76,11 @@ export async function getAttendanceRoster(passcode) {
   if (!code) throw new Error('6-digit security passkey is required.');
   return request('/api/registrations/admin/roster', { passcode: code });
 }
+
+export async function lookupAdminPass(passcode, query) {
+  const code = (passcode || '').trim();
+  const q = (query || '').trim();
+  if (!code) throw new Error('6-digit security passkey is required.');
+  if (!q) throw new Error('Team name or team code is required.');
+  return request('/api/registrations/admin/pass-lookup', { passcode: code, query: q });
+}
