@@ -481,6 +481,13 @@ export default function AdminScannerPage() {
                     <polyline points="7 7 17 7 17 17" />
                   </svg>
                 </a>
+                <a
+                  href="/admin/pass"
+                  className={styles.viewRosterButton}
+                  title="Generate or Recover Entry Passes"
+                >
+                  <span>Pass Desk</span>
+                </a>
                 <button
                   type="button"
                   className={styles.logoutButton}

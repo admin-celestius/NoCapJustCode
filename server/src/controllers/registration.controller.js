@@ -313,6 +313,85 @@ exports.getAttendanceRoster = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/registrations/admin/pass-lookup
+ * Protected endpoint allowing organisers to look up confirmed teams by team name or team code to regenerate passes.
+ */
+exports.lookupPassForAdmin = async (req, res, next) => {
+  try {
+    const passcode = (req.headers['x-organiser-passcode'] || req.body?.passcode || req.query?.passcode || '').trim();
+    const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
+
+    if (!passcode || passcode !== expectedPasscode) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized. Invalid organiser passcode.',
+      });
+    }
+
+    const rawQuery = (req.body?.query || req.query?.query || '').trim();
+    if (!rawQuery) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a team name or team code.',
+      });
+    }
+
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = escapeRegex(rawQuery);
+    const upperCode = rawQuery.toUpperCase().replace(/^#/, '');
+    const codeCandidates = [upperCode];
+    if (!upperCode.startsWith('TEAM-')) {
+      codeCandidates.push(`TEAM-${upperCode}`);
+    }
+
+    const registrations = await Registration.find({
+      status: 'confirmed',
+      $or: [
+        { regCode: { $in: codeCandidates } },
+        { regCode: { $regex: escaped, $options: 'i' } },
+        { teamName: { $regex: escaped, $options: 'i' } },
+      ],
+    })
+      .populate('members', 'name role email phone rollNo department')
+      .sort({ confirmedAt: 1, createdAt: 1 })
+      .limit(20)
+      .lean();
+
+    const lowerQuery = rawQuery.toLowerCase();
+    const sorted = [...registrations].sort((a, b) => {
+      const aExact =
+        a.regCode?.toLowerCase() === upperCode.toLowerCase() ||
+        a.teamName?.toLowerCase() === lowerQuery;
+      const bExact =
+        b.regCode?.toLowerCase() === upperCode.toLowerCase() ||
+        b.teamName?.toLowerCase() === lowerQuery;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return 0;
+    });
+
+    return res.json({
+      success: true,
+      teams: sorted.map((reg) => ({
+        regCode: reg.regCode,
+        teamName: reg.teamName,
+        confirmedAt: reg.confirmedAt,
+        members: (reg.members || []).map((m) => ({
+          name: m.name,
+          role: m.role || 'member',
+          department: m.department || '',
+          email: m.email || '',
+          phone: m.phone || '',
+          rollNo: m.rollNo || '',
+        })),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.checkAvailability = async (req, res, next) => {
   try {
     const parsed = checkSchema.safeParse(req.body);

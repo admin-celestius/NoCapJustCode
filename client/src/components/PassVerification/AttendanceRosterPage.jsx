@@ -163,6 +163,9 @@ export default function AttendanceRosterPage() {
               <a href="/admin/scan" className={styles.navActionButton}>
                 <span>Scanner Desk</span>
               </a>
+              <a href="/admin/pass" className={styles.navActionButton}>
+                <span>Pass Desk</span>
+              </a>
 
               {authenticatedPasskey && (
                 <>
