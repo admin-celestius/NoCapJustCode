@@ -21,10 +21,7 @@ export const WHATSAPP_GROUP_URL =
   import.meta.env.VITE_WHATSAPP_GROUP_URL ||
   "https://chat.whatsapp.com/EwBezpPV7OKDwMI0SMBQrA";
 
-export const PROMO_END_ISO = "2026-11-11T23:59:59.999+05:30";
-export const PROMO_END_MS = new Date(PROMO_END_ISO).getTime();
-
-export const isPromoActive = (now = Date.now()) => now <= PROMO_END_MS;
+export const isPromoActive = (promoActive = true) => Boolean(promoActive);
 
 export const REGULAR_PRICING = {
   perHead: 149,
@@ -43,8 +40,8 @@ export const PROMO_PRICING = {
   isPromo: true,
 };
 
-export const getActivePricing = (now = Date.now()) =>
-  isPromoActive(now) ? PROMO_PRICING : REGULAR_PRICING;
+export const getActivePricing = (promoActive = true) =>
+  promoActive ? PROMO_PRICING : REGULAR_PRICING;
 
 export const PRICING = getActivePricing();
 

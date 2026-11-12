@@ -1,40 +1,10 @@
 // client/src/components/PromoPopup/PromoPopup.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './PromoPopup.module.css';
-import { PROMO_END_MS, PROMO_PRICING } from '../../data/event.js';
-
-function getTimeLeft() {
-  const diff = Math.max(0, PROMO_END_MS - Date.now());
-  const totalSeconds = Math.floor(diff / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return { diff, days, hours, minutes, seconds };
-}
-
-const pad = (n) => String(n).padStart(2, '0');
+import { PROMO_PRICING } from '../../data/event.js';
 
 export default function PromoPopup({ isOpen, onClose, onRegister }) {
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const tick = () => {
-      const next = getTimeLeft();
-      setTimeLeft(next);
-      if (next.diff <= 0) {
-        onClose?.();
-      }
-    };
-
-    tick();
-    const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
-  }, [isOpen, onClose]);
-
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -46,7 +16,7 @@ export default function PromoPopup({ isOpen, onClose, onRegister }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || timeLeft.diff <= 0) return null;
+  if (!isOpen) return null;
 
   const handleClaim = () => {
     onClose?.();
@@ -95,7 +65,7 @@ export default function PromoPopup({ isOpen, onClose, onRegister }) {
             {/* Top Eyebrow */}
             <div className={styles.eyebrowRow}>
               <span className={styles.eyebrowDot} aria-hidden="true" />
-              <span className={styles.eyebrowText}>CELESTIUS · NOV 11 SPECIAL</span>
+              <span className={styles.eyebrowText}>CELESTIUS · NATIONAL EDUCATION DAY</span>
             </div>
 
             {/* Large Focal Portrait */}
@@ -145,37 +115,10 @@ export default function PromoPopup({ isOpen, onClose, onRegister }) {
                 Celestius drops ₹{discountAmount} off your duo pass — celebrate his legacy and lock in together.
               </p>
 
-              {/* Split-Flap Precision Countdown Timer */}
-              <div className={styles.timerContainer} aria-label="Offer countdown timer">
-                <span className={styles.timerHeader}>OFFER ENDS IN</span>
-                <div className={styles.timerGrid}>
-                  {[
-                    { unit: 'DAYS', value: timeLeft.days },
-                    { unit: 'HRS', value: timeLeft.hours },
-                    { unit: 'MIN', value: timeLeft.minutes },
-                    { unit: 'SEC', value: timeLeft.seconds, live: true },
-                  ].map((item, idx) => (
-                    <React.Fragment key={item.unit}>
-                      {idx > 0 && (
-                        <span
-                          className={styles.timerColon}
-                          style={{ '--tile-idx': idx }}
-                          aria-hidden="true"
-                        >
-                          :
-                        </span>
-                      )}
-                      <div className={styles.timerTile} style={{ '--tile-idx': idx }}>
-                        <div className={`${styles.tileCard} ${item.live ? styles.tileCardLive : ''}`}>
-                          <span className={`${styles.tileNumber} ${item.live ? styles.tileNumberLive : ''}`}>
-                            {pad(item.value)}
-                          </span>
-                        </div>
-                        <span className={styles.tileUnit}>{item.unit}</span>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
+              {/* Closing Soon Status Banner */}
+              <div className={styles.closingSoonBox} aria-label="Offer status: Closing soon">
+                <span className={styles.closingSoonLabel}>OFFER STATUS</span>
+                <span className={styles.closingSoonValue}>CLOSING SOON</span>
               </div>
             </div>
 
@@ -199,7 +142,7 @@ export default function PromoPopup({ isOpen, onClose, onRegister }) {
             </button>
 
             <span className={styles.footerCaption}>
-              Ends <span className={styles.footerHighlight}>Nov 11 · 11:59 PM IST</span>
+              Limited Period Offer · <span className={styles.footerHighlight}>Closing Soon</span>
             </span>
           </div>
         </div>

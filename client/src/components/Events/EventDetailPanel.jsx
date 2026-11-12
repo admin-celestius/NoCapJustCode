@@ -13,7 +13,7 @@ const TAB_INDEX_MAP = {
   round2: 2,
 };
 
-export default function EventDetailPanel({ event, isOpen, onClose, onRegister, triggerRef }) {
+export default function EventDetailPanel({ event, isOpen, onClose, onRegister, triggerRef, promoActive = true, registrationsClosed = false, closedLabel = 'Registrations Closed' }) {
   const [activeTab, setActiveTab] = useState('overview'); // For TLE: 'overview' | 'round1' | 'round2'
   const activeTabIndex = TAB_INDEX_MAP[activeTab] ?? 0;
   const [dragY, setDragY] = useState(0);
@@ -173,9 +173,10 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
   const isTrainingArc = event.id === 'training-arc';
   const isTle = event.id === 'tle';
   const eyebrowText = event.eyebrow || (isTrainingArc ? 'WORKSHOP 01' : 'COMPETITION 02');
-  const activePricing = getActivePricing();
+  const activePricing = getActivePricing(promoActive);
 
   const handleRegisterClick = () => {
+    if (registrationsClosed) return;
     if (onRegister) {
       onRegister(event.id);
     } else if (eventData.ticketUrl) {
@@ -770,8 +771,9 @@ export default function EventDetailPanel({ event, isOpen, onClose, onRegister, t
             type="button"
             className={styles.primaryRegisterBtn}
             onClick={handleRegisterClick}
+            disabled={registrationsClosed}
           >
-            Register With Your Homie
+            {registrationsClosed ? closedLabel : 'Register With Your Homie'}
           </button>
         </div>
       </div>

@@ -5,7 +5,7 @@ import celestiusLogoWebp from '../../assets/celestius-transparent.webp';
 import celestiusLogoPng from '../../assets/celestius-transparent.png';
 import locLogoWebp from '../../assets/logo-navbar.webp';
 import locLogoPng from '../../assets/logo-navbar.png';
-import { verifyAdminPasskey, getAttendanceRoster } from '../../services/api.js';
+import { verifyAdminPasskey, getAttendanceRoster, updateAdminSettings } from '../../services/api.js';
 
 export default function AttendanceRosterPage() {
   // Passkey security gate
@@ -19,6 +19,8 @@ export default function AttendanceRosterPage() {
   // Roster data
   const [teams, setTeams] = useState([]);
   const [stats, setStats] = useState({ total: 0, workshopAttended: 0, competitionAttended: 0 });
+  const [eventSettings, setEventSettings] = useState({ promoActive: true, registrationsClosed: false });
+  const [savingSetting, setSavingSetting] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -42,6 +44,12 @@ export default function AttendanceRosterPage() {
           workshopAttended: res.workshopAttendedCount || 0,
           competitionAttended: res.competitionAttendedCount || 0,
         });
+        if (res.settings) {
+          setEventSettings({
+            promoActive: res.settings.promoActive ?? true,
+            registrationsClosed: Boolean(res.settings.registrationsClosed),
+          });
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to load attendance roster.');
@@ -89,6 +97,38 @@ export default function AttendanceRosterPage() {
     sessionStorage.removeItem('loc_admin_passkey');
     setAuthenticatedPasskey('');
     setTeams([]);
+  };
+
+  const handleToggleSetting = async (field) => {
+    if (!authenticatedPasskey || savingSetting) return;
+    const nextValue = !eventSettings[field];
+
+    if (field === 'registrationsClosed') {
+      const confirmMsg = nextValue
+        ? 'Close all student registrations? Every Register button on the site will be disabled and new checkouts will be blocked.'
+        : 'Reopen student registrations across the site?';
+      if (!window.confirm(confirmMsg)) return;
+    }
+
+    try {
+      setSavingSetting(field);
+      setError(null);
+      const res = await updateAdminSettings(authenticatedPasskey, { [field]: nextValue });
+      if (res.success && res.settings) {
+        setEventSettings({
+          promoActive: res.settings.promoActive ?? true,
+          registrationsClosed: Boolean(res.settings.registrationsClosed),
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update event setting.');
+      if (err.status === 401) {
+        sessionStorage.removeItem('loc_admin_passkey');
+        setAuthenticatedPasskey('');
+      }
+    } finally {
+      setSavingSetting(null);
+    }
   };
 
   // Filtered and searched list
@@ -254,6 +294,59 @@ export default function AttendanceRosterPage() {
                   <span className={`${styles.statNumber} ${styles.statGreen}`}>
                     {stats.competitionAttended} / {stats.total}
                   </span>
+                </div>
+              </div>
+
+              {/* Event Controls */}
+              <div className={styles.controlsRow}>
+                <div className={styles.controlCard}>
+                  <div className={styles.controlInfo}>
+                    <span className={styles.controlTitle}>NATIONAL EDUCATION DAY OFFER</span>
+                    <span className={styles.controlSubtitle}>
+                      {eventSettings.promoActive
+                        ? 'Active · ₹199 duo pricing & promo popup enabled'
+                        : 'Disabled · Regular ₹298 duo pricing active'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.controlToggleBtn} ${
+                      eventSettings.promoActive ? styles.controlBtnAmber : styles.controlBtnMuted
+                    }`}
+                    onClick={() => handleToggleSetting('promoActive')}
+                    disabled={savingSetting !== null}
+                  >
+                    {savingSetting === 'promoActive'
+                      ? 'Saving...'
+                      : eventSettings.promoActive
+                      ? 'Disable Offer'
+                      : 'Enable Offer'}
+                  </button>
+                </div>
+
+                <div className={styles.controlCard}>
+                  <div className={styles.controlInfo}>
+                    <span className={styles.controlTitle}>STUDENT REGISTRATIONS</span>
+                    <span className={styles.controlSubtitle}>
+                      {eventSettings.registrationsClosed
+                        ? 'Closed · Register buttons disabled & checkout blocked'
+                        : 'Open · Students can register normally'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.controlToggleBtn} ${
+                      eventSettings.registrationsClosed ? styles.controlBtnGreen : styles.controlBtnDanger
+                    }`}
+                    onClick={() => handleToggleSetting('registrationsClosed')}
+                    disabled={savingSetting !== null}
+                  >
+                    {savingSetting === 'registrationsClosed'
+                      ? 'Updating...'
+                      : eventSettings.registrationsClosed
+                      ? 'Reopen Registrations'
+                      : 'Close Registrations'}
+                  </button>
                 </div>
               </div>
 

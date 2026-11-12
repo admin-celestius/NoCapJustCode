@@ -6,7 +6,7 @@ import navbarLogoPng from '../../assets/logo-navbar.png';
 import Button from '../ui/Button.jsx';
 import { useScrollSpy } from '../../hooks/useScrollSpy.js';
 
-export default function Navbar({ onOpenRegister, animateIn }) {
+export default function Navbar({ onOpenRegister, animateIn, registrationsClosed = false, closedLabel = 'Registrations Closed' }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuActive, setMenuActive] = useState(false);
@@ -239,8 +239,14 @@ export default function Navbar({ onOpenRegister, animateIn }) {
         {/* Actions */}
         <div className={styles.actions}>
           <div className={styles.registerBtnDesktop}>
-            <Button size="sm" variant="primary" onClick={() => onOpenRegister()} title="Your homie better be ready.">
-              Register With Your Homie
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => onOpenRegister()}
+              disabled={registrationsClosed}
+              title={registrationsClosed ? closedLabel : 'Your homie better be ready.'}
+            >
+              {registrationsClosed ? closedLabel : 'Register With Your Homie'}
             </Button>
           </div>
 
@@ -309,12 +315,13 @@ export default function Navbar({ onOpenRegister, animateIn }) {
               size="lg"
               variant="primary"
               className={styles.mobileRegisterBtn}
+              disabled={registrationsClosed}
               onClick={() => {
                 closeMenu();
                 onOpenRegister();
               }}
             >
-              Register With Your Homie
+              {registrationsClosed ? closedLabel : 'Register With Your Homie'}
             </Button>
           </div>
         </div>

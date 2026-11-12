@@ -109,3 +109,10 @@ test('a fee different from ₹149 fails instead of silently charging another pri
   });
   assert.notEqual(result.status, 0); assert.match(result.stderr, /must be 149/);
 });
+
+test('EventConfig defaults promoActive to true and registrationsClosed to false', () => {
+  const EventConfig = require('../src/models/EventConfig');
+  const cfg = new EventConfig({ key: 'main' });
+  assert.equal(cfg.promoActive, true);
+  assert.equal(cfg.registrationsClosed, false);
+});

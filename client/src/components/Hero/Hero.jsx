@@ -10,7 +10,8 @@ import Marquee from './Marquee.jsx';
 import { SectionScene } from '../Scene/index.js';
 import Quote from '../Quote/Quote.jsx';
 
-export default function Hero({ onOpenRegister, animateIn }) {
+export default function Hero({ onOpenRegister, animateIn, promoActive = true, registrationsClosed = false, closedLabel = 'Registrations Closed' }) {
+  const activePricing = getActivePricing(promoActive);
   const scrollToEvents = (e) => {
     e.preventDefault();
     const target = document.getElementById('events');
@@ -65,13 +66,13 @@ export default function Hero({ onOpenRegister, animateIn }) {
                     <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>₹</span>
                   }
                 >
-                  {getActivePricing().isPromo ? (
+                  {activePricing.isPromo ? (
                     <>
-                      <span style={{ textDecoration: 'line-through', opacity: 0.55, marginRight: '6px' }}>₹{getActivePricing().regularPair}</span>
-                      <span>₹{getActivePricing().pair} {getActivePricing().taxNote}/pair · Nov 11 Offer</span>
+                      <span style={{ textDecoration: 'line-through', opacity: 0.55, marginRight: '6px' }}>₹{activePricing.regularPair}</span>
+                      <span>₹{activePricing.pair} {activePricing.taxNote}/pair · Closing Soon</span>
                     </>
                   ) : (
-                    <>₹{getActivePricing().perHead} per person // ₹{getActivePricing().pair} {getActivePricing().taxNote} per pair</>
+                    <>₹{activePricing.perHead} per person // ₹{activePricing.pair} {activePricing.taxNote} per pair</>
                   )}
                 </Chip>
               </div>
@@ -107,8 +108,14 @@ export default function Hero({ onOpenRegister, animateIn }) {
 
             {/* Action Buttons */}
             <div className={styles.ctaGroup}>
-              <Button size="lg" variant="primary" onClick={() => onOpenRegister()} title="Your homie better be ready.">
-                Register With Your Homie
+              <Button
+                size="lg"
+                variant="primary"
+                onClick={() => onOpenRegister()}
+                disabled={registrationsClosed}
+                title={registrationsClosed ? closedLabel : 'Your homie better be ready.'}
+              >
+                {registrationsClosed ? closedLabel : 'Register With Your Homie'}
               </Button>
               <Button
                 size="lg"
