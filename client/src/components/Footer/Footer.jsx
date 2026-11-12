@@ -232,6 +232,11 @@ export default function Footer() {
           </div>
         </div>
 
+        <section className={styles.refundPolicy} aria-labelledby="refund-policy-title">
+          <h2 id="refund-policy-title" className={styles.refundPolicyTitle}>No Refund Policy</h2>
+          <p>All registration fees are non-refundable.</p>
+        </section>
+
         {/* Bottom Bar: Copyright & Back to Top */}
         <div className={`${styles.bottomBar} scrollReveal`} style={{ transitionDelay: '240ms' }}>
           <p className={styles.copyright}>

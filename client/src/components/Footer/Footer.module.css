@@ -541,6 +541,26 @@
 /* ----------------------------------------------------
    Bottom Bar: Copyright & Back to Top
    ---------------------------------------------------- */
+.refundPolicy {
+  padding: 20px 0;
+  border-top: 1px solid rgba(247, 237, 216, 0.08);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.refundPolicyTitle {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent-orange, #F26B3A);
+}
+
+.refundPolicy p {
+  margin: 0;
+}
+
 .bottomBar {
   padding-top: 24px;
   padding-bottom: 36px;
