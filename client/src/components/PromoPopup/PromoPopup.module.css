@@ -320,118 +320,50 @@
   animation: promoFadeUp 280ms cubic-bezier(0.16, 1, 0.3, 1) 1700ms both;
 }
 
-/* Stage 9: Split-Flap Precision Countdown Timer */
-.timerContainer {
+/* Stage 9: Closing Soon Banner */
+.closingSoonBox {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 5px;
   margin-top: 6px;
+  padding: 12px 18px;
   width: 100%;
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(28, 25, 32, 0.96) 0%,
+    rgba(16, 14, 20, 0.98) 100%
+  );
+  border: 1px solid rgba(250, 160, 18, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 160, 18, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(242, 107, 58, 0.1);
+  animation: promoTileFlipIn 340ms cubic-bezier(0.16, 1, 0.3, 1) 1800ms both;
 }
 
-.timerHeader {
+.closingSoonLabel {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  color: rgba(247, 237, 216, 0.5);
+  letter-spacing: 0.22em;
+  color: rgba(247, 237, 216, 0.55);
   text-transform: uppercase;
-  animation: promoFadeIn 240ms ease-out 1780ms both;
+  animation: promoFadeIn 220ms ease-out 1860ms both;
 }
 
-.timerGrid {
-  display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  gap: 6px;
-}
-
-.timerTile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  animation: promoTileFlipIn 300ms cubic-bezier(0.16, 1, 0.3, 1) calc(1820ms + var(--tile-idx, 0) * 55ms) both;
-}
-
-.tileCard {
-  position: relative;
-  width: 58px;
-  height: 46px;
-  border-radius: 8px;
-  background: linear-gradient(
-    180deg,
-    rgba(28, 27, 36, 0.95) 0%,
-    rgba(16, 15, 21, 0.98) 50%,
-    rgba(11, 10, 15, 1) 100%
-  );
-  border: 1px solid rgba(247, 237, 216, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 6px 14px rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.tileCard::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: rgba(0, 0, 0, 0.65);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
-  pointer-events: none;
-}
-
-.tileCardLive {
-  border-color: rgba(250, 160, 18, 0.35);
-  box-shadow:
-    inset 0 1px 0 rgba(250, 160, 18, 0.1),
-    0 6px 16px rgba(0, 0, 0, 0.55),
-    0 0 14px rgba(250, 160, 18, 0.12);
-}
-
-.tileNumber {
-  position: relative;
-  z-index: 1;
+.closingSoonValue {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 22px;
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: #F7EDD8;
-  line-height: 1;
-}
-
-.tileNumberLive {
+  letter-spacing: 0.16em;
+  line-height: 1.1;
   color: #FAA012;
-}
-
-.tileUnit {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: rgba(247, 237, 216, 0.45);
-}
-
-.timerColon {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 18px;
-  font-weight: 800;
-  color: rgba(242, 107, 58, 0.72);
-  height: 46px;
-  display: inline-flex;
-  align-items: center;
-  user-select: none;
-  animation: promoFadeIn 240ms ease-out calc(1840ms + var(--tile-idx, 0) * 55ms) both;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(250, 160, 18, 0.28);
+  animation: promoFadeUp 280ms cubic-bezier(0.16, 1, 0.3, 1) 1900ms both;
 }
 
 /* Stage 10: CTA Button & Footer Caption */
@@ -579,36 +511,20 @@
     font-size: 9px;
   }
 
-  .timerContainer {
-    gap: 5px;
+  .closingSoonBox {
+    gap: 4px;
     margin-top: 4px;
+    padding: 10px 14px;
+    border-radius: 8px;
   }
 
-  .timerHeader {
+  .closingSoonLabel {
     font-size: 8.5px;
   }
 
-  .timerGrid {
-    gap: 4px;
-  }
-
-  .tileCard {
-    width: 50px;
-    height: 40px;
-    border-radius: 7px;
-  }
-
-  .tileNumber {
+  .closingSoonValue {
     font-size: 18px;
-  }
-
-  .tileUnit {
-    font-size: 8px;
-  }
-
-  .timerColon {
-    font-size: 15px;
-    height: 40px;
+    letter-spacing: 0.14em;
   }
 
   .ctaBtn {
@@ -640,9 +556,9 @@
   .priceMeta,
   .offerHeading,
   .catchyLine,
-  .timerHeader,
-  .timerTile,
-  .timerColon,
+  .closingSoonBox,
+  .closingSoonLabel,
+  .closingSoonValue,
   .ctaBtn,
   .footerCaption {
     animation: none !important;

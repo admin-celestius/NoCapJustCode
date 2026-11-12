@@ -19,16 +19,35 @@ const HOLD_MS = HOLD_MINUTES * 60 * 1000;
 
 const CONFIG_KEY = 'main';
 
+async function getEventSettings() {
+  const doc = await EventConfig.findOne({ key: CONFIG_KEY })
+    .select('promoActive registrationsClosed')
+    .lean();
+  return {
+    promoActive: doc?.promoActive ?? true,
+    registrationsClosed: doc?.registrationsClosed ?? false,
+  };
+}
+
 // Seats are counted from the Registration collection, not from EventConfig,
 // so abandoned attempts free their seat HOLD_MINUTES after they were created.
 async function getAvailability() {
   const holdSince = new Date(Date.now() - HOLD_MS);
-  const [confirmed, onHold] = await Promise.all([
+  const [confirmed, onHold, settings] = await Promise.all([
     Registration.countDocuments({ status: 'confirmed' }),
     HOLD_MS > 0 ? Registration.countDocuments({ status: 'pending', createdAt: { $gt: holdSince } }) : 0,
+    getEventSettings(),
   ]);
   const remaining = Math.max(0, MAX_TEAMS - confirmed - onHold);
-  return { capacity: MAX_TEAMS, confirmed, onHold, remaining, open: remaining > 0 };
+  return {
+    capacity: MAX_TEAMS,
+    confirmed,
+    onHold,
+    remaining,
+    open: !settings.registrationsClosed && remaining > 0,
+    promoActive: settings.promoActive,
+    registrationsClosed: settings.registrationsClosed,
+  };
 }
 
 // Creates the counter document if it doesn't exist yet, seeded from the real number
@@ -41,12 +60,37 @@ async function ensureEventConfig() {
   try {
     await EventConfig.updateOne(
       { key: CONFIG_KEY },
-      { $setOnInsert: { confirmedCount: confirmed } },
+      { $setOnInsert: { confirmedCount: confirmed, promoActive: true, registrationsClosed: false } },
       { upsert: true }
     );
   } catch (err) {
     if (err.code !== 11000) throw err; // another request created it first
   }
+}
+
+async function updateEventSettings(patch = {}) {
+  await ensureEventConfig();
+  const update = {};
+  if (typeof patch.promoActive === 'boolean') {
+    update.promoActive = patch.promoActive;
+  }
+  if (typeof patch.registrationsClosed === 'boolean') {
+    update.registrationsClosed = patch.registrationsClosed;
+  }
+  if (Object.keys(update).length === 0) {
+    return getEventSettings();
+  }
+  const doc = await EventConfig.findOneAndUpdate(
+    { key: CONFIG_KEY },
+    { $set: update },
+    { new: true }
+  )
+    .select('promoActive registrationsClosed')
+    .lean();
+  return {
+    promoActive: doc?.promoActive ?? true,
+    registrationsClosed: doc?.registrationsClosed ?? false,
+  };
 }
 
 // Atomically takes one seat. Must be called with the confirmation transaction's session:
@@ -61,4 +105,4 @@ function claimSeat(session) {
   );
 }
 
-module.exports = { MAX_TEAMS, HOLD_MINUTES, HOLD_MS, CONFIG_KEY, getAvailability, ensureEventConfig, claimSeat };
+module.exports = { MAX_TEAMS, HOLD_MINUTES, HOLD_MS, CONFIG_KEY, getEventSettings, updateEventSettings, getAvailability, ensureEventConfig, claimSeat };

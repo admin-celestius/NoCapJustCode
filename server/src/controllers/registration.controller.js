@@ -13,14 +13,19 @@ const TEAM_SIZE = 2;
 const FEE_PER_PERSON_PAISE = Math.round(Number(process.env.FEE_PER_PERSON_INR || 149) * 100);
 if (FEE_PER_PERSON_PAISE !== 14900) throw new Error('FEE_PER_PERSON_INR must be 149 for this event');
 // Regular price per pair: ₹298 + taxes (30726 paise).
-// National Education Day promo (through 2026-11-11 23:59:59.999 IST): ₹199 + taxes = ₹205.18 (20518 paise).
+// National Education Day promo (toggled in admin roster): ₹199 + taxes = ₹205.18 (20518 paise).
 const REGULAR_ORDER_AMOUNT_PAISE = 30726;
 const PROMO_ORDER_AMOUNT_PAISE = 20518;
-const PROMO_END_MS = new Date('2026-11-11T23:59:59.999+05:30').getTime();
-const getActiveOrderAmountPaise = (now = Date.now()) =>
-  now <= PROMO_END_MS ? PROMO_ORDER_AMOUNT_PAISE : REGULAR_ORDER_AMOUNT_PAISE;
+const getActiveOrderAmountPaise = (promoActive = true) =>
+  promoActive ? PROMO_ORDER_AMOUNT_PAISE : REGULAR_ORDER_AMOUNT_PAISE;
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000; 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
+
+function isValidAdminPasscode(req) {
+  const passcode = (req.headers['x-organiser-passcode'] || req.body?.passcode || req.query?.passcode || '').trim();
+  const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
+  return Boolean(passcode && passcode === expectedPasscode);
+}
 
 async function findConflicts({ teamName, emails = [], phones = [], rollNos = [] }) {
   const [people, team] = await Promise.all([
@@ -263,20 +268,20 @@ exports.markAttendance = async (req, res, next) => {
  */
 exports.getAttendanceRoster = async (req, res, next) => {
   try {
-    const passcode = (req.headers['x-organiser-passcode'] || req.body?.passcode || req.query?.passcode || '').trim();
-    const expectedPasscode = (process.env.ORGANISER_PASSCODE || '849201').trim();
-
-    if (!passcode || passcode !== expectedPasscode) {
+    if (!isValidAdminPasscode(req)) {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized. Invalid organiser passcode.',
       });
     }
 
-    const registrations = await Registration.find({ status: 'confirmed' })
-      .populate('members', 'name role email phone rollNo department')
-      .sort({ confirmedAt: 1, createdAt: 1 })
-      .lean();
+    const [registrations, settings] = await Promise.all([
+      Registration.find({ status: 'confirmed' })
+        .populate('members', 'name role email phone rollNo department')
+        .sort({ confirmedAt: 1, createdAt: 1 })
+        .lean(),
+      capacity.getEventSettings(),
+    ]);
 
     const teams = registrations.map((reg) => {
       const mem1 = reg.members?.[0];
@@ -306,6 +311,7 @@ exports.getAttendanceRoster = async (req, res, next) => {
       totalTeams: teams.length,
       workshopAttendedCount: teams.filter((t) => t.workshopStatus === 'attended').length,
       competitionAttendedCount: teams.filter((t) => t.competitionStatus === 'attended').length,
+      settings,
       teams,
     });
   } catch (err) {
@@ -392,6 +398,40 @@ exports.lookupPassForAdmin = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/registrations/admin/settings
+ * Protected endpoint allowing organisers to toggle promo pricing or manually close registrations.
+ */
+exports.updateAdminSettings = async (req, res, next) => {
+  try {
+    if (!isValidAdminPasscode(req)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized. Invalid organiser passcode.',
+      });
+    }
+
+    const patch = {};
+    if (Object.hasOwn(req.body || {}, 'promoActive')) {
+      if (typeof req.body.promoActive !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'promoActive must be a boolean.' });
+      }
+      patch.promoActive = req.body.promoActive;
+    }
+    if (Object.hasOwn(req.body || {}, 'registrationsClosed')) {
+      if (typeof req.body.registrationsClosed !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'registrationsClosed must be a boolean.' });
+      }
+      patch.registrationsClosed = req.body.registrationsClosed;
+    }
+
+    const settings = await capacity.updateEventSettings(patch);
+    return res.json({ success: true, settings });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.checkAvailability = async (req, res, next) => {
   try {
     const parsed = checkSchema.safeParse(req.body);
@@ -424,14 +464,20 @@ exports.createOrder = async (req, res, next) => {
       return res.status(409).json({ code: 'DUPLICATE_REGISTRATION', message: 'Already registered', conflicts });
     }
 
-    // Soft cap (UX only): confirmed teams + teams currently in checkout. The real
-    // guarantee is the counter in confirmRegistration.
-    const { open } = await capacity.getAvailability();
+    // Manual organiser close takes precedence over seat count, then soft cap.
+    // The hard seat cap guarantee stays in confirmRegistration.
+    const { open, promoActive, registrationsClosed } = await capacity.getAvailability();
+    if (registrationsClosed) {
+      return res.status(403).json({
+        code: 'REGISTRATIONS_CLOSED',
+        message: 'Registrations are currently closed by the organisers.',
+      });
+    }
     if (!open) {
       return res.status(409).json({ code: 'SOLD_OUT', message: 'Registrations are full' });
     }
 
-    const amount = getActiveOrderAmountPaise();
+    const amount = getActiveOrderAmountPaise(promoActive);
     const expiresAt = new Date(Date.now() + PENDING_TTL_MS);
 
     // Persist a complete pair atomically before creating an external order.

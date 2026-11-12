@@ -28,6 +28,10 @@ async function request(path, payload, timeout = 20000) {
   }
 }
 
+export async function getAvailability() {
+  return request('/api/registrations/availability');
+}
+
 export async function checkHealth() {
   try {
     const data = await request('/health', undefined, 2000);
@@ -83,4 +87,10 @@ export async function lookupAdminPass(passcode, query) {
   if (!code) throw new Error('6-digit security passkey is required.');
   if (!q) throw new Error('Team name or team code is required.');
   return request('/api/registrations/admin/pass-lookup', { passcode: code, query: q });
+}
+
+export async function updateAdminSettings(passcode, settings) {
+  const code = (passcode || '').trim();
+  if (!code) throw new Error('6-digit security passkey is required.');
+  return request('/api/registrations/admin/settings', { passcode: code, ...settings });
 }

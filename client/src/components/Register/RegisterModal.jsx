@@ -36,7 +36,15 @@ const DEPARTMENT_OPTIONS = [
   { value: 'BME', label: 'BME' },
 ];
 
-export default function RegisterModal({ isOpen, onClose }) {
+export default function RegisterModal({
+  isOpen,
+  onClose,
+  promoActive = true,
+  registrationsClosed = false,
+  soldOut = false,
+  onRefreshStatus,
+}) {
+  const isClosed = registrationsClosed || soldOut;
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
   const [registrationResult, setRegistrationResult] = useState(null);
@@ -172,6 +180,12 @@ export default function RegisterModal({ isOpen, onClose }) {
     if (isOpen && serverError) errorRef.current?.scrollIntoView({ block: 'nearest' });
   }, [isOpen, serverError]);
 
+  useEffect(() => {
+    if (isOpen) {
+      onRefreshStatus?.();
+    }
+  }, [isOpen, onRefreshStatus]);
+
   // Lock body scroll and handle focus trap / restore trigger on open/close
   useEffect(() => {
     if (!isOpen) return;
@@ -263,6 +277,13 @@ export default function RegisterModal({ isOpen, onClose }) {
 
   const onSubmit = async (formData) => {
     if (submittingRef.current) return;
+    if (isClosed) {
+      const msg = registrationsClosed
+        ? 'Registrations are currently closed by the organisers.'
+        : "Lobby Full. You're Late to the Party. Registration is sold out.";
+      showToast(msg);
+      return;
+    }
     if (teamNameStatus === 'taken') {
       setError('pairName', { type: 'manual', message: 'This duo codename is already taken.' });
       showToast('This duo codename is already taken. Please choose a unique name.');
@@ -342,10 +363,14 @@ export default function RegisterModal({ isOpen, onClose }) {
         await loadCheckout();
         const fingerprint = JSON.stringify(payload);
         if (checkoutRef.current?.fingerprint !== fingerprint) {
-          const currentPricing = getActivePricing();
+          const currentPricing = getActivePricing(promoActive);
           const order = await createOrder(payload);
-          if (!order.orderId || !order.registrationId || !order.keyId || order.amount !== currentPricing.orderAmountPaise || order.currency !== 'INR') {
+          if (!order.orderId || !order.registrationId || !order.keyId || order.currency !== 'INR') {
             throw new Error('The payment order is invalid. Please contact the organisers.');
+          }
+          if (order.amount !== currentPricing.orderAmountPaise) {
+            onRefreshStatus?.();
+            throw new Error('Offer pricing was just updated by the organisers. Please review the updated total and try again.');
           }
           checkoutRef.current = { fingerprint, order };
         }
@@ -397,8 +422,12 @@ export default function RegisterModal({ isOpen, onClose }) {
       let errorMsg = err.message || 'Payment was cancelled or failed.';
       if (err.code === 'PAYMENT_CANCELLED') {
         errorMsg = 'Checkout was cancelled before completion. Your duo details are safely preserved.';
+      } else if (err.code === 'REGISTRATIONS_CLOSED') {
+        errorMsg = 'Registrations have been closed by the organisers.';
+        onRefreshStatus?.();
       } else if (err.code === 'SOLD_OUT') {
         errorMsg = "Lobby Full. You're Late to the Party. Registration is sold out.";
+        onRefreshStatus?.();
       } else if (err.code === 'DUPLICATE_REGISTRATION') {
         errorMsg = "Bro, You're Already In. This detail belongs to a registered participant.";
       }
@@ -496,7 +525,7 @@ export default function RegisterModal({ isOpen, onClose }) {
     }
   };
 
-  const activePricing = getActivePricing();
+  const activePricing = getActivePricing(promoActive);
   const backdropMode = flowState === 'success' ? 'tick' : flowState === 'failure' ? 'cross' : 'ambient';
 
   return (
@@ -751,7 +780,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                   2 Coders · {activePricing.isPromo && <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>₹{activePricing.regularPair}</span>}₹{activePricing.pair}
                 </span>
                 {activePricing.isPromo && (
-                  <span className={styles.brandPromoNote}>National Education Day Offer · Ends Nov 11</span>
+                  <span className={styles.brandPromoNote}>National Education Day Offer · Closing Soon</span>
                 )}
               </div>
             </div>
@@ -822,7 +851,21 @@ export default function RegisterModal({ isOpen, onClose }) {
             <form className={styles.formInner} onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
               <div className={styles.formScrollArea}>
                 <BouncingBallsCanvas />
-                <fieldset className={styles.formScrollBody} disabled={submitting || !!pendingPayment}>
+                <fieldset className={styles.formScrollBody} disabled={submitting || !!pendingPayment || isClosed}>
+                {isClosed && (
+                  <div className={styles.statusBanner} role="alert">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                    <span>
+                      {registrationsClosed
+                        ? 'Registrations are currently closed by the organisers.'
+                        : 'All registration slots are currently full.'}
+                    </span>
+                  </div>
+                )}
                 {pendingPayment && !serverError && (
                   <div className={styles.statusBanner} role="status">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1102,7 +1145,7 @@ export default function RegisterModal({ isOpen, onClose }) {
                   </span>
                   <span className={styles.footerSubText}>
                     {activePricing.isPromo
-                      ? ' · National Education Day Offer (ends Nov 11)'
+                      ? ' · National Education Day Offer (Closing Soon)'
                       : ' · Covers both members for both events'}
                   </span>
                 </div>
@@ -1123,10 +1166,12 @@ export default function RegisterModal({ isOpen, onClose }) {
                     onClick={pendingPayment ? () => onSubmit() : undefined}
                     variant="primary"
                     size="lg"
-                    disabled={submitting || (!pendingPayment && teamNameStatus === 'taken')}
+                    disabled={submitting || isClosed || (!pendingPayment && teamNameStatus === 'taken')}
                     className={styles.submitBtn}
                   >
-                    {submitting
+                    {isClosed
+                      ? (registrationsClosed ? 'Registrations Closed' : 'Registrations Full')
+                      : submitting
                       ? 'Locking In...'
                       : (!pendingPayment && teamNameStatus === 'taken')
                       ? 'Codename Taken'

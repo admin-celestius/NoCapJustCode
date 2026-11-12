@@ -6,7 +6,7 @@ import EventCard from './EventCard.jsx';
 import EventDetailPanel from './EventDetailPanel.jsx';
 import { SectionScene } from '../Scene/index.js';
 
-export default function EventCards({ onOpenRegister }) {
+export default function EventCards({ onOpenRegister, promoActive = true, registrationsClosed = false, closedLabel = 'Registrations Closed' }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [triggerRef, setTriggerRef] = useState(null);
   const [activeFlippedId, setActiveFlippedId] = useState(null);
@@ -110,6 +110,9 @@ export default function EventCards({ onOpenRegister }) {
           onClose={handleCloseDetails}
           onRegister={(eventId) => onOpenRegister(eventId)}
           triggerRef={triggerRef}
+          promoActive={promoActive}
+          registrationsClosed={registrationsClosed}
+          closedLabel={closedLabel}
         />
       </div>
     </section>

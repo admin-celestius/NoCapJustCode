@@ -3723,13 +3723,19 @@
   }
 }
 
-.primaryRegisterBtn:hover {
+.primaryRegisterBtn:hover:not(:disabled) {
   background-color: #fa7b4c;
   transform: translateY(-1px);
 }
 
-.primaryRegisterBtn:active {
+.primaryRegisterBtn:active:not(:disabled) {
   transform: scale(0.99);
+}
+
+.primaryRegisterBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ---------------------------------------------------- */

@@ -11,12 +11,14 @@ const {
   verifyPasskey,
   getAttendanceRoster,
   lookupPassForAdmin,
+  updateAdminSettings,
 } = require('../controllers/registration.controller');
 
 router.post('/admin/verify-passkey', verifyPasskey);
 router.post('/admin/roster', getAttendanceRoster);
 router.get('/admin/roster', getAttendanceRoster);
 router.post('/admin/pass-lookup', lookupPassForAdmin);
+router.post('/admin/settings', updateAdminSettings);
 router.get('/check-team', checkTeamName);
 router.post('/check-team', checkTeamName);
 router.post('/check', checkAvailability);

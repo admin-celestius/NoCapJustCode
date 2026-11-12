@@ -1,7 +1,7 @@
 // client/src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
-import { checkHealth } from './services/api.js';
+import { checkHealth, getAvailability } from './services/api.js';
 import Scene from './components/Scene/Scene.jsx';
 import Intro from './components/Intro/Intro.jsx';
 import { logTimelineEvent } from './utils/timelineLogger.js';
@@ -12,7 +12,6 @@ import Schedule from './components/Schedule/Schedule.jsx';
 import EventCards from './components/Events/EventCards.jsx';
 import RegisterModal from './components/Register/RegisterModal.jsx';
 import PromoPopup from './components/PromoPopup/PromoPopup.jsx';
-import { isPromoActive } from './data/event.js';
 import Footer from './components/Footer/Footer.jsx';
 import { auditHardwarePlacement } from './utils/hardwareAudit.js';
 import { useScrollReveal } from './hooks/useScrollReveal.js';
@@ -27,23 +26,79 @@ export default function App() {
   const [siteRevealed, setSiteRevealed] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [promoModalOpen, setPromoModalOpen] = useState(false);
+  const [eventStatus, setEventStatus] = useState({
+    promoActive: true,
+    registrationsClosed: false,
+    soldOut: false,
+    loaded: false,
+  });
 
-  // Show promotional offer popup on every visit/refresh of the root route while active
+  const registrationDisabled = eventStatus.registrationsClosed || eventStatus.soldOut;
+  const closedButtonLabel = eventStatus.registrationsClosed
+    ? 'Registrations Closed'
+    : eventStatus.soldOut
+    ? 'Registrations Full'
+    : null;
+
+  const refreshAvailability = useCallback(async () => {
+    try {
+      const data = await getAvailability();
+      setEventStatus({
+        promoActive: data.promoActive ?? true,
+        registrationsClosed: Boolean(data.registrationsClosed),
+        soldOut: !data.registrationsClosed && data.open === false,
+        loaded: true,
+      });
+    } catch {
+      setEventStatus((prev) => ({ ...prev, loaded: true }));
+    }
+  }, []);
+
+  // Show promotional offer popup on every visit/refresh of the root route while active and open
   useEffect(() => {
-    if (!siteRevealed || !isPromoActive()) return;
+    if (!siteRevealed || !eventStatus.loaded || !eventStatus.promoActive || registrationDisabled) return;
     const timer = setTimeout(() => {
       setPromoModalOpen(true);
     }, 350);
     return () => clearTimeout(timer);
-  }, [siteRevealed]);
+  }, [siteRevealed, eventStatus.loaded, eventStatus.promoActive, registrationDisabled]);
 
   // Activate independent scroll reveals across all site elements
   useScrollReveal(appFlow === 'SITE');
 
-  // Non-blocking background health check
+  // Non-blocking background health check & live event configuration sync
   useEffect(() => {
+    let active = true;
     checkHealth();
-  }, []);
+    getAvailability()
+      .then((data) => {
+        if (!active) return;
+        setEventStatus({
+          promoActive: data.promoActive ?? true,
+          registrationsClosed: Boolean(data.registrationsClosed),
+          soldOut: !data.registrationsClosed && data.open === false,
+          loaded: true,
+        });
+      })
+      .catch(() => {
+        if (!active) return;
+        setEventStatus((prev) => ({ ...prev, loaded: true }));
+      });
+
+    const handleFocus = () => {
+      refreshAvailability();
+    };
+    const handleVisibility = () => {
+      if (!document.hidden) refreshAvailability();
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [refreshAvailability]);
 
   // Handle tab visibility to pause animations when hidden
   useEffect(() => {
@@ -104,6 +159,7 @@ export default function App() {
   }, [appFlow, isCustomRoute]);
 
   const handleOpenRegister = () => {
+    if (registrationDisabled) return;
     setRegisterModalOpen(true);
   };
 
@@ -165,23 +221,39 @@ export default function App() {
         aria-hidden={appFlow !== 'SITE'}
       >
         {/* Floating Pill Navbar */}
-        <Navbar onOpenRegister={handleOpenRegister} animateIn={siteRevealed} />
+        <Navbar
+          onOpenRegister={handleOpenRegister}
+          animateIn={siteRevealed}
+          registrationsClosed={registrationDisabled}
+          closedLabel={closedButtonLabel}
+        />
 
         {/* Main Sections */}
         <main className="mainContent">
-          <Hero onOpenRegister={handleOpenRegister} animateIn={siteRevealed} />
+          <Hero
+            onOpenRegister={handleOpenRegister}
+            animateIn={siteRevealed}
+            promoActive={eventStatus.promoActive}
+            registrationsClosed={registrationDisabled}
+            closedLabel={closedButtonLabel}
+          />
           <About />
           <Schedule />
-          <EventCards onOpenRegister={handleOpenRegister} />
+          <EventCards
+            onOpenRegister={handleOpenRegister}
+            promoActive={eventStatus.promoActive}
+            registrationsClosed={registrationDisabled}
+            closedLabel={closedButtonLabel}
+          />
         </main>
 
         {/* Footer */}
         <Footer />
       </div>
 
-      {/* National Education Day Promotional Offer Popup (shows on every root visit/refresh while active) */}
+      {/* National Education Day Promotional Offer Popup (shows on every root visit/refresh while active & open) */}
       <PromoPopup
-        isOpen={promoModalOpen && !registerModalOpen}
+        isOpen={promoModalOpen && !registerModalOpen && eventStatus.promoActive && !registrationDisabled}
         onClose={() => setPromoModalOpen(false)}
         onRegister={handleOpenRegister}
       />
@@ -190,6 +262,10 @@ export default function App() {
       <RegisterModal
         isOpen={registerModalOpen}
         onClose={handleCloseRegister}
+        promoActive={eventStatus.promoActive}
+        registrationsClosed={eventStatus.registrationsClosed}
+        soldOut={eventStatus.soldOut}
+        onRefreshStatus={refreshAvailability}
       />
     </div>
   );
